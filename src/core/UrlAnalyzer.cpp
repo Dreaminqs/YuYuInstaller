@@ -1,4 +1,5 @@
 #include "UrlAnalyzer.h"
+#include "ProxyManager.h"
 #include "FFmpegProcessor.h"
 #include <QNetworkRequest>
 #include <QRegularExpression>
@@ -1301,6 +1302,9 @@ void UrlAnalyzer::startYtDlpProbe(const QString &rawUrl) {
     args << "--no-check-certificates";
     args << "--socket-timeout" << "25";
     args << "--retries" << "5";
+    if (ProxyManager::instance() && !ProxyManager::instance()->proxyUrl().isEmpty()) {
+        args << "--proxy" << ProxyManager::instance()->proxyUrl();
+    }
     if (!m_ytDlpRetried) {
         args << "--impersonate" << "Chrome";
     }
@@ -1788,6 +1792,9 @@ void UrlAnalyzer::onSpotifyOembedFinished() {
     args << "--no-warnings";
     args << "--no-playlist";
     args << "--no-check-certificates";
+    if (ProxyManager::instance() && !ProxyManager::instance()->proxyUrl().isEmpty()) {
+        args << "--proxy" << ProxyManager::instance()->proxyUrl();
+    }
     args << QString("ytsearch1:%1").arg(searchQuery);
 
     connect(m_ytDlpProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &UrlAnalyzer::onSpotifySearchFinished);

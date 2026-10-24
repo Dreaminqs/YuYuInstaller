@@ -8,7 +8,7 @@ Rectangle {
     border.color: Theme.borderDim
     border.width: 1
 
-    property int activeTab: 0 // 0: Dashboard, 1: Queue, 2: Settings
+    property int activeTab: 0 // 0: Dashboard, 1: Queue, 2: Updates, 3: Proxy, 4: Settings
 
     Column {
         anchors.fill: parent
@@ -385,12 +385,12 @@ Rectangle {
                 }
             }
 
-            // Tab 3: Settings
+            // Tab 3: Proxy & Privacy
             Rectangle {
                 width: parent.width
                 height: 42
                 radius: Theme.radiusMd
-                color: (root.activeTab === 3) ? Theme.activeTabBg : (tab3Mouse.containsMouse ? Theme.bgCardHover : "transparent")
+                color: (root.activeTab === 3) ? Theme.activeTabBg : (tabProxyMouse.containsMouse ? Theme.bgCardHover : "transparent")
                 border.color: (root.activeTab === 3) ? Theme.activeTabBorder : "transparent"
                 border.width: 1
 
@@ -407,11 +407,120 @@ Rectangle {
                 }
 
                 MouseArea {
-                    id: tab3Mouse
+                    id: tabProxyMouse
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.activeTab = 3
+                }
+
+                Row {
+                    anchors.fill: parent
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 12
+                    spacing: 12
+
+                    Item {
+                        width: 18; height: 18
+                        anchors.verticalCenter: parent.verticalCenter
+                        Canvas {
+                            id: tabProxyCanvas
+                            anchors.fill: parent
+                            onPaint: {
+                                var ctx = getContext("2d");
+                                ctx.reset();
+                                ctx.strokeStyle = (root.activeTab === 3) ? Theme.accent : (tabProxyMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary);
+                                ctx.fillStyle = ctx.strokeStyle;
+                                ctx.lineWidth = 1.6;
+                                ctx.lineCap = "round";
+                                ctx.lineJoin = "round";
+
+                                // Shield outline
+                                ctx.beginPath();
+                                ctx.moveTo(9, 2.5);
+                                ctx.lineTo(15.5, 4.8);
+                                ctx.lineTo(15.5, 9.5);
+                                ctx.bezierCurveTo(15.5, 13.8, 12, 16.2, 9, 17.2);
+                                ctx.bezierCurveTo(6, 16.2, 2.5, 13.8, 2.5, 9.5);
+                                ctx.lineTo(2.5, 4.8);
+                                ctx.closePath();
+                                ctx.stroke();
+
+                                // Central keyhole / secure dot
+                                ctx.beginPath();
+                                ctx.arc(9, 8.5, 1.6, 0, Math.PI * 2);
+                                ctx.fill();
+                                ctx.beginPath();
+                                ctx.moveTo(9, 10.2);
+                                ctx.lineTo(9, 12.8);
+                                ctx.stroke();
+                            }
+                            Connections {
+                                target: root
+                                function onActiveTabChanged() { tabProxyCanvas.requestPaint(); }
+                            }
+                            Connections {
+                                target: tabProxyMouse
+                                function onContainsMouseChanged() { tabProxyCanvas.requestPaint(); }
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: I18n.t("navProxy")
+                        color: (root.activeTab === 3) ? Theme.activeTabText : (tabProxyMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary)
+                        font.pixelSize: 13
+                        font.family: Theme.fontFamily
+                        font.weight: (root.activeTab === 3) ? Font.DemiBold : Font.Normal
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Item { width: 4; height: 1 }
+
+                    // Glowing green indicator when proxy is actively enabled
+                    Rectangle {
+                        visible: (typeof proxyManager !== "undefined" && proxyManager.enabled && proxyManager.proxyMode !== 0)
+                        width: 7; height: 7; radius: 3.5
+                        color: "#00d29d"
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: 12; height: 12; radius: 6
+                            color: "#00d29d"
+                            opacity: 0.35
+                        }
+                    }
+                }
+            }
+
+            // Tab 4: Settings
+            Rectangle {
+                width: parent.width
+                height: 42
+                radius: Theme.radiusMd
+                color: (root.activeTab === 4) ? Theme.activeTabBg : (tab3Mouse.containsMouse ? Theme.bgCardHover : "transparent")
+                border.color: (root.activeTab === 4) ? Theme.activeTabBorder : "transparent"
+                border.width: 1
+
+                // Left vertical neon indicator line
+                Rectangle {
+                    width: 3
+                    height: 18
+                    radius: 2
+                    color: Theme.activeTabIndicator
+                    anchors.left: parent.left
+                    anchors.leftMargin: 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root.activeTab === 4
+                }
+
+                MouseArea {
+                    id: tab3Mouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.activeTab = 4
                 }
 
                 Row {
@@ -429,7 +538,7 @@ Rectangle {
                             onPaint: {
                                 var ctx = getContext("2d");
                                 ctx.reset();
-                                ctx.strokeStyle = (root.activeTab === 3) ? Theme.accent : (tab3Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary);
+                                ctx.strokeStyle = (root.activeTab === 4) ? Theme.accent : (tab3Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary);
                                 ctx.lineWidth = 1.75;
                                 ctx.lineCap = "round";
 
@@ -462,10 +571,10 @@ Rectangle {
 
                     Text {
                         text: I18n.t("navSettings")
-                        color: (root.activeTab === 3) ? Theme.activeTabText : (tab3Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary)
+                        color: (root.activeTab === 4) ? Theme.activeTabText : (tab3Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary)
                         font.pixelSize: 13
                         font.family: Theme.fontFamily
-                        font.weight: (root.activeTab === 3) ? Font.DemiBold : Font.Normal
+                        font.weight: (root.activeTab === 4) ? Font.DemiBold : Font.Normal
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }

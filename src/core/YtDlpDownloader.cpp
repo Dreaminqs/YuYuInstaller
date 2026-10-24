@@ -1,4 +1,5 @@
 #include "YtDlpDownloader.h"
+#include "ProxyManager.h"
 #include "FFmpegProcessor.h"
 #include <QFileInfo>
 #include <QDir>
@@ -81,6 +82,10 @@ void YtDlpDownloader::start() {
 
     if (!ffmpegExe.isEmpty()) {
         args << "--ffmpeg-location" << QFileInfo(ffmpegExe).absolutePath();
+    }
+
+    if (ProxyManager::instance() && !ProxyManager::instance()->proxyUrl().isEmpty()) {
+        args << "--proxy" << ProxyManager::instance()->proxyUrl();
     }
 
     if (m_formatId.startsWith("audio_mp3") || m_formatId == "audio_mp3") {

@@ -88,6 +88,10 @@ ApplicationWindow {
                     id: updatesView
                 }
 
+                ProxyView {
+                    id: proxyView
+                }
+
                 SettingsView {
                     id: settingsView
                 }

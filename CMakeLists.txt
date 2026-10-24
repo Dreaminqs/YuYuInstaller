@@ -34,6 +34,8 @@ qt_add_executable(MediaGrab
     src/core/DownloadManager.cpp
     src/core/UpdateManager.h
     src/core/UpdateManager.cpp
+    src/core/ProxyManager.h
+    src/core/ProxyManager.cpp
     src/media/FFmpegProcessor.h
     src/media/FFmpegProcessor.cpp
     src/media/VideoBackgroundItem.h
@@ -75,6 +77,7 @@ qt_add_qml_module(MediaGrab
         qml/views/DashboardView.qml
         qml/views/QueueView.qml
         qml/views/UpdatesView.qml
+        qml/views/ProxyView.qml
         qml/views/SettingsView.qml
 )
 

@@ -22,6 +22,7 @@
 #include "MediaInfo.h"
 #include "VideoBackgroundItem.h"
 #include "UpdateManager.h"
+#include "ProxyManager.h"
 
 void consoleHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
     Q_UNUSED(type);
@@ -97,6 +98,8 @@ int main(int argc, char *argv[]) {
     rootCtx->setContextProperty("urlAnalyzer", downloadManager.urlAnalyzer());
     rootCtx->setContextProperty("ffmpegProcessor", downloadManager.ffmpegProcessor());
     rootCtx->setContextProperty("updateManager", &updateManager);
+    ProxyManager proxyManager;
+    rootCtx->setContextProperty("proxyManager", &proxyManager);
 
     // Silent update check 3 seconds after application launch
     QTimer::singleShot(3000, &updateManager, [&updateManager]() {
