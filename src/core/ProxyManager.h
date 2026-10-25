@@ -2,11 +2,22 @@
 
 #include <QObject>
 #include <QString>
+#include <QVector>
 #include <QNetworkProxy>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QElapsedTimer>
 #include <QSettings>
+#include <QTimer>
+
+struct AutoProxyNode {
+    QString country;
+    QString countryCode;
+    QString host;
+    int port;
+    bool isSocks5;
+    int latency{-1};
+};
 
 class ProxyManager : public QObject {
     Q_OBJECT
@@ -21,10 +32,20 @@ class ProxyManager : public QObject {
     Q_PROPERTY(QString testMessage READ testMessage NOTIFY testMessageChanged)
     Q_PROPERTY(QString proxyUrl READ proxyUrl NOTIFY proxyUrlChanged)
 
+    // Auto In-App VPN Properties
+    Q_PROPERTY(bool autoConnecting READ isAutoConnecting NOTIFY autoConnectingChanged)
+    Q_PROPERTY(bool autoConnected READ isAutoConnected NOTIFY autoConnectedChanged)
+    Q_PROPERTY(QString autoLocation READ autoLocation NOTIFY autoLocationChanged)
+    Q_PROPERTY(QString autoCountryCode READ autoCountryCode NOTIFY autoCountryCodeChanged)
+    Q_PROPERTY(int autoLatency READ autoLatency NOTIFY autoLatencyChanged)
+    Q_PROPERTY(QString autoStatusMessage READ autoStatusMessage NOTIFY autoStatusMessageChanged)
+    Q_PROPERTY(QString autoProtocol READ autoProtocol NOTIFY autoProtocolChanged)
+
 public:
     enum ProxyMode {
-        ModeSocks5 = 0,         // SOCKS5 (Tor, Cloudflare WARP, v2ray, Clash, SSH)
-        ModeHttp = 1            // HTTP / HTTPS Proxy
+        ModeAutoVPN = 0,        // In-App Smart VPN / Auto Public Tunnel
+        ModeSocks5 = 1,         // SOCKS5 (Tor, Cloudflare WARP, v2ray, Clash, SSH)
+        ModeHttp = 2            // HTTP / HTTPS Proxy
     };
     Q_ENUM(ProxyMode)
 
@@ -51,6 +72,15 @@ public:
     QString testMessage() const { return m_testMessage; }
     QString proxyUrl() const;
 
+    // Auto VPN Getters
+    bool isAutoConnecting() const { return m_autoConnecting; }
+    bool isAutoConnected() const { return m_autoConnected; }
+    QString autoLocation() const { return m_autoLocation; }
+    QString autoCountryCode() const { return m_autoCountryCode; }
+    int autoLatency() const { return m_autoLatency; }
+    QString autoStatusMessage() const { return m_autoStatusMessage; }
+    QString autoProtocol() const { return m_autoIsSocks5 ? "SOCKS5" : "HTTP"; }
+
 public slots:
     void setEnabled(bool enabled);
     void setProxyMode(int mode);
@@ -64,6 +94,11 @@ public slots:
     void saveSettings();
     void testConnection();
 
+    // Auto In-App VPN Slots
+    void startAutoTunnel();
+    void switchAutoTunnelNode();
+    void stopAutoTunnel();
+
 signals:
     void enabledChanged();
     void proxyModeChanged();
@@ -76,11 +111,24 @@ signals:
     void testMessageChanged();
     void proxyUrlChanged();
 
+    // Auto VPN Signals
+    void autoConnectingChanged();
+    void autoConnectedChanged();
+    void autoLocationChanged();
+    void autoCountryCodeChanged();
+    void autoLatencyChanged();
+    void autoStatusMessageChanged();
+    void autoProtocolChanged();
+
 private:
     static ProxyManager *s_instance;
 
+    void initAutoPool();
+    void fetchLiveProxies();
+    void testNextCandidate(int attemptCount);
+
     bool m_enabled{false};
-    int m_proxyMode{ModeSocks5};
+    int m_proxyMode{ModeAutoVPN}; // Default to Auto In-App VPN
     QString m_host{"127.0.0.1"};
     int m_port{40000};
     QString m_username{""};
@@ -90,6 +138,22 @@ private:
     int m_testStatus{StatusNone};
     QString m_testMessage{""};
 
+    // Auto In-App VPN State
+    bool m_autoConnecting{false};
+    bool m_autoConnected{false};
+    QString m_autoHost{""};
+    int m_autoPort{0};
+    bool m_autoIsSocks5{true};
+    QString m_autoLocation{""};
+    QString m_autoCountryCode{"GL"};
+    int m_autoLatency{-1};
+    QString m_autoStatusMessage{"Ready to connect"};
+
+    QVector<AutoProxyNode> m_autoPool;
+    int m_currentPoolIndex{0};
+
     QNetworkAccessManager *m_testNam{nullptr};
+    QNetworkAccessManager *m_autoNam{nullptr};
+    QNetworkAccessManager *m_fetchNam{nullptr};
     QElapsedTimer m_timer;
 };

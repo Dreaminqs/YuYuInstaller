@@ -86,6 +86,7 @@ void YtDlpDownloader::start() {
 
     if (ProxyManager::instance() && !ProxyManager::instance()->proxyUrl().isEmpty()) {
         args << "--proxy" << ProxyManager::instance()->proxyUrl();
+        args << "--geo-bypass";
     }
 
     if (m_formatId.startsWith("audio_mp3") || m_formatId == "audio_mp3") {

@@ -1304,6 +1304,7 @@ void UrlAnalyzer::startYtDlpProbe(const QString &rawUrl) {
     args << "--retries" << "5";
     if (ProxyManager::instance() && !ProxyManager::instance()->proxyUrl().isEmpty()) {
         args << "--proxy" << ProxyManager::instance()->proxyUrl();
+        args << "--geo-bypass";
     }
     if (!m_ytDlpRetried) {
         args << "--impersonate" << "Chrome";
@@ -1794,6 +1795,7 @@ void UrlAnalyzer::onSpotifyOembedFinished() {
     args << "--no-check-certificates";
     if (ProxyManager::instance() && !ProxyManager::instance()->proxyUrl().isEmpty()) {
         args << "--proxy" << ProxyManager::instance()->proxyUrl();
+        args << "--geo-bypass";
     }
     args << QString("ytsearch1:%1").arg(searchQuery);
 

@@ -184,9 +184,14 @@ Item {
                                 text: {
                                     if (typeof proxyManager === "undefined" || !proxyManager.enabled)
                                         return I18n.t("proxyStatusInactive")
-                                    if (proxyManager.proxyMode === 0)
-                                        return "SOCKS5: " + proxyManager.host + ":" + proxyManager.port
+                                    if (proxyManager.proxyMode === 0) {
+                                        if (proxyManager.autoConnecting) return "In-App VPN: " + I18n.t("proxyAutoConnecting")
+                                        if (proxyManager.autoConnected) return "In-App VPN: " + proxyManager.autoLocation + " (" + proxyManager.autoLatency + " ms)"
+                                        return "In-App VPN: " + proxyManager.autoStatusMessage
+                                    }
                                     if (proxyManager.proxyMode === 1)
+                                        return "SOCKS5: " + proxyManager.host + ":" + proxyManager.port
+                                    if (proxyManager.proxyMode === 2)
                                         return "HTTP: " + proxyManager.host + ":" + proxyManager.port
                                     return ""
                                 }
@@ -198,9 +203,9 @@ Item {
 
                             Item { width: 8; height: 1 }
 
-                            // Latency Badge if test passed
+                            // Latency Badge if test passed (Manual mode)
                             Rectangle {
-                                visible: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1)
+                                visible: (typeof proxyManager !== "undefined" && proxyManager.proxyMode !== 0 && proxyManager.testStatus === 1)
                                 height: 20
                                 width: latencyTxt.implicitWidth + 12
                                 radius: 10
@@ -224,7 +229,7 @@ Item {
                 }
             }
 
-            // Card 2: Proxy Protocol Selection (SOCKS5 or HTTP)
+            // Card 2: Tunnel Mode Selection (Auto VPN, SOCKS5, HTTP)
             Rectangle {
                 width: parent.width
                 implicitHeight: modeCol.implicitHeight + 32
@@ -247,10 +252,10 @@ Item {
                         font.weight: Font.Bold
                     }
 
-                    // Mode 0: SOCKS5
+                    // Mode 0: In-App Stealth VPN (Recommended / Zero Setup)
                     Rectangle {
                         width: parent.width
-                        implicitHeight: 60
+                        implicitHeight: 64
                         radius: Theme.radiusMd
                         color: (root.selectedMode === 0) ? Theme.activeTabBg : (m0Mouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
                         border.color: (root.selectedMode === 0) ? Theme.accent : Theme.borderDim
@@ -275,13 +280,13 @@ Item {
                             spacing: 12
 
                             Rectangle {
-                                width: 56; height: 22; radius: 4
+                                width: 72; height: 24; radius: 4
                                 color: (root.selectedMode === 0) ? Theme.accent : "#222c3c"
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Text {
                                     anchors.centerIn: parent
-                                    text: "SOCKS5"
+                                    text: "AUTO VPN"
                                     color: (root.selectedMode === 0) ? "#07090e" : Theme.textSecondary
                                     font.pixelSize: 10
                                     font.weight: Font.Bold
@@ -291,17 +296,17 @@ Item {
                             Column {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: 2
-                                width: parent.width - 100
+                                width: parent.width - 120
 
                                 Text {
-                                    text: I18n.t("proxyModeSocks5")
+                                    text: I18n.t("proxyModeAutoVPN")
                                     color: (root.selectedMode === 0) ? Theme.accent : Theme.textPrimary
                                     font.pixelSize: 12
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
                                 }
                                 Text {
-                                    text: I18n.t("proxyModeSocks5Desc")
+                                    text: I18n.t("proxyModeAutoVPNDesc")
                                     color: Theme.textSecondary
                                     font.pixelSize: 10
                                     font.family: Theme.fontFamily
@@ -327,7 +332,7 @@ Item {
                         }
                     }
 
-                    // Mode 1: HTTP / HTTPS
+                    // Mode 1: SOCKS5
                     Rectangle {
                         width: parent.width
                         implicitHeight: 60
@@ -355,13 +360,13 @@ Item {
                             spacing: 12
 
                             Rectangle {
-                                width: 56; height: 22; radius: 4
+                                width: 72; height: 22; radius: 4
                                 color: (root.selectedMode === 1) ? Theme.accent : "#222c3c"
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Text {
                                     anchors.centerIn: parent
-                                    text: "HTTP"
+                                    text: "SOCKS5"
                                     color: (root.selectedMode === 1) ? "#07090e" : Theme.textSecondary
                                     font.pixelSize: 10
                                     font.weight: Font.Bold
@@ -371,17 +376,17 @@ Item {
                             Column {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: 2
-                                width: parent.width - 100
+                                width: parent.width - 120
 
                                 Text {
-                                    text: I18n.t("proxyModeHttp")
+                                    text: I18n.t("proxyModeSocks5")
                                     color: (root.selectedMode === 1) ? Theme.accent : Theme.textPrimary
                                     font.pixelSize: 12
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
                                 }
                                 Text {
-                                    text: I18n.t("proxyModeHttpDesc")
+                                    text: I18n.t("proxyModeSocks5Desc")
                                     color: Theme.textSecondary
                                     font.pixelSize: 10
                                     font.family: Theme.fontFamily
@@ -406,11 +411,282 @@ Item {
                             }
                         }
                     }
+
+                    // Mode 2: HTTP / HTTPS
+                    Rectangle {
+                        width: parent.width
+                        implicitHeight: 60
+                        radius: Theme.radiusMd
+                        color: (root.selectedMode === 2) ? Theme.activeTabBg : (m2Mouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
+                        border.color: (root.selectedMode === 2) ? Theme.accent : Theme.borderDim
+                        border.width: 1
+
+                        MouseArea {
+                            id: m2Mouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.selectedMode = 2
+                                if (typeof proxyManager !== "undefined") {
+                                    proxyManager.proxyMode = 2
+                                }
+                            }
+                        }
+
+                        Row {
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            spacing: 12
+
+                            Rectangle {
+                                width: 72; height: 22; radius: 4
+                                color: (root.selectedMode === 2) ? Theme.accent : "#222c3c"
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "HTTP"
+                                    color: (root.selectedMode === 2) ? "#07090e" : Theme.textSecondary
+                                    font.pixelSize: 10
+                                    font.weight: Font.Bold
+                                }
+                            }
+
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 2
+                                width: parent.width - 120
+
+                                Text {
+                                    text: I18n.t("proxyModeHttp")
+                                    color: (root.selectedMode === 2) ? Theme.accent : Theme.textPrimary
+                                    font.pixelSize: 12
+                                    font.family: Theme.fontFamily
+                                    font.weight: Font.Bold
+                                }
+                                Text {
+                                    text: I18n.t("proxyModeHttpDesc")
+                                    color: Theme.textSecondary
+                                    font.pixelSize: 10
+                                    font.family: Theme.fontFamily
+                                    elide: Text.ElideRight
+                                    width: parent.width
+                                }
+                            }
+
+                            Rectangle {
+                                width: 16; height: 16; radius: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: (root.selectedMode === 2) ? Theme.accent : "transparent"
+                                border.color: (root.selectedMode === 2) ? Theme.accent : Theme.borderBright
+                                border.width: 2
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 6; height: 6; radius: 3
+                                    color: "#07090e"
+                                    visible: root.selectedMode === 2
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            // Card 3: Server Configuration & Quick Presets
+            // Card 3-A: In-App VPN Active Node Control (Shown ONLY in Mode 0)
             Rectangle {
+                visible: root.selectedMode === 0
+                width: parent.width
+                implicitHeight: autoVpnCol.implicitHeight + 32
+                radius: Theme.radiusLg
+                color: Theme.bgCard
+                border.color: Theme.borderDim
+                border.width: 1
+
+                Column {
+                    id: autoVpnCol
+                    anchors.fill: parent
+                    anchors.margins: 16
+                    spacing: 14
+
+                    Row {
+                        width: parent.width
+                        spacing: 8
+
+                        Text {
+                            text: I18n.t("proxyAutoCardTitle")
+                            color: Theme.textPrimary
+                            font.pixelSize: 13
+                            font.family: Theme.fontFamily
+                            font.weight: Font.Bold
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Item { width: 10; height: 1 }
+
+                        // Node Status Chip
+                        Rectangle {
+                            height: 22
+                            width: autoStatusChipTxt.implicitWidth + 16
+                            radius: 11
+                            color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? "#143a2d" : "#222c3c"
+                            border.color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? "#00d29d" : Theme.borderDim
+                            border.width: 1
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Text {
+                                id: autoStatusChipTxt
+                                anchors.centerIn: parent
+                                text: {
+                                    if (typeof proxyManager === "undefined") return "Ready"
+                                    if (proxyManager.autoConnecting) return I18n.t("proxyAutoConnecting")
+                                    if (proxyManager.autoConnected) return proxyManager.autoLocation + " (" + proxyManager.autoLatency + " ms)"
+                                    return proxyManager.autoStatusMessage
+                                }
+                                color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? "#00d29d" : Theme.textSecondary
+                                font.pixelSize: 10
+                                font.family: Theme.fontFamily
+                                font.weight: Font.DemiBold
+                            }
+                        }
+                    }
+
+                    // Node Info Details Box
+                    Rectangle {
+                        width: parent.width
+                        height: 52
+                        radius: Theme.radiusMd
+                        color: Theme.bgElevated
+                        border.color: Theme.borderDim
+                        border.width: 1
+
+                        Row {
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            spacing: 16
+
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 2
+                                width: (parent.width - 16) * 0.55
+
+                                Text {
+                                    text: I18n.t("proxyAutoLocation")
+                                    color: Theme.textSecondary
+                                    font.pixelSize: 10
+                                    font.family: Theme.fontFamily
+                                }
+                                Text {
+                                    text: (typeof proxyManager !== "undefined" && proxyManager.autoConnected && proxyManager.autoLocation !== "")
+                                          ? proxyManager.autoLocation
+                                          : "Standby / Ready"
+                                    color: Theme.textPrimary
+                                    font.pixelSize: 12
+                                    font.family: Theme.fontFamily
+                                    font.weight: Font.Bold
+                                }
+                            }
+
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 2
+                                width: (parent.width - 16) * 0.45
+
+                                Text {
+                                    text: "Protocol / Latency:"
+                                    color: Theme.textSecondary
+                                    font.pixelSize: 10
+                                    font.family: Theme.fontFamily
+                                }
+                                Text {
+                                    text: (typeof proxyManager !== "undefined" && proxyManager.autoConnected)
+                                          ? proxyManager.autoProtocol + " • " + proxyManager.autoLatency + " ms"
+                                          : "--"
+                                    color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? "#00d29d" : Theme.textSecondary
+                                    font.pixelSize: 12
+                                    font.family: Theme.fontFamily
+                                    font.weight: Font.Bold
+                                }
+                            }
+                        }
+                    }
+
+                    // Action Buttons for Auto VPN
+                    Row {
+                        width: parent.width
+                        spacing: 12
+
+                        // Switch Server Node Button
+                        Rectangle {
+                            width: (parent.width - 12) * 0.5
+                            height: 40
+                            radius: Theme.radiusMd
+                            color: switchMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
+                            border.color: Theme.borderBright
+                            border.width: 1
+
+                            MouseArea {
+                                id: switchMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (typeof proxyManager !== "undefined") {
+                                        proxyManager.enabled = true
+                                        proxyManager.switchAutoTunnelNode()
+                                    }
+                                }
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: I18n.t("proxyAutoSwitchBtn")
+                                color: Theme.textPrimary
+                                font.pixelSize: 12
+                                font.family: Theme.fontFamily
+                                font.weight: Font.DemiBold
+                            }
+                        }
+
+                        // Connect / Reconnect Button
+                        Rectangle {
+                            width: (parent.width - 12) * 0.5
+                            height: 40
+                            radius: Theme.radiusMd
+                            color: connectVpnMouse.containsMouse ? "#00e5ab" : Theme.accent
+
+                            MouseArea {
+                                id: connectVpnMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (typeof proxyManager !== "undefined") {
+                                        proxyManager.enabled = true
+                                        proxyManager.startAutoTunnel()
+                                    }
+                                }
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: (typeof proxyManager !== "undefined" && proxyManager.autoConnecting)
+                                      ? I18n.t("proxyAutoConnecting")
+                                      : "Connect VPN Tunnel"
+                                color: "#07090e"
+                                font.pixelSize: 12
+                                font.family: Theme.fontFamily
+                                font.weight: Font.Bold
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Card 3-B: Server Configuration & Quick Presets (Shown for SOCKS5 or HTTP)
+            Rectangle {
+                visible: root.selectedMode !== 0
                 width: parent.width
                 implicitHeight: configCol.implicitHeight + 32
                 radius: Theme.radiusLg
@@ -441,7 +717,7 @@ Item {
 
                         // Quick Presets (Only shown for SOCKS5)
                         Row {
-                            visible: root.selectedMode === 0
+                            visible: root.selectedMode === 1
                             spacing: 6
                             anchors.verticalCenter: parent.verticalCenter
 
@@ -710,8 +986,9 @@ Item {
                 }
             }
 
-            // Card 4: Action Buttons (Test & Save)
+            // Card 4: Action Buttons (Only shown in Manual SOCKS5 or HTTP modes)
             Row {
+                visible: root.selectedMode !== 0
                 width: parent.width
                 spacing: 12
 
@@ -793,9 +1070,9 @@ Item {
                 }
             }
 
-            // Status message from test
+            // Status message from test (Manual Mode)
             Rectangle {
-                visible: (typeof proxyManager !== "undefined" && proxyManager.testStatus !== 0)
+                visible: (root.selectedMode !== 0 && typeof proxyManager !== "undefined" && proxyManager.testStatus !== 0)
                 width: parent.width
                 height: 34
                 radius: Theme.radiusMd
