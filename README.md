@@ -1,8 +1,6 @@
 # YuYuInstaller
 
-[Türkçe](#türkçe) | [English](#english) | [Українська](#ukrainian)
-
-<a id="türkçe"></a>
+[English](#english) | [Українська](#ukrainian)
 
 YuYuInstaller, modern ve yüksek performanslı bir Windows medya indirme ve dönüştürme yazılımıdır. 4K'ya kadar video indirme, tek tıkla 320 kbps MP3 dönüştürme, güvenli Proxy/Tünel desteği ve akıcı bir anime arayüzü sunar.
 
