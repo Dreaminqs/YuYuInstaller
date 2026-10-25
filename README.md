@@ -1,5 +1,9 @@
 # YuYuInstaller
 
+[Türkçe](#türkçe) | [English](#english) | [Українська](#ukrainian)
+
+<a id="türkçe"></a>
+
 YuYuInstaller, modern ve yüksek performanslı bir Windows medya indirme ve dönüştürme yazılımıdır. 4K'ya kadar video indirme, tek tıkla 320 kbps MP3 dönüştürme, güvenli Proxy/Tünel desteği ve akıcı bir anime arayüzü sunar.
 
 > [!NOTE]
@@ -38,15 +42,16 @@ cd YuYuInstaller
 
 ---
 
-<details>
-<summary><h3>English (Click to view)</h3></summary>
+<a id="english"></a>
+
+## English
 
 YuYuInstaller is a high-performance Windows media downloader and audio converter built with modern C++20 and Qt 6. It offers up to 4K video downloads, 1-click 320 kbps MP3 extraction, secure Proxy/Tunnel support, and a fluid dark anime interface.
 
 > [!NOTE]
 > **Auto-Update:** Once installed, you don't need to manually download new `.exe` installers. Updates can be installed with 1-click directly from the **Updates** tab.
 
-#### Features
+### Features
 - **Multi-Platform:** Download from YouTube, Instagram, TikTok, Twitter/X, Facebook, Animecix, and hundreds of sites.
 - **High Resolution:** Up to 4K UHD, 2K QHD, and 1080p FHD video; editable video titles prior to downloading.
 - **320 kbps MP3:** Studio-quality audio extraction powered by FFmpeg.
@@ -54,12 +59,12 @@ YuYuInstaller is a high-performance Windows media downloader and audio converter
 - **Smart Queue:** Speed limit caps (MB/s), concurrent or sequential modes, pause & resume.
 - **Multi-Language:** English, Turkish, and Ukrainian support.
 
-#### Quick Start
+### Quick Start
 1. Download and run `YuYuInstaller_Setup.exe` from [Releases](https://github.com/Dreaminqs/YuYuInstaller/releases/latest).
 2. Paste a video or audio link and click **Analyze**.
 3. Select your desired resolution or MP3 format, then click **Start Download**.
 
-#### Build from Source
+### Build from Source
 ```powershell
 git clone https://github.com/Dreaminqs/YuYuInstaller.git
 cd YuYuInstaller
@@ -67,19 +72,21 @@ cd YuYuInstaller
 .\deploy.bat       # Deploys Qt runtime binaries
 .\make_setup.bat   # Packages the installer (Optional)
 ```
-</details>
+
+[↑ Başa Dön / Back to Top](#yuyuinstaller)
 
 ---
 
-<details>
-<summary><h3>Українська (Натисніть для перегляду)</h3></summary>
+<a id="ukrainian"></a>
+
+## Українська
 
 YuYuInstaller — сучасний високопродуктивний завантажувач медіа та конвертер аудіо для Windows на базі C++20 та Qt 6. Підтримує завантаження відео до 4K, конвертацію в MP3 320 кбіт/с, безпечний проксі/тунель та плавний аніме-інтерфейс.
 
 > [!NOTE]
 > **Автооновлення:** Після встановлення вам не потрібно завантажувати нові файли `.exe` вручну. Оновлення можна встановлювати в один клік безпосередньо у вкладці **Оновлення**.
 
-#### Особливості
+### Особливості
 - **Багатоплатформеність:** Завантаження з YouTube, Instagram, TikTok, Twitter/X, Facebook, Animecix та сотень інших сайтів.
 - **Висока якість:** Відео до 4K UHD, 2K QHD та 1080p FHD; можливість перейменування відео перед завантаженням.
 - **320 кбіт/с MP3:** Студійна якість вилучення аудіо за допомогою FFmpeg.
@@ -87,12 +94,12 @@ YuYuInstaller — сучасний високопродуктивний зава
 - **Розумна черга:** Обмеження швидкості (MB/s), паралельний або послідовний режими, пауза та відновлення.
 - **Багатомовність:** Англійська, турецька та українська мови інтерфейсу.
 
-#### Швидкий старт
+### Швидкий старт
 1. Завантажте `YuYuInstaller_Setup.exe` зі сторінки [Releases](https://github.com/Dreaminqs/YuYuInstaller/releases/latest) та встановіть.
 2. Вставте посилання на відео або аудіо та натисніть **Аналіз**.
 3. Оберіть якість або MP3 та натисніть **Почати завантаження**.
 
-#### Збірка з вихідного коду
+### Збірка з вихідного коду
 ```powershell
 git clone https://github.com/Dreaminqs/YuYuInstaller.git
 cd YuYuInstaller
@@ -100,10 +107,11 @@ cd YuYuInstaller
 .\deploy.bat       # Розгортання залежностей Qt
 .\make_setup.bat   # Створення інсталятора (Опціонально)
 ```
-</details>
+
+[↑ Başa Dön / Back to Top](#yuyuinstaller)
 
 ---
 
-## Lisans
+## Lisans / License
 
 Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır.
