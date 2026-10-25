@@ -138,7 +138,7 @@ QtObject {
             "updateBannerAction": "Update Now",
 
             // Proxy & Privacy View
-            "proxyTitle": "Proxy & Stealth Tunnel",
+            "proxyTitle": "Proxy & Privacy",
             "proxySubtitle": "Bypass campus/firewall blocks and keep your downloads 100% private",
             "proxyStatusCardTitle": "Tunnel Network Status",
             "proxyStatusActive": "Protected Tunnel Active (Domain Hidden)",
@@ -153,8 +153,10 @@ QtObject {
             "proxyModeAutoVPNDesc": "Connects to fast global servers to bypass network restrictions.",
             "proxyAutoCardTitle": "In-App VPN Server Status",
             "proxyAutoLocation": "Active Node:",
+            "proxyExitIpLabel": "Virtual Exit IP:",
             "proxyAutoSwitchBtn": "Switch Node",
             "proxyAutoConnecting": "Scanning fastest global node...",
+            "changeFolder": "Change Location",
             "proxyModeSocks5": "Custom SOCKS5 Proxy",
             "proxyModeSocks5Desc": "Route all downloads through your SOCKS5 client (Tor, Cloudflare WARP, v2ray, Clash).",
             "proxyModeHttp": "Custom HTTP / HTTPS Proxy",
@@ -360,7 +362,7 @@ QtObject {
             "updateBannerAction": "Şimdi Güncelle",
 
             // Proxy & Gizlilik Görünümü
-            "proxyTitle": "Proxy & Gizli Tünel",
+            "proxyTitle": "Proxy & Gizlilik",
             "proxySubtitle": "Ağ ve güvenlik duvarı engellerini aşın, açık ağlarda hedef site adını gizleyin",
             "proxyStatusCardTitle": "Tünel Ağ Durumu",
             "proxyStatusActive": "Korumalı Tünel Aktif (Hedef Site Gizli)",
@@ -375,8 +377,10 @@ QtObject {
             "proxyModeAutoVPNDesc": "Ağ ve sansür engellerini aşmak için hızlı küresel sunuculara bağlanır.",
             "proxyAutoCardTitle": "Dahili VPN Sunucu Durumu",
             "proxyAutoLocation": "Aktif Sunucu:",
+            "proxyExitIpLabel": "Sanal Çıkış IP'si:",
             "proxyAutoSwitchBtn": "Farklı Sunucuya Geç",
             "proxyAutoConnecting": "En hızlı küresel sunucu taranıyor...",
+            "changeFolder": "Konumu Değiştir",
             "proxyModeSocks5": "Özel SOCKS5 Proxy",
             "proxyModeSocks5Desc": "Trafiği kendi SOCKS5 istemcinizden (Tor, Cloudflare WARP, v2ray, Clash) geçirin.",
             "proxyModeHttp": "Özel HTTP / HTTPS Proxy",
@@ -582,7 +586,7 @@ QtObject {
             "updateBannerAction": "Оновити зараз",
 
             // Проксі та захист
-            "proxyTitle": "Проксі та тунель конфіденційності",
+            "proxyTitle": "Проксі та захист",
             "proxySubtitle": "Обхід блокувань та приховування доменів у відкритих мережах",
             "proxyStatusCardTitle": "Статус мережевого тунелю",
             "proxyStatusActive": "Захищений тунель активний (домен приховано)",
@@ -597,8 +601,10 @@ QtObject {
             "proxyModeAutoVPNDesc": "Підключення до швидких серверів для обходу мережевих обмежень.",
             "proxyAutoCardTitle": "Статус вбудованого сервера VPN",
             "proxyAutoLocation": "Активний сервер:",
+            "proxyExitIpLabel": "Віртуальний вихідний IP:",
             "proxyAutoSwitchBtn": "Змінити сервер",
             "proxyAutoConnecting": "Пошук швидкого сервера...",
+            "changeFolder": "Змінити папку",
             "proxyModeSocks5": "Власний SOCKS5 проксі",
             "proxyModeSocks5Desc": "Перенаправлення завантажень через ваш SOCKS5 проксі (Tor, Cloudflare WARP, v2ray, Clash).",
             "proxyModeHttp": "Власний HTTP / HTTPS проксі",

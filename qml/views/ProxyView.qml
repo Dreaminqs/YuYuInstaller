@@ -187,7 +187,10 @@ Item {
                                         return I18n.t("proxyStatusInactive")
                                     if (proxyManager.proxyMode === 0) {
                                         if (proxyManager.autoConnecting) return "In-App VPN: " + I18n.t("proxyAutoConnecting")
-                                        if (proxyManager.autoConnected) return "In-App VPN: " + proxyManager.autoLocation + " (" + proxyManager.autoLatency + " ms)"
+                                        if (proxyManager.autoConnected) {
+                                            var ipPart = (proxyManager.autoExitIp !== "") ? (" • IP: " + proxyManager.autoExitIp) : ""
+                                            return "In-App VPN: " + proxyManager.autoLocation + ipPart + " (" + proxyManager.autoLatency + " ms)"
+                                        }
                                         return "In-App VPN: " + proxyManager.autoStatusMessage
                                     }
                                     if (proxyManager.proxyMode === 1)
@@ -646,20 +649,21 @@ Item {
                     // Node Info Details Box
                     Rectangle {
                         width: parent.width
-                        height: 52
+                        implicitHeight: nodeDetailsRow.implicitHeight + 20
                         radius: Theme.radiusMd
                         color: Theme.bgElevated
                         border.color: Theme.borderDim
                         border.width: 1
 
                         Row {
+                            id: nodeDetailsRow
                             anchors.fill: parent
                             anchors.margins: 12
                             spacing: 16
 
                             Column {
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
+                                spacing: 4
                                 width: (parent.width - 16) * 0.55
 
                                 Text {
@@ -677,11 +681,19 @@ Item {
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
                                 }
+                                Text {
+                                    visible: (typeof proxyManager !== "undefined" && proxyManager.autoConnected)
+                                    text: I18n.t("proxyExitIpLabel") + " " + ((proxyManager.autoExitIp !== "") ? proxyManager.autoExitIp : "Detecting...")
+                                    color: "#00d29d"
+                                    font.pixelSize: 10
+                                    font.family: Theme.fontFamily
+                                    font.weight: Font.DemiBold
+                                }
                             }
 
                             Column {
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
+                                spacing: 4
                                 width: (parent.width - 16) * 0.45
 
                                 Text {
@@ -698,6 +710,13 @@ Item {
                                     font.pixelSize: 12
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
+                                }
+                                Text {
+                                    visible: (typeof proxyManager !== "undefined" && proxyManager.autoConnected)
+                                    text: "Tunnel Verified (Domain Hidden)"
+                                    color: Theme.textSecondary
+                                    font.pixelSize: 10
+                                    font.family: Theme.fontFamily
                                 }
                             }
                         }

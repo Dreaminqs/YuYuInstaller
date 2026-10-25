@@ -112,7 +112,7 @@ void ProxyManager::setEnabled(bool enabled) {
 
         if (m_enabled && m_proxyMode == ModeAutoVPN && !m_autoConnected) {
             startAutoTunnel();
-        } else if (!m_enabled && m_autoConnected) {
+        } else if (!m_enabled) {
             stopAutoTunnel();
         }
     }
@@ -280,6 +280,7 @@ void ProxyManager::testBatch(int startIndex) {
                 m_autoCountryCode = node.countryCode;
                 m_autoLatency = static_cast<int>(elapsedMs);
                 m_autoStatusMessage = QString("Connected (%1 ms)").arg(elapsedMs);
+                m_autoExitIp = node.host;
 
                 emit autoConnectingChanged();
                 emit autoConnectedChanged();
@@ -288,9 +289,37 @@ void ProxyManager::testBatch(int startIndex) {
                 emit autoLatencyChanged();
                 emit autoStatusMessageChanged();
                 emit autoProtocolChanged();
+                emit autoExitIpChanged();
                 emit proxyUrlChanged();
 
                 applyProxy();
+
+                // Concurrently query external exit IP through this proxy to confirm real IP concealment
+                QNetworkAccessManager *ipNam = new QNetworkAccessManager(this);
+                QNetworkProxy ipProxy(node.isSocks5 ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy,
+                                      node.host, static_cast<quint16>(node.port));
+                ipNam->setProxy(ipProxy);
+                QNetworkRequest ipReq(QUrl("http://api.ipify.org"));
+                ipReq.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.1.8");
+                QNetworkReply *ipReply = ipNam->get(ipReq);
+                QTimer *ipTimeout = new QTimer(ipReply);
+                ipTimeout->setSingleShot(true);
+                connect(ipTimeout, &QTimer::timeout, ipReply, [ipReply]() {
+                    if (ipReply->isRunning()) ipReply->abort();
+                });
+                ipTimeout->start(3500);
+                connect(ipReply, &QNetworkReply::finished, this, [this, ipReply, ipNam, ipTimeout]() {
+                    ipTimeout->stop();
+                    if (ipReply->error() == QNetworkReply::NoError) {
+                        QString raw = QString::fromUtf8(ipReply->readAll()).trimmed();
+                        if (!raw.isEmpty()) {
+                            m_autoExitIp = raw;
+                            emit autoExitIpChanged();
+                        }
+                    }
+                    ipReply->deleteLater();
+                    ipNam->deleteLater();
+                });
             }
 
             reply->deleteLater();
@@ -308,7 +337,9 @@ void ProxyManager::testBatch(int startIndex) {
 void ProxyManager::switchAutoTunnelNode() {
     m_currentPoolIndex = (m_currentPoolIndex + 1) % qMax(1, m_autoPool.size());
     m_autoConnected = false;
+    m_autoExitIp = "";
     emit autoConnectedChanged();
+    emit autoExitIpChanged();
     emit proxyUrlChanged();
     startAutoTunnel();
 }
@@ -316,9 +347,11 @@ void ProxyManager::switchAutoTunnelNode() {
 void ProxyManager::stopAutoTunnel() {
     m_autoConnecting = false;
     m_autoConnected = false;
+    m_autoExitIp = "";
     m_autoStatusMessage = "Tunnel stopped";
     emit autoConnectingChanged();
     emit autoConnectedChanged();
+    emit autoExitIpChanged();
     emit autoStatusMessageChanged();
     emit proxyUrlChanged();
     applyProxy();
@@ -327,7 +360,8 @@ void ProxyManager::stopAutoTunnel() {
 void ProxyManager::loadSettings() {
     QSettings s;
     s.beginGroup("Proxy");
-    m_enabled = s.value("enabled", false).toBool();
+    // ALWAYS start with VPN / Proxy disabled on app launch (user enables manually when desired)
+    m_enabled = false;
     m_proxyMode = s.value("mode", ModeAutoVPN).toInt();
     m_host = s.value("host", "127.0.0.1").toString();
     m_port = s.value("port", 40000).toInt();
@@ -335,17 +369,13 @@ void ProxyManager::loadSettings() {
     m_password = s.value("password", "").toString();
     s.endGroup();
 
-    if (m_enabled && m_proxyMode == ModeAutoVPN) {
-        startAutoTunnel();
-    } else {
-        applyProxy();
-    }
+    applyProxy();
 }
 
 void ProxyManager::saveSettings() {
     QSettings s;
     s.beginGroup("Proxy");
-    s.setValue("enabled", m_enabled);
+    s.setValue("enabled", false); // Keep false across restarts
     s.setValue("mode", m_proxyMode);
     s.setValue("host", m_host);
     s.setValue("port", m_port);

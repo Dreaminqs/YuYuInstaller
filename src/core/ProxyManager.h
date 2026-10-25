@@ -40,6 +40,7 @@ class ProxyManager : public QObject {
     Q_PROPERTY(int autoLatency READ autoLatency NOTIFY autoLatencyChanged)
     Q_PROPERTY(QString autoStatusMessage READ autoStatusMessage NOTIFY autoStatusMessageChanged)
     Q_PROPERTY(QString autoProtocol READ autoProtocol NOTIFY autoProtocolChanged)
+    Q_PROPERTY(QString autoExitIp READ autoExitIp NOTIFY autoExitIpChanged)
 
 public:
     enum ProxyMode {
@@ -80,6 +81,7 @@ public:
     int autoLatency() const { return m_autoLatency; }
     QString autoStatusMessage() const { return m_autoStatusMessage; }
     QString autoProtocol() const { return m_autoIsSocks5 ? "SOCKS5" : "HTTP"; }
+    QString autoExitIp() const { return m_autoExitIp; }
 
 public slots:
     void setEnabled(bool enabled);
@@ -119,6 +121,7 @@ signals:
     void autoLatencyChanged();
     void autoStatusMessageChanged();
     void autoProtocolChanged();
+    void autoExitIpChanged();
 
 private:
     static ProxyManager *s_instance;
@@ -151,6 +154,7 @@ private:
     QString m_autoCountryCode{"GL"};
     int m_autoLatency{-1};
     QString m_autoStatusMessage{"Ready to connect"};
+    QString m_autoExitIp{""};
 
     QVector<AutoProxyNode> m_autoPool;
     int m_currentPoolIndex{0};

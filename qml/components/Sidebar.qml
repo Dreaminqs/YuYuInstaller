@@ -318,23 +318,31 @@ Rectangle {
                                 ctx.fillStyle = ctx.strokeStyle;
                                 ctx.lineWidth = 1.75;
                                 ctx.lineCap = "round";
+                                ctx.lineJoin = "round";
 
-                                // Arc reload / loop
+                                // Top arc
                                 ctx.beginPath();
-                                ctx.arc(9, 9, 5.5, -Math.PI * 0.35, Math.PI * 1.15);
+                                ctx.arc(9, 9, 5.5, -Math.PI * 0.25, Math.PI * 0.65);
                                 ctx.stroke();
 
-                                // Arrow tip
+                                // Top-right arrow head
                                 ctx.beginPath();
-                                ctx.moveTo(13.5, 4);
-                                ctx.lineTo(15.5, 4);
-                                ctx.lineTo(15.5, 6.5);
+                                ctx.moveTo(11, 3);
+                                ctx.lineTo(14.2, 4.5);
+                                ctx.lineTo(13.2, 7.8);
                                 ctx.stroke();
 
-                                // Center sparkle
+                                // Bottom arc
                                 ctx.beginPath();
-                                ctx.arc(9, 9, 1.2, 0, Math.PI * 2);
-                                ctx.fill();
+                                ctx.arc(9, 9, 5.5, Math.PI * 0.75, Math.PI * 1.65);
+                                ctx.stroke();
+
+                                // Bottom-left arrow head
+                                ctx.beginPath();
+                                ctx.moveTo(7, 15);
+                                ctx.lineTo(3.8, 13.5);
+                                ctx.lineTo(4.8, 10.2);
+                                ctx.stroke();
                             }
                             Connections {
                                 target: root
@@ -431,28 +439,26 @@ Rectangle {
                                 ctx.reset();
                                 ctx.strokeStyle = (root.activeTab === 3) ? Theme.accent : (tabProxyMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary);
                                 ctx.fillStyle = ctx.strokeStyle;
-                                ctx.lineWidth = 1.6;
+                                ctx.lineWidth = 1.75;
                                 ctx.lineCap = "round";
                                 ctx.lineJoin = "round";
 
-                                // Shield outline
+                                // Symmetrical cyber shield outline
                                 ctx.beginPath();
                                 ctx.moveTo(9, 2.5);
-                                ctx.lineTo(15.5, 4.8);
-                                ctx.lineTo(15.5, 9.5);
-                                ctx.bezierCurveTo(15.5, 13.8, 12, 16.2, 9, 17.2);
-                                ctx.bezierCurveTo(6, 16.2, 2.5, 13.8, 2.5, 9.5);
-                                ctx.lineTo(2.5, 4.8);
+                                ctx.lineTo(15, 4.8);
+                                ctx.lineTo(15, 9.5);
+                                ctx.bezierCurveTo(15, 13.5, 12, 15.8, 9, 16.8);
+                                ctx.bezierCurveTo(6, 15.8, 3, 13.5, 3, 9.5);
+                                ctx.lineTo(3, 4.8);
                                 ctx.closePath();
                                 ctx.stroke();
 
-                                // Central keyhole / secure dot
+                                // Crisp security checkmark
                                 ctx.beginPath();
-                                ctx.arc(9, 8.5, 1.6, 0, Math.PI * 2);
-                                ctx.fill();
-                                ctx.beginPath();
-                                ctx.moveTo(9, 10.2);
-                                ctx.lineTo(9, 12.8);
+                                ctx.moveTo(6.5, 9.5);
+                                ctx.lineTo(8.2, 11.3);
+                                ctx.lineTo(11.8, 7.3);
                                 ctx.stroke();
                             }
                             Connections {
@@ -539,24 +545,33 @@ Rectangle {
                                 var ctx = getContext("2d");
                                 ctx.reset();
                                 ctx.strokeStyle = (root.activeTab === 4) ? Theme.accent : (tab3Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary);
-                                ctx.lineWidth = 1.75;
                                 ctx.lineCap = "round";
+                                ctx.lineJoin = "round";
 
-                                ctx.beginPath();
-                                ctx.arc(9, 9, 3.2, 0, Math.PI * 2);
-                                ctx.stroke();
-
+                                // 6 rounded thick gear teeth
+                                ctx.lineWidth = 2.2;
                                 for (var i = 0; i < 6; i++) {
                                     var angle = i * Math.PI / 3;
-                                    var x1 = 9 + Math.cos(angle) * 4.5;
-                                    var y1 = 9 + Math.sin(angle) * 4.5;
-                                    var x2 = 9 + Math.cos(angle) * 7.5;
-                                    var y2 = 9 + Math.sin(angle) * 7.5;
+                                    var x1 = 9 + Math.cos(angle) * 4.2;
+                                    var y1 = 9 + Math.sin(angle) * 4.2;
+                                    var x2 = 9 + Math.cos(angle) * 7.4;
+                                    var y2 = 9 + Math.sin(angle) * 7.4;
                                     ctx.beginPath();
                                     ctx.moveTo(x1, y1);
                                     ctx.lineTo(x2, y2);
                                     ctx.stroke();
                                 }
+
+                                // Gear rim ring body
+                                ctx.lineWidth = 1.75;
+                                ctx.beginPath();
+                                ctx.arc(9, 9, 4.8, 0, Math.PI * 2);
+                                ctx.stroke();
+
+                                // Center axle hole
+                                ctx.beginPath();
+                                ctx.arc(9, 9, 2.2, 0, Math.PI * 2);
+                                ctx.stroke();
                             }
                             Connections {
                                 target: root

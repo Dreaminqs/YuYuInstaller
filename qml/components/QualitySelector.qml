@@ -21,6 +21,17 @@ Rectangle {
     property string customTitle: ""
     property bool isEditingTitle: false
 
+    FolderDialog {
+        id: customFolderDialog
+        title: I18n.t("storageSection")
+        currentFolder: "file:///" + (root.customFolder && root.customFolder.length > 0 ? root.customFolder : downloadManager.defaultDownloadPath)
+        onAccepted: {
+            var raw = selectedFolder.toString().replace("file:///", "")
+            root.customFolder = raw
+            downloadManager.setDefaultDownloadPath(raw)
+        }
+    }
+
     onMediaInfoChanged: {
         customTitle = mediaInfo ? mediaInfo.title : ""
         isEditingTitle = false
@@ -588,14 +599,23 @@ Rectangle {
             width: parent.width
             spacing: 12
 
-            // Folder path
+            // Folder path (Clickable & auto-saves default location)
             Rectangle {
+                id: folderBox
                 width: parent.width - 160
                 height: 44
                 radius: Theme.radiusMd
-                color: Theme.bgInput
-                border.color: Theme.borderDim
+                color: folderHover.hovered ? Theme.bgCardHover : Theme.bgInput
+                border.color: folderHover.hovered ? Theme.accent : Theme.borderDim
                 border.width: 1
+
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                HoverHandler { id: folderHover }
+                TapHandler {
+                    onTapped: customFolderDialog.open()
+                }
 
                 Row {
                     anchors.fill: parent
@@ -610,12 +630,34 @@ Rectangle {
 
                     Text {
                         text: root.customFolder
-                        color: Theme.textSecondary
+                        color: folderHover.hovered ? Theme.textPrimary : Theme.textSecondary
                         font.pixelSize: 12
                         font.family: Theme.fontFamily
                         elide: Text.ElideMiddle
-                        width: parent.width - 30
+                        width: parent.width - changeChip.width - 32
                         anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    // Change badge button
+                    Rectangle {
+                        id: changeChip
+                        height: 24
+                        width: changeTxt.implicitWidth + 14
+                        radius: 12
+                        color: folderHover.hovered ? Theme.accent : Theme.bgElevated
+                        border.color: folderHover.hovered ? Theme.accent : Theme.borderBright
+                        border.width: 1
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Text {
+                            id: changeTxt
+                            anchors.centerIn: parent
+                            text: I18n.t("changeFolder")
+                            color: folderHover.hovered ? "#07090e" : Theme.textSecondary
+                            font.pixelSize: 10
+                            font.family: Theme.fontFamily
+                            font.weight: Font.DemiBold
+                        }
                     }
                 }
             }
