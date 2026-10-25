@@ -12,6 +12,7 @@ Item {
     property string localPass: (typeof proxyManager !== "undefined") ? proxyManager.password : ""
     property bool showPassword: false
     property bool savedNotification: false
+    property bool showModeInfo: false
 
     Timer {
         id: notificationTimer
@@ -244,12 +245,102 @@ Item {
                     anchors.margins: 16
                     spacing: 12
 
-                    Text {
-                        text: I18n.t("proxyModeTitle")
-                        color: Theme.textPrimary
-                        font.pixelSize: 13
-                        font.family: Theme.fontFamily
-                        font.weight: Font.Bold
+                    // Header Row with Title and Info (i) Button
+                    Item {
+                        width: parent.width
+                        height: 24
+
+                        Text {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: I18n.t("proxyModeTitle")
+                            color: Theme.textPrimary
+                            font.pixelSize: 13
+                            font.family: Theme.fontFamily
+                            font.weight: Font.Bold
+                        }
+
+                        // Info (i) Button on the right
+                        Rectangle {
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 22; height: 22; radius: 11
+                            color: root.showModeInfo ? Theme.accent : (infoMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
+                            border.color: root.showModeInfo ? Theme.accent : Theme.borderDim
+                            border.width: 1
+
+                            Behavior on color { ColorAnimation { duration: 150 } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "i"
+                                font.pixelSize: 11
+                                font.weight: Font.Bold
+                                font.family: Theme.fontFamily
+                                color: root.showModeInfo ? "#07090e" : (infoMouse.containsMouse ? Theme.accent : Theme.textSecondary)
+                            }
+
+                            MouseArea {
+                                id: infoMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.showModeInfo = !root.showModeInfo
+                            }
+                        }
+                    }
+
+                    // Expandable Information Guide Card
+                    Rectangle {
+                        visible: root.showModeInfo
+                        width: parent.width
+                        implicitHeight: infoBoxCol.implicitHeight + 20
+                        radius: Theme.radiusMd
+                        color: Theme.bgElevated
+                        border.color: Theme.accent
+                        border.width: 1
+
+                        Column {
+                            id: infoBoxCol
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            spacing: 8
+
+                            Text {
+                                text: I18n.t("proxyInfoTitle")
+                                color: Theme.accent
+                                font.pixelSize: 11
+                                font.family: Theme.fontFamily
+                                font.weight: Font.Bold
+                            }
+
+                            Text {
+                                text: I18n.t("proxyInfoVpn")
+                                color: Theme.textPrimary
+                                font.pixelSize: 10
+                                font.family: Theme.fontFamily
+                                wrapMode: Text.Wrap
+                                width: parent.width
+                            }
+
+                            Text {
+                                text: I18n.t("proxyInfoSocks5")
+                                color: Theme.textSecondary
+                                font.pixelSize: 10
+                                font.family: Theme.fontFamily
+                                wrapMode: Text.Wrap
+                                width: parent.width
+                            }
+
+                            Text {
+                                text: I18n.t("proxyInfoHttp")
+                                color: Theme.textSecondary
+                                font.pixelSize: 10
+                                font.family: Theme.fontFamily
+                                wrapMode: Text.Wrap
+                                width: parent.width
+                            }
+                        }
                     }
 
                     // Mode 0: In-App Stealth VPN (Recommended / Zero Setup)
