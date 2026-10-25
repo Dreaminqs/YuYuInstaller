@@ -14,6 +14,16 @@ Rectangle {
     Behavior on color { ColorAnimation { duration: 150 } }
     HoverHandler { id: cardHover }
 
+    function getTargetFormat() {
+        var p = (model && (model.destinationPath || model.title)) ? (model.destinationPath || model.title) : ""
+        var lastDot = p.lastIndexOf(".")
+        if (lastDot !== -1 && lastDot < p.length - 1) {
+            var ext = p.substring(lastDot + 1).toUpperCase().split(/[?#]/)[0]
+            if (ext.length <= 4) return ext
+        }
+        return (model && model.isAudioOnly) ? "MP3" : "MP4"
+    }
+
     Row {
         anchors.fill: parent
         anchors.margins: 16
@@ -29,7 +39,7 @@ Rectangle {
 
             Text {
                 anchors.centerIn: parent
-                text: model.isAudioOnly ? "MP3" : "MP4"
+                text: root.getTargetFormat()
                 color: Theme.accent
                 font.pixelSize: 11
                 font.family: Theme.fontFamily
@@ -80,7 +90,7 @@ Rectangle {
                         text: {
                             if (model.status === "Completed") return I18n.t("statusCompleted")
                             if (model.status === "Downloading") return I18n.t("statusDownloading")
-                            if (model.status === "Converting") return I18n.t("statusConverting")
+                            if (model.status === "Converting") return I18n.t("statusConverting").arg(root.getTargetFormat())
                             if (model.status === "Paused") return I18n.t("statusPaused")
                             if (model.status === "Queued") return I18n.t("statusQueued")
                             if (model.status === "Failed") return I18n.t("statusFailed")

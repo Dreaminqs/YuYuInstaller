@@ -52,7 +52,7 @@ private:
     void startSpotifyResolve(const QUrl &url);
     void startYouTubeOembedProbe(const QUrl &url);
     void startAnimecixResolve(const QUrl &url);
-    void startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster);
+    void startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster, const QStringList &fallbackEmbeds = {});
     void startWebPageScrape(const QUrl &url);
     void fetchIframeContent(const QUrl &iframeUrl, const QString &title, const QString &thumb, const QString &providerName);
     void parseHtmlForMedia(const QString &html, const QUrl &baseUrl);

@@ -45,8 +45,8 @@ void ProxyManager::initAutoPool() {
 }
 
 void ProxyManager::fetchLiveProxies() {
-    // Dynamically retrieve fresh elite public proxies from public repository
-    QNetworkRequest req(QUrl("https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http,socks5&timeout=1500&country=all&ssl=all&anonymity=all"));
+    // Dynamically retrieve fresh verified HTTPS proxies from GitHub RAW repository
+    QNetworkRequest req(QUrl("https://raw.githubusercontent.com/roosterkid/openproxylist/main/HTTPS_RAW.txt"));
     req.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0.0.0 Safari/537.36");
 
     QNetworkReply *reply = m_fetchNam->get(req);
@@ -63,14 +63,13 @@ void ProxyManager::fetchLiveProxies() {
                     bool ok = false;
                     int port = parts[1].toInt(&ok);
                     if (ok && port > 0 && port <= 65535) {
-                        bool isHttp = (port == 80 || port == 8080 || port == 3128 || port == 8888 || port == 10023 || port == 10649 || port == 11205);
-                        m_autoPool.append({"Global Cloud Node", "GL", parts[0], port, !isHttp, -1});
+                        m_autoPool.append({"Global Cloud Node", "GL", parts[0], port, false, -1});
                         addedCount++;
                         if (addedCount >= 40) break;
                     }
                 }
             }
-            std::cout << "[ProxyManager] Auto VPN pool updated with " << addedCount << " live nodes." << std::endl;
+            std::cout << "[ProxyManager] Auto VPN pool updated with " << addedCount << " live HTTPS nodes." << std::endl;
         }
         reply->deleteLater();
     });
@@ -242,13 +241,14 @@ void ProxyManager::testBatch(int startIndex) {
                             node.host, static_cast<quint16>(node.port));
         probeNam->setProxy(proxy);
 
-        QNetworkRequest req(QUrl("http://cp.cloudflare.com/generate_204"));
+        QNetworkRequest req(QUrl("https://cp.cloudflare.com/generate_204"));
         req.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.1.8");
 
         QElapsedTimer *timer = new QElapsedTimer();
         timer->start();
 
         QNetworkReply *reply = probeNam->get(req);
+        reply->ignoreSslErrors();
 
         // 2-second timeout per candidate
         QTimer *timeoutTimer = new QTimer(reply);
@@ -299,9 +299,10 @@ void ProxyManager::testBatch(int startIndex) {
                 QNetworkProxy ipProxy(node.isSocks5 ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy,
                                       node.host, static_cast<quint16>(node.port));
                 ipNam->setProxy(ipProxy);
-                QNetworkRequest ipReq(QUrl("http://api.ipify.org"));
+                QNetworkRequest ipReq(QUrl("https://api.ipify.org"));
                 ipReq.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.1.8");
                 QNetworkReply *ipReply = ipNam->get(ipReq);
+                ipReply->ignoreSslErrors();
                 QTimer *ipTimeout = new QTimer(ipReply);
                 ipTimeout->setSingleShot(true);
                 connect(ipTimeout, &QTimer::timeout, ipReply, [ipReply]() {
@@ -404,11 +405,12 @@ void ProxyManager::testConnection() {
 
     m_testNam->setProxy(testProxy);
 
-    QNetworkRequest req(QUrl("http://cp.cloudflare.com/generate_204"));
+    QNetworkRequest req(QUrl("https://cp.cloudflare.com/generate_204"));
     req.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0.0.0 Safari/537.36");
 
     m_timer.start();
     QNetworkReply *reply = m_testNam->get(req);
+    reply->ignoreSslErrors();
 
     // 5-second timeout
     QTimer *timeoutTimer = new QTimer(reply);

@@ -12,6 +12,7 @@
 #include <QSet>
 #include <algorithm>
 #include <QDebug>
+#include <iostream>
 
 UrlAnalyzer::UrlAnalyzer(QObject *parent)
     : QObject(parent)
@@ -352,15 +353,13 @@ void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
             }
         }
 
-        if (!tauId.isEmpty()) {
-            startTauVideoResolve(tauId, animeTitle, targetSeason, targetEp, episodeName, poster);
-            return;
-        }
+        // If tauId was identified from poster and no multi-page query needed, save it
+        QString directTauId = tauId;
 
         // Step 2: Query secure/videos?titleId={titleId}&page={page}&perPage=200 with multi-page support
         auto allCandidates = std::make_shared<QJsonArray>();
         auto fetchPage = std::make_shared<std::function<void(int)>>();
-        *fetchPage = [this, fetchPage, allCandidates, titleId, animeTitle, targetSeason, targetEp, isEpisodeSpecific, episodeName, poster, url](int page) {
+        *fetchPage = [this, fetchPage, allCandidates, titleId, animeTitle, targetSeason, targetEp, isEpisodeSpecific, episodeName, poster, url, directTauId](int page) {
             QString videosApiUrl = QString("https://animecix.tv/secure/videos?titleId=%1&page=%2&perPage=200").arg(titleId).arg(page);
             QNetworkRequest vReq((QUrl(videosApiUrl)));
             vReq.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
@@ -372,7 +371,7 @@ void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
             vReply->ignoreSslErrors();
             m_currentReply = vReply;
 
-            connect(vReply, &QNetworkReply::finished, this, [this, fetchPage, allCandidates, vReply, titleId, animeTitle, targetSeason, targetEp, isEpisodeSpecific, episodeName, poster, url, page]() {
+            connect(vReply, &QNetworkReply::finished, this, [this, fetchPage, allCandidates, vReply, titleId, animeTitle, targetSeason, targetEp, isEpisodeSpecific, episodeName, poster, url, directTauId, page]() {
                 if (m_currentReply == vReply) {
                     m_currentReply = nullptr;
                 }
@@ -405,36 +404,54 @@ void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
                             }
                         }
 
-                        // Priority 1: Check for Tau Video in filtered candidates
-                        for (const QJsonValue &cVal : *allCandidates) {
-                            QJsonObject cObj = cVal.toObject();
-                            QString embedUrl = cObj.value("url").toString();
-                            QRegularExpression tauEmbedRe(R"(tau-video\.xyz/embed/([a-f0-9]{24}))", QRegularExpression::CaseInsensitiveOption);
-                            auto m = tauEmbedRe.match(embedUrl);
-                            if (m.hasMatch()) {
-                                QString vTauId = m.captured(1);
-                                startTauVideoResolve(vTauId, animeTitle, targetSeason, targetEp, episodeName, poster);
-                                return;
-                            }
-                        }
-
-                        // If Tau Video was not found yet and more pages exist, fetch next page
-                        if (page < lastPage && page < 6) {
+                        // If candidates for this episode haven't been found yet and more pages exist, fetch next page
+                        if (allCandidates->isEmpty() && page < lastPage && page < 8) {
                             (*fetchPage)(page + 1);
                             return;
                         }
 
-                        // Priority 2: Check for direct supported web embeds
+                        // Collect Tau Video ID and all alternative embed mirrors
+                        QString vTauId = directTauId;
+                        QStringList fallbackEmbeds;
+
                         for (const QJsonValue &cVal : *allCandidates) {
                             QJsonObject cObj = cVal.toObject();
-                            QString embedUrl = cObj.value("url").toString();
-                            if (!embedUrl.isEmpty() &&
-                                (embedUrl.contains("sibnet.ru") || embedUrl.contains("vidmoly.") || embedUrl.contains("ok.ru") ||
-                                 embedUrl.contains("dailymotion.com") || embedUrl.contains("mp4upload") || embedUrl.contains("dood"))) {
-                                m_analyzingUrl = embedUrl;
-                                startYtDlpProbe(embedUrl);
-                                return;
+                            QString embedUrl = cObj.value("url").toString().trimmed();
+                            if (embedUrl.isEmpty()) continue;
+
+                            QRegularExpression tauEmbedRe(R"(tau-video\.xyz/embed/([a-f0-9]{24}))", QRegularExpression::CaseInsensitiveOption);
+                            auto m = tauEmbedRe.match(embedUrl);
+                            if (m.hasMatch()) {
+                                if (vTauId.isEmpty()) vTauId = m.captured(1);
+                                continue;
                             }
+
+                            // Prioritize Google Drive (fastest direct CDN, highest reliability)
+                            if (embedUrl.contains("drive.google.com") || embedUrl.contains("docs.google.com") || embedUrl.contains("google.com/file")) {
+                                fallbackEmbeds.prepend(embedUrl);
+                            } else if (embedUrl.contains("sibnet.ru") || embedUrl.contains("vidmoly.") || embedUrl.contains("ok.ru") ||
+                                       embedUrl.contains("dailymotion.com") || embedUrl.contains("mp4upload") || embedUrl.contains("dood")) {
+                                fallbackEmbeds.append(embedUrl);
+                            }
+                        }
+
+                        // Priority 1: Check for Tau Video if present, passing alternative mirrors as fallbacks
+                        if (!vTauId.isEmpty()) {
+                            startTauVideoResolve(vTauId, animeTitle, targetSeason, targetEp, episodeName, poster, fallbackEmbeds);
+                            return;
+                        }
+
+                        // Priority 2: Use best alternative embed directly if Tau Video is not listed
+                        if (!fallbackEmbeds.isEmpty()) {
+                            m_analyzingUrl = fallbackEmbeds.first();
+                            startYtDlpProbe(fallbackEmbeds.first());
+                            return;
+                        }
+
+                        // If allCandidates is still empty and more pages exist, keep searching
+                        if (page < lastPage && page < 8) {
+                            (*fetchPage)(page + 1);
+                            return;
                         }
                     }
                 }
@@ -451,7 +468,7 @@ void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
                 fvReply->ignoreSslErrors();
                 m_currentReply = fvReply;
 
-                connect(fvReply, &QNetworkReply::finished, this, [this, fvReply, animeTitle, targetSeason, targetEp, isEpisodeSpecific, episodeName, poster, url]() {
+                connect(fvReply, &QNetworkReply::finished, this, [this, fvReply, animeTitle, targetSeason, targetEp, isEpisodeSpecific, episodeName, poster, url, vStatus]() {
                     if (m_currentReply == fvReply) {
                         m_currentReply = nullptr;
                     }
@@ -488,7 +505,11 @@ void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
                     } else {
                         m_isAnalyzing = false;
                         emit analyzingChanged();
-                        emit analysisError(QString("Animecix: Video stream not found for Season %1 Episode %2.").arg(targetSeason).arg(targetEp));
+                        if (vStatus == 0 || fvStatus == 0) {
+                            emit analysisError("Animecix: Connection failed (network or firewall blocked). Please enable Stealth Tunnel / VPN.");
+                        } else {
+                            emit analysisError(QString("Animecix: Video stream not found for Season %1 Episode %2.").arg(targetSeason).arg(targetEp));
+                        }
                     }
                 });
             });
@@ -498,7 +519,7 @@ void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
     });
 }
 
-void UrlAnalyzer::startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster) {
+void UrlAnalyzer::startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster, const QStringList &fallbackEmbeds) {
     QString tauApiUrl = QString("https://tau-video.xyz/api/video/%1").arg(tauId);
     QNetworkRequest request((QUrl(tauApiUrl)));
     request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
@@ -510,7 +531,7 @@ void UrlAnalyzer::startTauVideoResolve(const QString &tauId, const QString &anim
     reply->ignoreSslErrors();
     m_currentReply = reply;
 
-    connect(reply, &QNetworkReply::finished, this, [this, reply, tauId, animeTitle, season, episode, epName, poster]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, tauId, animeTitle, season, episode, epName, poster, fallbackEmbeds]() {
         if (m_currentReply == reply) {
             m_currentReply = nullptr;
         }
@@ -581,6 +602,16 @@ void UrlAnalyzer::startTauVideoResolve(const QString &tauId, const QString &anim
                     return;
                 }
             }
+        }
+
+        // Automatic fallback: If Tau Video is blocked by Cloudflare (403) or unreachable, try alternative mirrors
+        if (!fallbackEmbeds.isEmpty()) {
+            QString altUrl = fallbackEmbeds.first();
+            std::cout << "[UrlAnalyzer] Tau-Video endpoint blocked or unavailable (HTTP " << statusCode
+                      << "). Auto-switching to alternative mirror: " << altUrl.toStdString() << std::endl;
+            m_analyzingUrl = altUrl;
+            startYtDlpProbe(altUrl);
+            return;
         }
 
         m_isAnalyzing = false;
