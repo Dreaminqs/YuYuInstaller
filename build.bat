@@ -10,7 +10,8 @@ echo === Building YuYuInstaller ===
 cmake --build build --config Release
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-if not exist build\assets mkdir build\assets >nul 2>&1
+if exist build\assets rmdir /S /Q build\assets >nul 2>&1
+mkdir build\assets >nul 2>&1
 copy /Y assets\* build\assets\ >nul 2>&1
 
 echo === Build Successful! ===

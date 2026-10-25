@@ -103,7 +103,6 @@ target_link_libraries(YuYuInstaller PRIVATE
 # Performance & Compiler Optimizations (MSVC)
 if(MSVC)
     add_compile_options(
-        /arch:AVX2
         /Oi
         /Ot
         /GF

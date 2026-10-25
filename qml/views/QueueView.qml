@@ -528,6 +528,7 @@ Item {
             height: parent.height - 70
             clip: true
             spacing: 12
+            reuseItems: true
             model: queueModel
 
             delegate: DownloadCard {
