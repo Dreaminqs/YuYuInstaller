@@ -33,8 +33,6 @@ void consoleHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 
 int main(int argc, char *argv[]) {
     qInstallMessageHandler(consoleHandler);
-    std::cout << ">>> [DEBUG] YuYuInstaller process started! <<<" << std::endl;
-    std::cout.flush();
 
     // Enable High DPI scaling
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
@@ -53,9 +51,7 @@ int main(int argc, char *argv[]) {
 
     QIcon appIcon;
     const QStringList iconCandidates = {
-        ":/qt/qml/MediaGrab/assets/app_icon.png",
-        ":/qt/qml/MediaGrab/assets/logo.png",
-        QCoreApplication::applicationDirPath() + "/assets/app_icon.png",
+        ":/qt/qml/YuYuInstaller/assets/logo.png",
         QCoreApplication::applicationDirPath() + "/assets/logo.png",
         QCoreApplication::applicationDirPath() + "/assets/app.ico"
     };
@@ -74,8 +70,8 @@ int main(int argc, char *argv[]) {
     QQuickStyle::setStyle("Basic");
 
     // Register custom types for QML
-    qmlRegisterUncreatableType<MediaInfo>("MediaGrab", 1, 0, "MediaInfo", "MediaInfo is created by UrlAnalyzer");
-    qmlRegisterType<VideoBackgroundItem>("MediaGrab", 1, 0, "VideoBackground");
+    qmlRegisterUncreatableType<MediaInfo>("YuYuInstaller", 1, 0, "MediaInfo", "MediaInfo is created by UrlAnalyzer");
+    qmlRegisterType<VideoBackgroundItem>("YuYuInstaller", 1, 0, "VideoBackground");
     qRegisterMetaType<MediaStreamOption>("MediaStreamOption");
 
     DownloadManager downloadManager;
@@ -107,14 +103,10 @@ int main(int argc, char *argv[]) {
     });
 
     // Load Main QML resource path
-    const QUrl url(u"qrc:/qt/qml/MediaGrab/qml/Main.qml"_qs);
-    std::cout << ">>> [DEBUG] Loading QML URL: " << url.toString().toStdString() << std::endl;
-    std::cout.flush();
+    const QUrl url(u"qrc:/qt/qml/YuYuInstaller/qml/Main.qml"_qs);
 
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [&app, url, appIcon](QObject *obj, const QUrl &objUrl) {
-        std::cout << ">>> [DEBUG] objectCreated fired! obj=" << (void*)obj << " url=" << objUrl.toString().toStdString() << std::endl;
-        std::cout.flush();
         if (!obj && url == objUrl) {
             std::cerr << ">>> [FATAL] Failed to load root QML object: " << objUrl.toString().toStdString() << std::endl;
             std::cerr.flush();
@@ -130,8 +122,6 @@ int main(int argc, char *argv[]) {
             if (!appIcon.isNull()) {
                 win->setIcon(appIcon);
             }
-            std::cout << ">>> [DEBUG] Invoking win->show(), raise(), requestActivate() <<<" << std::endl;
-            std::cout.flush();
             win->show();
             win->raise();
             win->requestActivate();
@@ -139,9 +129,6 @@ int main(int argc, char *argv[]) {
     }, Qt::QueuedConnection);
 
     engine.load(url);
-
-    std::cout << ">>> [DEBUG] Entering app.exec()... <<<" << std::endl;
-    std::cout.flush();
 
     return app.exec();
 }

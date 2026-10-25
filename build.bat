@@ -10,8 +10,6 @@ echo === Building YuYuInstaller ===
 cmake --build build --config Release
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-copy /Y build\YuYuInstaller.exe build\MediaGrabApp.exe >nul 2>&1
-copy /Y build\YuYuInstaller.exe build\MediaGrab.exe >nul 2>&1
 if not exist build\assets mkdir build\assets >nul 2>&1
 copy /Y assets\* build\assets\ >nul 2>&1
 

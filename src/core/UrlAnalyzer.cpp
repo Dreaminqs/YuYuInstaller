@@ -30,43 +30,6 @@ UrlAnalyzer::~UrlAnalyzer() {
     }
 }
 
-UrlCategory UrlAnalyzer::categorizeUrl(const QString &rawUrl) {
-    QString lower = rawUrl.trimmed().toLower();
-    if (lower.endsWith(".m3u8") || lower.contains(".m3u8?")) {
-        return UrlCategory::HlsStream;
-    }
-    if (lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mkv") ||
-        lower.contains(".mp4?") || lower.contains(".webm?")) {
-        return UrlCategory::DirectVideo;
-    }
-    if (lower.endsWith(".mp3") || lower.endsWith(".m4a") || lower.endsWith(".wav") ||
-        lower.endsWith(".aac") || lower.contains(".mp3?")) {
-        return UrlCategory::DirectAudio;
-    }
-    if (lower.contains("youtube.com") || lower.contains("youtu.be") ||
-        lower.contains("spotify.com") ||
-        lower.contains("animecix.") || lower.contains("vidmoly.") || lower.contains("sibnet.ru") ||
-        lower.contains("twitter.com") || lower.contains("x.com") ||
-        lower.contains("tiktok.com") || lower.contains("instagram.com") ||
-        lower.contains("vimeo.com") || lower.contains("reddit.com") ||
-        lower.contains("soundcloud.com") || lower.contains("twitch.tv") ||
-        lower.contains("dailymotion.com") || lower.contains("streamtape.com") ||
-        lower.contains("dood") || lower.contains("filemoon") ||
-        lower.contains("facebook.com") || lower.contains("fb.watch") ||
-        lower.contains("pornhub.com") || lower.contains("xvideos.com") ||
-        lower.contains("xnxx.com") || lower.contains("redtube.com") ||
-        lower.contains("youporn.com") || lower.contains("spankbang.com") ||
-        lower.contains("eporner.com") || lower.contains("rumble.com") ||
-        lower.contains("bilibili") || lower.contains("vk.com") ||
-        lower.contains("streamable.com") || lower.contains("threads.net") ||
-        lower.contains("bsky.app") || lower.contains("pinterest.com") ||
-        lower.contains("pin.it") || lower.contains("bandcamp.com") ||
-        lower.contains("mixcloud.com")) {
-        return UrlCategory::GenericWebPage;
-    }
-    return UrlCategory::Unknown;
-}
-
 QString UrlAnalyzer::encodeUrlSafely(const QString &raw) {
     QString trimmed = raw.trimmed();
     if (trimmed.isEmpty()) return QString();
@@ -626,7 +589,7 @@ void UrlAnalyzer::startYouTubeOembedProbe(const QUrl &url) {
 
     QUrl oembedUrl(oembedUrlStr);
     QNetworkRequest request(oembedUrl);
-    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) MediaGrab/1.0");
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) YuYuInstaller/1.1.8");
 
     m_currentReply = m_netManager.get(request);
     connect(m_currentReply, &QNetworkReply::finished, this, &UrlAnalyzer::onOembedFinished);

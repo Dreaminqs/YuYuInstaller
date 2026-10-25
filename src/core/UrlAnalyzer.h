@@ -8,14 +8,6 @@
 #include <QProcess>
 #include "MediaInfo.h"
 
-enum class UrlCategory {
-    DirectVideo,     // .mp4, .webm, .mkv
-    DirectAudio,     // .mp3, .m4a, .wav, .aac
-    HlsStream,       // .m3u8
-    GenericWebPage,  // Web video platform (YouTube, Animecix, Vidmoly, etc.)
-    Unknown
-};
-
 class UrlAnalyzer : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool isAnalyzing READ isAnalyzing NOTIFY analyzingChanged)
@@ -30,7 +22,6 @@ public:
 
     Q_INVOKABLE void analyzeUrl(const QString &rawUrl);
     Q_INVOKABLE void clear();
-    static UrlCategory categorizeUrl(const QString &rawUrl);
     static QString cleanUrl(const QString &rawUrl);
 
 signals:

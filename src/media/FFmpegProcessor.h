@@ -4,13 +4,6 @@
 #include <QString>
 #include <QProcess>
 
-enum class AudioFormat {
-    MP3,
-    AAC,
-    WAV,
-    M4A
-};
-
 class FFmpegProcessor : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool isProcessing READ isProcessing NOTIFY processingChanged)
@@ -32,7 +25,6 @@ public:
     bool isYtDlpAvailable() const;
 
     Q_INVOKABLE void extractAudio(const QString &inputFilePath, const QString &outputFilePath, const QString &format = "mp3", int bitrateKbps = 320);
-    Q_INVOKABLE void mergeStreams(const QString &videoPath, const QString &audioPath, const QString &outputPath);
     Q_INVOKABLE void cancel();
     Q_INVOKABLE void refreshTools();
 

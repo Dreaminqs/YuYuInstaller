@@ -150,9 +150,7 @@ void DownloadManager::setSpeedLimitEnabled(bool enabled) {
         m_speedLimitEnabled = enabled;
         QSettings settings("YuYuDev", "YuYuInstaller");
         settings.setValue("speedLimitEnabled", m_speedLimitEnabled);
-        settings.setValue("downloadLimitEnabled", m_speedLimitEnabled);
         emit speedLimitEnabledChanged();
-        emit downloadLimitEnabledChanged();
 
         int effectiveLimit = m_speedLimitEnabled ? m_speedLimitMBps : 0;
         for (auto it = m_activeHttpDownloads.begin(); it != m_activeHttpDownloads.end(); ++it) {
@@ -171,9 +169,7 @@ void DownloadManager::setSpeedLimitMBps(int limit) {
         m_speedLimitMBps = limit;
         QSettings settings("YuYuDev", "YuYuInstaller");
         settings.setValue("speedLimitMBps", m_speedLimitMBps);
-        settings.setValue("maxConcurrentDownloads", m_speedLimitMBps);
         emit speedLimitMBpsChanged();
-        emit maxConcurrentDownloadsChanged();
 
         if (m_speedLimitEnabled) {
             for (auto it = m_activeHttpDownloads.begin(); it != m_activeHttpDownloads.end(); ++it) {

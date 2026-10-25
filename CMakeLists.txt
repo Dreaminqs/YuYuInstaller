@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(MediaGrab VERSION 1.1.8 LANGUAGES CXX)
+project(YuYuInstaller VERSION 1.1.8 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,7 +17,7 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Quick Qml QuickControls2 Netwo
 
 qt_standard_project_setup(REQUIRES 6.5)
 
-qt_add_executable(MediaGrab
+qt_add_executable(YuYuInstaller
     WIN32
     src/main.cpp
     src/models/MediaInfo.h
@@ -47,7 +47,7 @@ set_source_files_properties(app.rc PROPERTIES
     OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/app.ico"
 )
 
-target_include_directories(MediaGrab PRIVATE
+target_include_directories(YuYuInstaller PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/models
@@ -58,8 +58,8 @@ set_source_files_properties(qml/Theme.qml qml/I18n.qml PROPERTIES
     QT_QML_SINGLETON_TYPE TRUE
 )
 
-qt_add_qml_module(MediaGrab
-    URI MediaGrab
+qt_add_qml_module(YuYuInstaller
+    URI YuYuInstaller
     VERSION 1.0
     RESOURCES
         assets/logo.png
@@ -81,12 +81,12 @@ qt_add_qml_module(MediaGrab
         qml/views/SettingsView.qml
 )
 
-set_target_properties(MediaGrab PROPERTIES
+set_target_properties(YuYuInstaller PROPERTIES
     OUTPUT_NAME "YuYuInstaller"
     WIN32_EXECUTABLE TRUE
 )
 
-target_link_libraries(MediaGrab PRIVATE
+target_link_libraries(YuYuInstaller PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Quick
@@ -115,7 +115,7 @@ if(MSVC)
     )
 endif()
 
-target_precompile_headers(MediaGrab PRIVATE
+target_precompile_headers(YuYuInstaller PRIVATE
     <QtCore>
     <QtGui>
     <QtQuick>
@@ -124,13 +124,3 @@ target_precompile_headers(MediaGrab PRIVATE
     <QString>
     <QUrl>
 )
-
-# Optional libcurl linking if found
-find_package(CURL QUIET)
-if(CURL_FOUND)
-    target_link_libraries(MediaGrab PRIVATE CURL::libcurl)
-    target_compile_definitions(MediaGrab PRIVATE HAVE_LIBCURL=1)
-    message(STATUS "libcurl found and linked")
-else()
-    message(STATUS "libcurl not found yet; will use Qt Network or bundled curl worker")
-endif()

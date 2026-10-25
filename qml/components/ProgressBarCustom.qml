@@ -1,5 +1,5 @@
 import QtQuick
-import MediaGrab
+import YuYuInstaller
 
 Item {
     id: root

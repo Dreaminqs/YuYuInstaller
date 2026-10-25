@@ -1,5 +1,5 @@
 import QtQuick
-import MediaGrab
+import YuYuInstaller
 
 Rectangle {
     id: root
@@ -30,7 +30,7 @@ Rectangle {
                 Image {
                     anchors.fill: parent
                     anchors.margins: 2
-                    source: "qrc:/qt/qml/MediaGrab/assets/logo.png"
+                    source: "qrc:/qt/qml/YuYuInstaller/assets/logo.png"
                     fillMode: Image.PreserveAspectFit
                     smooth: true
                     mipmap: true

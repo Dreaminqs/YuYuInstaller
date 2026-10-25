@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
-import MediaGrab
+import YuYuInstaller
 
 Item {
     id: root
@@ -417,7 +417,7 @@ Item {
                         Image {
                             anchors.centerIn: parent
                             width: 28; height: 28
-                            source: "qrc:/qt/qml/MediaGrab/assets/ffmpeg.png"
+                            source: "qrc:/qt/qml/YuYuInstaller/assets/ffmpeg.png"
                             fillMode: Image.PreserveAspectFit
                             smooth: true
                             mipmap: true
@@ -493,7 +493,7 @@ Item {
                         Image {
                             anchors.centerIn: parent
                             width: 28; height: 28
-                            source: "qrc:/qt/qml/MediaGrab/assets/ytdlp.png"
+                            source: "qrc:/qt/qml/YuYuInstaller/assets/ytdlp.png"
                             fillMode: Image.PreserveAspectFit
                             smooth: true
                             mipmap: true

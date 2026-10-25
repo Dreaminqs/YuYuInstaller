@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import MediaGrab
+import YuYuInstaller
 
 Rectangle {
     id: root

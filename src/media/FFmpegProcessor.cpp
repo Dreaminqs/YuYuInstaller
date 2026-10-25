@@ -176,37 +176,6 @@ void FFmpegProcessor::extractAudio(const QString &inputFilePath, const QString &
     m_process->start(ffmpegPath, args);
 }
 
-void FFmpegProcessor::mergeStreams(const QString &videoPath, const QString &audioPath, const QString &outputPath) {
-    if (m_isProcessing) return;
-
-    QString ffmpegPath = findFFmpegExecutable();
-    if (ffmpegPath.isEmpty()) {
-        emit finished(false, "", "FFmpeg was not found.");
-        return;
-    }
-
-    m_currentOutputFile = outputPath;
-    m_progress = 0.0;
-    m_totalDurationSec = 0.0;
-    m_isProcessing = true;
-    m_statusMessage = "Merging video and audio streams...";
-    emit processingChanged();
-
-    QStringList args;
-    args << "-i" << videoPath;
-    args << "-i" << audioPath;
-    args << "-c:v" << "copy";
-    args << "-c:a" << "aac";
-    args << "-y" << outputPath;
-
-    m_process = new QProcess(this);
-    connect(m_process, &QProcess::readyReadStandardError, this, &FFmpegProcessor::onProcessReadyRead);
-    connect(m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &FFmpegProcessor::onProcessFinished);
-    connect(m_process, &QProcess::errorOccurred, this, &FFmpegProcessor::onProcessError);
-
-    m_process->start(ffmpegPath, args);
-}
-
 void FFmpegProcessor::cancel() {
     if (m_process && m_process->state() != QProcess::NotRunning) {
         m_process->kill();

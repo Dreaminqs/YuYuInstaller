@@ -31,8 +31,6 @@ class DownloadManager : public QObject {
     Q_PROPERTY(bool sequentialMode READ sequentialMode WRITE setSequentialMode NOTIFY sequentialModeChanged)
     Q_PROPERTY(bool speedLimitEnabled READ speedLimitEnabled WRITE setSpeedLimitEnabled NOTIFY speedLimitEnabledChanged)
     Q_PROPERTY(int speedLimitMBps READ speedLimitMBps WRITE setSpeedLimitMBps NOTIFY speedLimitMBpsChanged)
-    Q_PROPERTY(bool downloadLimitEnabled READ speedLimitEnabled WRITE setSpeedLimitEnabled NOTIFY speedLimitEnabledChanged)
-    Q_PROPERTY(int maxConcurrentDownloads READ speedLimitMBps WRITE setSpeedLimitMBps NOTIFY speedLimitMBpsChanged)
     Q_PROPERTY(bool videoBackgroundEnabled READ videoBackgroundEnabled WRITE setVideoBackgroundEnabled NOTIFY videoBackgroundEnabledChanged)
     Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY languageChanged)
 
@@ -47,8 +45,6 @@ public:
     bool sequentialMode() const { return m_sequentialMode; }
     bool speedLimitEnabled() const { return m_speedLimitEnabled; }
     int speedLimitMBps() const { return m_speedLimitMBps; }
-    bool downloadLimitEnabled() const { return m_speedLimitEnabled; }
-    int maxConcurrentDownloads() const { return m_speedLimitMBps; }
     bool videoBackgroundEnabled() const { return m_videoBackgroundEnabled; }
     QString language() const { return m_language; }
 
@@ -58,8 +54,6 @@ public:
     Q_INVOKABLE void setSequentialMode(bool seq);
     Q_INVOKABLE void setSpeedLimitEnabled(bool enabled);
     Q_INVOKABLE void setSpeedLimitMBps(int limit);
-    Q_INVOKABLE void setDownloadLimitEnabled(bool enabled) { setSpeedLimitEnabled(enabled); }
-    Q_INVOKABLE void setMaxConcurrentDownloads(int limit) { setSpeedLimitMBps(limit); }
     Q_INVOKABLE void setVideoBackgroundEnabled(bool enabled);
     Q_INVOKABLE void setLanguage(const QString &lang);
     Q_INVOKABLE void openLogFile();
@@ -75,8 +69,6 @@ signals:
     void sequentialModeChanged();
     void speedLimitEnabledChanged();
     void speedLimitMBpsChanged();
-    void downloadLimitEnabledChanged();
-    void maxConcurrentDownloadsChanged();
     void videoBackgroundEnabledChanged();
     void languageChanged();
     void downloadStarted(const QString &id, const QString &title);
