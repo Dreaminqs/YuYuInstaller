@@ -1,6 +1,6 @@
 ; YuYuInstaller Professional Inno Setup Script
 #define MyAppName "YuYuInstaller"
-#define MyAppVersion "1.1.7"
+#define MyAppVersion "1.1.8"
 #define MyAppPublisher "YuYuDev"
 #define MyAppExeName "YuYuInstaller.exe"
 #define MyAppAssocName MyAppName + " Media Package"

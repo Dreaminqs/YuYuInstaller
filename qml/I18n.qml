@@ -11,7 +11,7 @@ QtObject {
         "en": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.1.7 Pro",
+            "appVersion": "v1.1.8 Pro",
             "appSubtitle": "Media Downloader & Converter",
             
             // Sidebar
@@ -122,7 +122,7 @@ QtObject {
             "missingStatus": "Missing",
             "aboutTitle": "About YuYuInstaller",
             "aboutDesc": "YuYuInstaller is a modern Windows media downloader and converter built with C++20, Qt 6 Quick / QML, FFmpeg, and yt-dlp for high-performance direct streaming and 320 kbps audio extraction.",
-            "aboutVersion": "Version 1.1.7 Pro • Hardware-Accelerated QML Interface",
+            "aboutVersion": "Version 1.1.8 Pro • Hardware-Accelerated QML Interface",
             "updateSection": "Application Updates",
             "updateSubtitle": "Keep YuYuInstaller updated with the latest improvements.",
             "currentVersionLabel": "Installed Version",
@@ -164,6 +164,10 @@ QtObject {
 
             "updateLogTitle": "Release Notes & Changelog",
             "updateLogSubtitle": "Detailed history of improvements and release notes",
+            "log118_1": "Dedicated Proxy & Stealth Tunnel: Seamless in-app proxy navigation tab with live connection status, custom Canvas shield icon, and responsive UI",
+            "log118_2": "Cloudflare Stealth & DoH Engine: 1-click encrypted DNS and fast privacy tunnel to bypass campus/eduroam blocks and keep destination domains 100% invisible",
+            "log118_3": "Universal Proxy Protocols: Native support for custom SOCKS5 (Tor, v2ray, Clash, Shadowsocks, SSH) and HTTP/HTTPS proxies with optional authentication",
+            "log118_4": "Synchronized Network Routing & Latency Tester: Live ping testing in milliseconds with real-time proxy propagation across Qt network requests and yt-dlp",
             "log117_1": "Embedded Web Player Resolver: Dedicated Ajax source resolution for embedded web video players, bypassing legacy SWF flash placeholders",
             "log117_2": "Full Unicode URL Percent-Encoding: Fixed 'UnicodeEncodeError: latin-1' when processing video URLs containing Turkish/Unicode characters",
             "log117_3": "Dynamic Stream Quality Detection: Quality selector dynamically extracts available resolutions (4K, 2K, 1080p, 720p, 480p, 360p) matching detected stream heights",
@@ -224,7 +228,7 @@ QtObject {
         "tr": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.1.7 Pro",
+            "appVersion": "v1.1.8 Pro",
             "appSubtitle": "Medya İndirici & Dönüştürücü",
 
             // Sidebar
@@ -335,7 +339,7 @@ QtObject {
             "missingStatus": "Bulunamadı",
             "aboutTitle": "YuYuİnstaller Hakkında",
             "aboutDesc": "YuYuİnstaller; C++20, Qt 6 Quick / QML, FFmpeg ve yt-dlp ile güçlendirilmiş, yüksek performanslı yeni nesil medya indirme ve ses dönüştürme yazılımıdır.",
-            "aboutVersion": "Sürüm 1.1.7 Pro • Donanım Hızlandırmalı QML Arayüzü",
+            "aboutVersion": "Sürüm 1.1.8 Pro • Donanım Hızlandırmalı QML Arayüzü",
             "updateSection": "Uygulama Güncellemeleri",
             "updateSubtitle": "YuYuİnstaller'ı resmi depodan en son sürümle güncel tutun.",
             "currentVersionLabel": "Yüklü Sürüm",
@@ -377,6 +381,10 @@ QtObject {
 
             "updateLogTitle": "Güncelleme Notları & Sürüm Logları",
             "updateLogSubtitle": "Yayınlanan sürümler ve yapılan yeniliklerin detaylı listesi",
+            "log118_1": "Özel Proxy & Gizli Tünel Menüsü: Canlı bağlantı durumunu gösteren yeni kenar çubuğu sekmesi, özel vektör kalkan simgesi ve modern arayüz",
+            "log118_2": "Cloudflare Gizlilik ve DoH Tüneli: Eduroam ve yurt ağlarında hedef site adını gizleyen, engelli siteleri son hızda açan tek tıkla gizlilik modu",
+            "log118_3": "Evrensel Proxy Protokolleri: Özel SOCKS5 (Tor, v2ray, Clash, Shadowsocks, SSH) ve kimlik doğrulamalı HTTP/HTTPS proxy desteği",
+            "log118_4": "Eşzamanlı Ağ Yönlendirme ve Gecikme Testi: Milisaniye cinsinden canlı ping testi ve tüm Qt indirmeleri ile yt-dlp motorunu aynı tünelden geçirme",
             "log117_1": "Gömülü Web Oynatıcı Çözücü: Gömülü web video oynatıcıları için özel Ajax kaynak çözücü eklendi, eski SWF flash kalıntıları engellendi",
             "log117_2": "Tam Unicode URL Kodlaması: Türkçe ve özel karakter içeren URL'lerdeki latin-1 codec kodlama hatası (UnicodeEncodeError) tamamen giderildi",
             "log117_3": "Dinamik Akış Kalitesi Algılama: Kalite seçenekleri artık sitedeki gerçek akış çözünürlüklerine (4K, 2K, 1080p, 720p, 480p, 360p) göre dinamik olarak listelenir",
@@ -437,7 +445,7 @@ QtObject {
         "uk": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.1.7 Pro",
+            "appVersion": "v1.1.8 Pro",
             "appSubtitle": "Завантажувач та конвертер медіа",
 
             // Sidebar
@@ -548,7 +556,7 @@ QtObject {
             "missingStatus": "Відсутній",
             "aboutTitle": "Про YuYuInstaller",
             "aboutDesc": "YuYuInstaller — це сучасний завантажувач та конвертер медіа для Windows, створений на C++20, Qt 6 Quick / QML, FFmpeg та yt-dlp для високопродуктивного прямого потокового завантаження та вилучення аудіо 320 kbps.",
-            "aboutVersion": "Версія 1.1.7 Pro • Апаратно-прискорений інтерфейс QML",
+            "aboutVersion": "Версія 1.1.8 Pro • Апаратно-прискорений інтерфейс QML",
             "updateSection": "Оновлення програми",
             "updateSubtitle": "Підтримуйте актуальність YuYuInstaller з офіційного репозиторію.",
             "currentVersionLabel": "Встановлена версія",
@@ -590,6 +598,10 @@ QtObject {
 
             "updateLogTitle": "Журнал оновлень та історія змін",
             "updateLogSubtitle": "Детальний список випусків та реалізованих покращень",
+            "log118_1": "Спеціальне меню Проксі та тунелю: Нова вкладка на бічній панелі з живим статусом підключення та вектором захисного щита",
+            "log118_2": "Швидкий тунель Cloudflare та DoH: Режим у 1 клік для обходу блокувань у мережах Eduroam та повного приховування цільових доменів",
+            "log118_3": "Універсальні протоколи проксі: Підтримка власних SOCKS5 (Tor, v2ray, Clash, Shadowsocks) та HTTP/HTTPS проксі з авторизацією",
+            "log118_4": "Синхронізована маршрутизація та тест затримки: Живе вимірювання пінгу в мілісекундах та маршрутизація через єдиний тунель для Qt і yt-dlp",
             "log117_1": "Розпізнавач вбудованих веб-плеєрів: Інтегровано виділений резолвер джерел Ajax для вбудованих веб-відео з обходом застарілих SWF",
             "log117_2": "Повне кодування Unicode URL: Виправлено помилку 'UnicodeEncodeError: latin-1' при обробці посилань із спеціальними символами",
             "log117_3": "Динамічне визначення якості потоку: Вибір якості динамічно підлаштовується під виявлені роздільні здатності (4K, 2K, 1080p, 720p, 480p, 360p)",
