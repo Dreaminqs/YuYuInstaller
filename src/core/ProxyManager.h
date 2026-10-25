@@ -125,7 +125,10 @@ private:
 
     void initAutoPool();
     void fetchLiveProxies();
-    void testNextCandidate(int attemptCount);
+    void testBatch(int startIndex);
+
+    int m_batchPending{0};
+    bool m_batchWon{false};
 
     bool m_enabled{false};
     int m_proxyMode{ModeAutoVPN}; // Default to Auto In-App VPN

@@ -31,22 +31,22 @@ ProxyManager* ProxyManager::instance() {
 void ProxyManager::initAutoPool() {
     m_autoPool.clear();
 
-    // High-uptime, fast public proxy nodes across Europe and North America
+    // High-uptime, fast verified live public proxy nodes
+    m_autoPool.append({"Netherlands (Amsterdam)", "NL", "144.124.251.24", 10649, false, -1});
+    m_autoPool.append({"Netherlands (Amsterdam)", "NL", "144.124.251.24", 11205, false, -1});
+    m_autoPool.append({"United States (Azure)", "US", "4.144.146.21", 80, false, -1});
+    m_autoPool.append({"Germany (Frankfurt)", "DE", "194.150.110.134", 80, false, -1});
+    m_autoPool.append({"Netherlands (Amsterdam)", "NL", "144.124.251.24", 10023, false, -1});
     m_autoPool.append({"Germany (Frankfurt)", "DE", "159.65.120.144", 1080, true, -1});
-    m_autoPool.append({"Netherlands (Amsterdam)", "NL", "185.162.228.110", 1080, true, -1});
     m_autoPool.append({"France (Paris)", "FR", "51.15.242.202", 1080, true, -1});
-    m_autoPool.append({"United Kingdom (London)", "GB", "51.89.255.67", 8080, false, -1});
+    m_autoPool.append({"Netherlands (Rotterdam)", "NL", "145.220.227.154", 8080, false, -1});
     m_autoPool.append({"United States (New York)", "US", "192.241.178.115", 1080, true, -1});
-    m_autoPool.append({"Sweden (Stockholm)", "SE", "185.105.109.40", 1080, true, -1});
-    m_autoPool.append({"Germany (Berlin)", "DE", "194.38.20.26", 1080, true, -1});
-    m_autoPool.append({"Netherlands (Rotterdam)", "NL", "185.220.101.5", 8080, false, -1});
-    m_autoPool.append({"United States (Los Angeles)", "US", "198.199.86.11", 1080, true, -1});
-    m_autoPool.append({"Canada (Toronto)", "CA", "142.93.155.19", 1080, true, -1});
+    m_autoPool.append({"United Kingdom (London)", "GB", "51.89.255.67", 8080, false, -1});
 }
 
 void ProxyManager::fetchLiveProxies() {
-    // Dynamically retrieve fresh elite public SOCKS5 proxies from public repository
-    QNetworkRequest req(QUrl("https://api.proxyscrape.com/v2/?request=displayproxies&protocol=socks5&timeout=2500&country=DE,NL,FR,GB,US,SE&ssl=all&anonymity=elite"));
+    // Dynamically retrieve fresh elite public proxies from public repository
+    QNetworkRequest req(QUrl("https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http,socks5&timeout=1500&country=all&ssl=all&anonymity=all"));
     req.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0.0.0 Safari/537.36");
 
     QNetworkReply *reply = m_fetchNam->get(req);
@@ -63,9 +63,10 @@ void ProxyManager::fetchLiveProxies() {
                     bool ok = false;
                     int port = parts[1].toInt(&ok);
                     if (ok && port > 0 && port <= 65535) {
-                        m_autoPool.append({"Global Cloud Node", "GL", parts[0], port, true, -1});
+                        bool isHttp = (port == 80 || port == 8080 || port == 3128 || port == 8888 || port == 10023 || port == 10649 || port == 11205);
+                        m_autoPool.append({"Global Cloud Node", "GL", parts[0], port, !isHttp, -1});
                         addedCount++;
-                        if (addedCount >= 30) break; // Keep top 30 fresh entries
+                        if (addedCount >= 40) break;
                     }
                 }
             }
@@ -175,7 +176,7 @@ void ProxyManager::applyProxy() {
             QNetworkProxy proxy(m_autoIsSocks5 ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy,
                                 m_autoHost, static_cast<quint16>(m_autoPort));
             QNetworkProxy::setApplicationProxy(proxy);
-            std::cout << "[ProxyManager] Auto VPN Tunnel active: " << m_autoHost.toStdString() << ":" << m_autoPort
+            std::cout << "[ProxyManager] Auto VPN active: " << m_autoHost.toStdString() << ":" << m_autoPort
                       << " (" << m_autoLocation.toStdString() << ")" << std::endl;
         } else {
             QNetworkProxy::setApplicationProxy(QNetworkProxy(QNetworkProxy::NoProxy));
@@ -202,22 +203,23 @@ void ProxyManager::startAutoTunnel() {
 
     m_autoConnecting = true;
     m_autoConnected = false;
-    m_autoStatusMessage = "Scanning fastest node...";
+    m_batchWon = false;
+    m_autoStatusMessage = "Connecting to fast node...";
     emit autoConnectingChanged();
     emit autoConnectedChanged();
     emit autoStatusMessageChanged();
 
-    testNextCandidate(0);
+    testBatch(m_currentPoolIndex);
 }
 
-void ProxyManager::testNextCandidate(int attemptCount) {
+void ProxyManager::testBatch(int startIndex) {
     if (!m_enabled || m_proxyMode != ModeAutoVPN) {
         m_autoConnecting = false;
         emit autoConnectingChanged();
         return;
     }
 
-    if (attemptCount >= 5 || m_autoPool.isEmpty()) {
+    if (m_autoPool.isEmpty() || startIndex >= m_currentPoolIndex + 16) {
         m_autoConnecting = false;
         m_autoConnected = false;
         m_autoStatusMessage = "No node responded. Click to retry.";
@@ -227,66 +229,80 @@ void ProxyManager::testNextCandidate(int attemptCount) {
         return;
     }
 
-    int index = (m_currentPoolIndex + attemptCount) % m_autoPool.size();
-    AutoProxyNode candidate = m_autoPool[index];
+    m_batchWon = false;
+    int batchSize = qMin(4, m_autoPool.size());
+    m_batchPending = batchSize;
 
-    QNetworkProxy testProxy(candidate.isSocks5 ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy,
-                            candidate.host, static_cast<quint16>(candidate.port));
-    m_autoNam->setProxy(testProxy);
+    for (int i = 0; i < batchSize; ++i) {
+        int idx = (startIndex + i) % m_autoPool.size();
+        AutoProxyNode node = m_autoPool[idx];
 
-    QNetworkRequest req(QUrl("https://1.1.1.1/cdn-cgi/trace"));
-    req.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0.0.0 Safari/537.36");
-    req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+        QNetworkAccessManager *probeNam = new QNetworkAccessManager(this);
+        QNetworkProxy proxy(node.isSocks5 ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy,
+                            node.host, static_cast<quint16>(node.port));
+        probeNam->setProxy(proxy);
 
-    QElapsedTimer *timer = new QElapsedTimer();
-    timer->start();
+        QNetworkRequest req(QUrl("http://cp.cloudflare.com/generate_204"));
+        req.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.1.8");
 
-    QNetworkReply *reply = m_autoNam->get(req);
+        QElapsedTimer *timer = new QElapsedTimer();
+        timer->start();
 
-    // 2.5-second timeout for rapid failover
-    QTimer *timeoutTimer = new QTimer(reply);
-    timeoutTimer->setSingleShot(true);
-    connect(timeoutTimer, &QTimer::timeout, reply, [reply]() {
-        if (reply->isRunning()) {
-            reply->abort();
-        }
-    });
-    timeoutTimer->start(2500);
+        QNetworkReply *reply = probeNam->get(req);
 
-    connect(reply, &QNetworkReply::finished, this, [this, reply, timeoutTimer, timer, candidate, index, attemptCount]() {
-        timeoutTimer->stop();
-        qint64 elapsedMs = timer->elapsed();
-        delete timer;
+        // 2-second timeout per candidate
+        QTimer *timeoutTimer = new QTimer(reply);
+        timeoutTimer->setSingleShot(true);
+        connect(timeoutTimer, &QTimer::timeout, reply, [reply]() {
+            if (reply->isRunning()) {
+                reply->abort();
+            }
+        });
+        timeoutTimer->start(2000);
 
-        if (reply->error() == QNetworkReply::NoError) {
-            // Success! Node connected
-            m_currentPoolIndex = (index + 1) % m_autoPool.size();
-            m_autoConnecting = false;
-            m_autoConnected = true;
-            m_autoHost = candidate.host;
-            m_autoPort = candidate.port;
-            m_autoIsSocks5 = candidate.isSocks5;
-            m_autoLocation = candidate.country;
-            m_autoCountryCode = candidate.countryCode;
-            m_autoLatency = static_cast<int>(elapsedMs);
-            m_autoStatusMessage = QString("Connected (%1 ms)").arg(elapsedMs);
+        connect(reply, &QNetworkReply::finished, this, [this, reply, timeoutTimer, timer, probeNam, node, idx, startIndex]() {
+            timeoutTimer->stop();
+            qint64 elapsedMs = timer->elapsed();
+            delete timer;
 
-            emit autoConnectingChanged();
-            emit autoConnectedChanged();
-            emit autoLocationChanged();
-            emit autoCountryCodeChanged();
-            emit autoLatencyChanged();
-            emit autoStatusMessageChanged();
-            emit autoProtocolChanged();
-            emit proxyUrlChanged();
+            int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            bool ok = (reply->error() == QNetworkReply::NoError) && (statusCode == 204 || statusCode == 200);
 
-            applyProxy();
-        } else {
-            // Try next candidate
-            testNextCandidate(attemptCount + 1);
-        }
-        reply->deleteLater();
-    });
+            if (ok && !m_batchWon && m_enabled && m_proxyMode == ModeAutoVPN) {
+                m_batchWon = true;
+                m_currentPoolIndex = (idx + 1) % m_autoPool.size();
+                m_autoConnecting = false;
+                m_autoConnected = true;
+                m_autoHost = node.host;
+                m_autoPort = node.port;
+                m_autoIsSocks5 = node.isSocks5;
+                m_autoLocation = node.country;
+                m_autoCountryCode = node.countryCode;
+                m_autoLatency = static_cast<int>(elapsedMs);
+                m_autoStatusMessage = QString("Connected (%1 ms)").arg(elapsedMs);
+
+                emit autoConnectingChanged();
+                emit autoConnectedChanged();
+                emit autoLocationChanged();
+                emit autoCountryCodeChanged();
+                emit autoLatencyChanged();
+                emit autoStatusMessageChanged();
+                emit autoProtocolChanged();
+                emit proxyUrlChanged();
+
+                applyProxy();
+            }
+
+            reply->deleteLater();
+            probeNam->deleteLater();
+
+            m_batchPending--;
+            if (m_batchPending <= 0 && !m_batchWon) {
+                // Entire batch failed, try next batch!
+                testBatch(startIndex + 4);
+            }
+        });
+    }
 }
 
 void ProxyManager::switchAutoTunnelNode() {
@@ -358,14 +374,13 @@ void ProxyManager::testConnection() {
 
     m_testNam->setProxy(testProxy);
 
-    QNetworkRequest req(QUrl("https://1.1.1.1/cdn-cgi/trace"));
+    QNetworkRequest req(QUrl("http://cp.cloudflare.com/generate_204"));
     req.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0.0.0 Safari/537.36");
-    req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
 
     m_timer.start();
     QNetworkReply *reply = m_testNam->get(req);
 
-    // 6-second timeout
+    // 5-second timeout
     QTimer *timeoutTimer = new QTimer(reply);
     timeoutTimer->setSingleShot(true);
     connect(timeoutTimer, &QTimer::timeout, reply, [reply]() {
@@ -373,20 +388,21 @@ void ProxyManager::testConnection() {
             reply->abort();
         }
     });
-    timeoutTimer->start(6000);
+    timeoutTimer->start(5000);
 
     connect(reply, &QNetworkReply::finished, this, [this, reply, timeoutTimer]() {
         timeoutTimer->stop();
         m_isTesting = false;
         qint64 elapsedMs = m_timer.elapsed();
 
-        if (reply->error() == QNetworkReply::NoError) {
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (reply->error() == QNetworkReply::NoError && (statusCode == 204 || statusCode == 200)) {
             m_testStatus = StatusSuccess;
             m_testMessage = QString("%1 ms latency").arg(elapsedMs);
         } else {
             m_testStatus = StatusFailed;
             if (reply->error() == QNetworkReply::OperationCanceledError) {
-                m_testMessage = "Connection timed out (6s)";
+                m_testMessage = "Connection timed out (5s)";
             } else if (reply->error() == QNetworkReply::ProxyConnectionRefusedError) {
                 m_testMessage = QString("Proxy not running on %1:%2").arg(m_host, QString::number(m_port));
             } else {

@@ -280,13 +280,13 @@ Item {
                             spacing: 12
 
                             Rectangle {
-                                width: 72; height: 24; radius: 4
+                                width: 48; height: 22; radius: 4
                                 color: (root.selectedMode === 0) ? Theme.accent : "#222c3c"
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Text {
                                     anchors.centerIn: parent
-                                    text: "AUTO VPN"
+                                    text: "VPN"
                                     color: (root.selectedMode === 0) ? "#07090e" : Theme.textSecondary
                                     font.pixelSize: 10
                                     font.weight: Font.Bold
@@ -515,7 +515,7 @@ Item {
                         spacing: 8
 
                         Text {
-                            text: I18n.t("proxyAutoCardTitle")
+                            text: "In-App VPN"
                             color: Theme.textPrimary
                             font.pixelSize: 13
                             font.family: Theme.fontFamily
@@ -671,9 +671,13 @@ Item {
 
                             Text {
                                 anchors.centerIn: parent
-                                text: (typeof proxyManager !== "undefined" && proxyManager.autoConnecting)
-                                      ? I18n.t("proxyAutoConnecting")
-                                      : "Connect VPN Tunnel"
+                                text: {
+                                    if (typeof proxyManager !== "undefined" && proxyManager.autoConnecting)
+                                        return I18n.t("proxyAutoConnecting")
+                                    if (typeof proxyManager !== "undefined" && proxyManager.autoConnected)
+                                        return "Connected (Reconnect)"
+                                    return "Connect"
+                                }
                                 color: "#07090e"
                                 font.pixelSize: 12
                                 font.family: Theme.fontFamily
