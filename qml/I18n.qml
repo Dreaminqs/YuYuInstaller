@@ -11,7 +11,7 @@ QtObject {
         "en": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.1.8 Pro",
+            "appVersion": "v1.1.9 Pro",
             "appSubtitle": "Media Downloader & Converter",
             
             // Sidebar
@@ -122,7 +122,7 @@ QtObject {
             "missingStatus": "Missing",
             "aboutTitle": "About YuYuInstaller",
             "aboutDesc": "YuYuInstaller is a modern Windows media downloader and converter built with C++20, Qt 6 Quick / QML, FFmpeg, and yt-dlp for high-performance direct streaming and 320 kbps audio extraction.",
-            "aboutVersion": "Version 1.1.8 Pro • Hardware-Accelerated QML Interface",
+            "aboutVersion": "Version 1.1.9 Pro • Hardware-Accelerated QML Interface",
             "updateSection": "Application Updates",
             "updateSubtitle": "Keep YuYuInstaller updated with the latest improvements.",
             "currentVersionLabel": "Installed Version",
@@ -172,6 +172,10 @@ QtObject {
 
             "updateLogTitle": "Release Notes & Changelog",
             "updateLogSubtitle": "Detailed history of improvements and release notes",
+            "log119_1": "Setup Size Reduced by 51 MB: Cleaned redundant assets, shrinking the installer from 160 MB down to 109 MB",
+            "log119_2": "Universal CPU Compatibility: Removed /arch:AVX2 crash risk so the app runs smoothly on all 64-bit Windows systems",
+            "log119_3": "Smooth Queue Scrolling: Enabled item recycling (reuseItems) for zero-lag scrolling in the download queue",
+            "log119_4": "Brand & Codebase Unification: Fully migrated all legacy MediaGrab references to YuYuInstaller across C++ and QML",
             "log118_1": "Proxy & Privacy Tab: Added dedicated sidebar tab to route downloads through secure proxies",
             "log118_2": "SOCKS5 & HTTP Support: Native support for SOCKS5 (Tor, Cloudflare WARP, v2ray) and HTTP with 1-click presets",
             "log118_3": "Live Ping Testing: Real-time latency tester to verify proxy connectivity before downloading",
@@ -235,7 +239,7 @@ QtObject {
         "tr": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.1.8 Pro",
+            "appVersion": "v1.1.9 Pro",
             "appSubtitle": "Medya İndirici & Dönüştürücü",
 
             // Sidebar
@@ -346,7 +350,7 @@ QtObject {
             "missingStatus": "Bulunamadı",
             "aboutTitle": "YuYuİnstaller Hakkında",
             "aboutDesc": "YuYuİnstaller; C++20, Qt 6 Quick / QML, FFmpeg ve yt-dlp ile güçlendirilmiş, yüksek performanslı yeni nesil medya indirme ve ses dönüştürme yazılımıdır.",
-            "aboutVersion": "Sürüm 1.1.8 Pro • Donanım Hızlandırmalı QML Arayüzü",
+            "aboutVersion": "Sürüm 1.1.9 Pro • Donanım Hızlandırmalı QML Arayüzü",
             "updateSection": "Uygulama Güncellemeleri",
             "updateSubtitle": "YuYuİnstaller'ı resmi depodan en son sürümle güncel tutun.",
             "currentVersionLabel": "Yüklü Sürüm",
@@ -396,6 +400,10 @@ QtObject {
 
             "updateLogTitle": "Güncelleme Notları & Sürüm Logları",
             "updateLogSubtitle": "Yayınlanan sürümler ve yapılan yeniliklerin detaylı listesi",
+            "log119_1": "Kurulum Boyutu 51 MB Küçültüldü: Eski artık dosyalar temizlendi, kurulum paketi 160 MB'tan 109 MB'a indirildi",
+            "log119_2": "Evrensel İşlemci Uyumluluğu: /arch:AVX2 riski kaldırılarak tüm 64-bit Windows sistemlerinde çökmesiz çalışma sağlandı",
+            "log119_3": "Akıcı Kuyruk Kaydırması: İndirme kuyruğunda kart geri dönüşümü (reuseItems) ile takılmasız akıcı kaydırma sağlandı",
+            "log119_4": "Marka & Kod Temizliği: Eski MediaGrab referansları C++ ve QML genelinde tamamen YuYuInstaller ile güncellendi",
             "log118_1": "Proxy & Gizlilik Menüsü: İndirmeleri güvenli tünelden geçirmek için özel sekme eklendi",
             "log118_2": "SOCKS5 ve HTTP Desteği: SOCKS5 (Tor, Cloudflare WARP, v2ray) ve HTTP protokolleri için hızlı hazır ayarlar eklendi",
             "log118_3": "Canlı Gecikme Testi: Proxy bağlantısını ve ping süresini anlık ölçen test butonu eklendi",
@@ -459,7 +467,7 @@ QtObject {
         "uk": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.1.8 Pro",
+            "appVersion": "v1.1.9 Pro",
             "appSubtitle": "Завантажувач та конвертер медіа",
 
             // Sidebar
@@ -570,7 +578,7 @@ QtObject {
             "missingStatus": "Відсутній",
             "aboutTitle": "Про YuYuInstaller",
             "aboutDesc": "YuYuInstaller — це сучасний завантажувач та конвертер медіа для Windows, створений на C++20, Qt 6 Quick / QML, FFmpeg та yt-dlp для високопродуктивного прямого потокового завантаження та вилучення аудіо 320 kbps.",
-            "aboutVersion": "Версія 1.1.8 Pro • Апаратно-прискорений інтерфейс QML",
+            "aboutVersion": "Версія 1.1.9 Pro • Апаратно-прискорений інтерфейс QML",
             "updateSection": "Оновлення програми",
             "updateSubtitle": "Підтримуйте актуальність YuYuInstaller з офіційного репозиторію.",
             "currentVersionLabel": "Встановлена версія",
@@ -620,6 +628,10 @@ QtObject {
 
             "updateLogTitle": "Журнал оновлень та історія змін",
             "updateLogSubtitle": "Детальний список випусків та реалізованих покращень",
+            "log119_1": "Розмір інсталятора зменшено на 51 МБ: Очищено застарілі файли, розмір інсталятора зменшено зі 160 МБ до 109 МБ",
+            "log119_2": "Універсальна сумісність з процесорами: Виправлено ризик аварійного завершення /arch:AVX2 для стабільної роботи на всіх 64-бітних системах",
+            "log119_3": "Плавне прокручування черги: Увімкнено повторне використання карток (reuseItems) для усунення затримок",
+            "log119_4": "Уніфікація коду та бренду: Повна міграція старих посилань MediaGrab на YuYuInstaller у C++ та QML",
             "log118_1": "Меню Проксі: Додано вкладку для маршрутизації завантажень через захищені проксі",
             "log118_2": "Підтримка SOCKS5 та HTTP: Швидкі пресети для SOCKS5 (Tor, WARP, v2ray) та HTTP проксі",
             "log118_3": "Тест затримки: Жива перевірка пінгу та працездатності проксі перед завантаженням",

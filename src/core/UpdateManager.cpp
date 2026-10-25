@@ -40,7 +40,7 @@ void UpdateManager::checkForUpdates(bool silent) {
 
     QUrl apiUrl("https://api.github.com/repos/Dreaminqs/YuYuInstaller/releases/latest");
     QNetworkRequest request(apiUrl);
-    request.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.0.0 (Windows NT 10.0; Win64; x64)");
+    request.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.1.9 (Windows NT 10.0; Win64; x64)");
     request.setRawHeader("Accept", "application/vnd.github.v3+json");
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
 
