@@ -1,6 +1,6 @@
 # YuYuInstaller
 
-[Türkçe](../README.md) | [English](README_en.md)
+[Türkçe](../README.md) | [English](README_en.md) | **Українська**
 
 YuYuInstaller — сучасний високопродуктивний завантажувач медіа та конвертер аудіо для Windows на базі C++20 та Qt 6. Підтримує завантаження відео до 4K, конвертацію в MP3 320 кбіт/с та плавний аніме-інтерфейс.
 

@@ -1,6 +1,6 @@
 # YuYuInstaller
 
-[Türkçe](../README.md) | [Українська](README_uk.md)
+[Türkçe](../README.md) | **English** | [Українська](README_uk.md)
 
 YuYuInstaller is a high-performance Windows media downloader and audio converter built with modern C++20 and Qt 6. It offers up to 4K video downloads, 1-click 320 kbps MP3 extraction, and a fluid dark anime interface.
 

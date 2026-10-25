@@ -397,7 +397,7 @@ Item {
 
                                 Text {
                                     width: parent.width
-                                    text: "• " + I18n.t("log118_1") + "\n• " + I18n.t("log118_2") + "\n• " + I18n.t("log118_3") + "\n• " + I18n.t("log118_4")
+                                    text: "• " + I18n.t("log118_1") + "\n• " + I18n.t("log118_2") + "\n• " + I18n.t("log118_3")
                                     color: Theme.textSecondary
                                     font.pixelSize: 11
                                     font.family: Theme.fontFamily

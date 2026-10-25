@@ -5,10 +5,9 @@ import MediaGrab
 Item {
     id: root
 
-    // Local state for editing before saving
     property int selectedMode: (typeof proxyManager !== "undefined") ? proxyManager.proxyMode : 0
     property string localHost: (typeof proxyManager !== "undefined") ? proxyManager.host : "127.0.0.1"
-    property int localPort: (typeof proxyManager !== "undefined") ? proxyManager.port : 10808
+    property int localPort: (typeof proxyManager !== "undefined") ? proxyManager.port : 40000
     property string localUser: (typeof proxyManager !== "undefined") ? proxyManager.username : ""
     property string localPass: (typeof proxyManager !== "undefined") ? proxyManager.password : ""
     property bool showPassword: false
@@ -23,14 +22,14 @@ Item {
     Flickable {
         anchors.fill: parent
         anchors.margins: 28
-        contentHeight: contentCol.height + 60
+        contentHeight: contentCol.height + 40
         clip: true
 
         Column {
             id: contentCol
             width: Math.min(parent.width, 760)
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 24
+            spacing: 20
 
             // Header Section
             Column {
@@ -53,10 +52,10 @@ Item {
             // Card 1: Live Status & Master Switch
             Rectangle {
                 width: parent.width
-                implicitHeight: statusCol.implicitHeight + 36
+                implicitHeight: statusCol.implicitHeight + 32
                 radius: Theme.radiusLg
                 color: Theme.bgCard
-                border.color: (typeof proxyManager !== "undefined" && proxyManager.enabled && proxyManager.proxyMode !== 0) ? Theme.accent : Theme.borderDim
+                border.color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? Theme.accent : Theme.borderDim
                 border.width: 1
 
                 Behavior on border.color { ColorAnimation { duration: 250 } }
@@ -64,31 +63,31 @@ Item {
                 Column {
                     id: statusCol
                     anchors.fill: parent
-                    anchors.margins: 18
+                    anchors.margins: 16
                     spacing: 12
 
                     Item {
                         width: parent.width
-                        height: 40
+                        height: 38
 
                         Row {
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 14
+                            spacing: 12
 
                             // Pulsing status LED
                             Item {
-                                width: 38; height: 38
+                                width: 28; height: 28
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Rectangle {
                                     anchors.centerIn: parent
-                                    width: 34; height: 34; radius: 17
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled && proxyManager.proxyMode !== 0) ? "#00d29d" : "#64748b"
+                                    width: 26; height: 26; radius: 13
+                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? "#00d29d" : "#64748b"
                                     opacity: 0.15
 
                                     SequentialAnimation on scale {
-                                        running: (typeof proxyManager !== "undefined" && proxyManager.enabled && proxyManager.proxyMode !== 0)
+                                        running: (typeof proxyManager !== "undefined" && proxyManager.enabled)
                                         loops: Animation.Infinite
                                         NumberAnimation { from: 0.9; to: 1.25; duration: 1200; easing.type: Easing.InOutQuad }
                                         NumberAnimation { from: 1.25; to: 0.9; duration: 1200; easing.type: Easing.InOutQuad }
@@ -97,32 +96,32 @@ Item {
 
                                 Rectangle {
                                     anchors.centerIn: parent
-                                    width: 14; height: 14; radius: 7
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled && proxyManager.proxyMode !== 0) ? "#00d29d" : "#64748b"
+                                    width: 12; height: 12; radius: 6
+                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? "#00d29d" : "#64748b"
                                 }
                             }
 
                             // Status Info
                             Column {
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 3
+                                spacing: 2
 
                                 Text {
                                     text: I18n.t("proxyStatusCardTitle")
                                     color: Theme.textSecondary
-                                    font.pixelSize: 11
+                                    font.pixelSize: 10
                                     font.family: Theme.fontFamily
                                     font.weight: Font.DemiBold
                                 }
 
                                 Text {
-                                    text: (typeof proxyManager !== "undefined" && proxyManager.enabled && proxyManager.proxyMode !== 0)
+                                    text: (typeof proxyManager !== "undefined" && proxyManager.enabled)
                                           ? I18n.t("proxyStatusActive")
                                           : I18n.t("proxyStatusInactive")
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled && proxyManager.proxyMode !== 0)
+                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled)
                                            ? "#00d29d"
                                            : Theme.textPrimary
-                                    font.pixelSize: 14
+                                    font.pixelSize: 13
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
                                 }
@@ -133,11 +132,11 @@ Item {
                         Item {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.right: parent.right
-                            width: 52; height: 28
+                            width: 50; height: 26
 
                             Rectangle {
                                 anchors.fill: parent
-                                radius: 14
+                                radius: 13
                                 color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? Theme.accent : "#222c3c"
                                 border.color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? Theme.accent : Theme.borderDim
                                 border.width: 1
@@ -145,7 +144,7 @@ Item {
                                 Behavior on color { ColorAnimation { duration: 200 } }
 
                                 Rectangle {
-                                    width: 22; height: 22; radius: 11
+                                    width: 20; height: 20; radius: 10
                                     color: "#ffffff"
                                     y: 3
                                     x: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? 27 : 3
@@ -169,7 +168,7 @@ Item {
                     // Active Protocol Summary Bar
                     Rectangle {
                         width: parent.width
-                        height: 32
+                        height: 30
                         radius: Theme.radiusMd
                         color: Theme.bgElevated
                         border.color: Theme.borderDim
@@ -179,18 +178,16 @@ Item {
                             anchors.fill: parent
                             anchors.leftMargin: 12
                             anchors.rightMargin: 12
-                            spacing: 12
+                            spacing: 10
 
                             Text {
                                 text: {
-                                    if (typeof proxyManager === "undefined" || !proxyManager.enabled || proxyManager.proxyMode === 0)
-                                        return "• " + I18n.t("proxyModeDirect")
+                                    if (typeof proxyManager === "undefined" || !proxyManager.enabled)
+                                        return I18n.t("proxyStatusInactive")
+                                    if (proxyManager.proxyMode === 0)
+                                        return "SOCKS5: " + proxyManager.host + ":" + proxyManager.port
                                     if (proxyManager.proxyMode === 1)
-                                        return "• " + I18n.t("proxyModeCloudflare") + " (DoH DNS / TLS Masking)"
-                                    if (proxyManager.proxyMode === 2)
-                                        return "• SOCKS5: " + proxyManager.host + ":" + proxyManager.port
-                                    if (proxyManager.proxyMode === 3)
-                                        return "• HTTP: " + proxyManager.host + ":" + proxyManager.port
+                                        return "HTTP: " + proxyManager.host + ":" + proxyManager.port
                                     return ""
                                 }
                                 color: Theme.textSecondary
@@ -199,13 +196,13 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
-                            Item { width: 10; height: 1 }
+                            Item { width: 8; height: 1 }
 
                             // Latency Badge if test passed
                             Rectangle {
                                 visible: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1)
                                 height: 20
-                                width: latencyTxt.implicitWidth + 14
+                                width: latencyTxt.implicitWidth + 12
                                 radius: 10
                                 color: "#143a2d"
                                 border.color: "#00d29d"
@@ -227,10 +224,10 @@ Item {
                 }
             }
 
-            // Card 2: Tunnel Modes
+            // Card 2: Proxy Protocol Selection (SOCKS5 or HTTP)
             Rectangle {
                 width: parent.width
-                implicitHeight: modeCol.implicitHeight + 36
+                implicitHeight: modeCol.implicitHeight + 32
                 radius: Theme.radiusLg
                 color: Theme.bgCard
                 border.color: Theme.borderDim
@@ -239,21 +236,21 @@ Item {
                 Column {
                     id: modeCol
                     anchors.fill: parent
-                    anchors.margins: 18
-                    spacing: 14
+                    anchors.margins: 16
+                    spacing: 12
 
                     Text {
                         text: I18n.t("proxyModeTitle")
                         color: Theme.textPrimary
-                        font.pixelSize: 14
+                        font.pixelSize: 13
                         font.family: Theme.fontFamily
                         font.weight: Font.Bold
                     }
 
-                    // Mode 0: Direct
+                    // Mode 0: SOCKS5
                     Rectangle {
                         width: parent.width
-                        implicitHeight: 62
+                        implicitHeight: 60
                         radius: Theme.radiusMd
                         color: (root.selectedMode === 0) ? Theme.activeTabBg : (m0Mouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
                         border.color: (root.selectedMode === 0) ? Theme.accent : Theme.borderDim
@@ -275,30 +272,38 @@ Item {
                         Row {
                             anchors.fill: parent
                             anchors.margins: 12
-                            spacing: 14
+                            spacing: 12
 
-                            Text {
-                                text: "⚡"
-                                font.pixelSize: 18
+                            Rectangle {
+                                width: 56; height: 22; radius: 4
+                                color: (root.selectedMode === 0) ? Theme.accent : "#222c3c"
                                 anchors.verticalCenter: parent.verticalCenter
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "SOCKS5"
+                                    color: (root.selectedMode === 0) ? "#07090e" : Theme.textSecondary
+                                    font.pixelSize: 10
+                                    font.weight: Font.Bold
+                                }
                             }
 
                             Column {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: 2
-                                width: parent.width - 70
+                                width: parent.width - 100
 
                                 Text {
-                                    text: I18n.t("proxyModeDirect")
+                                    text: I18n.t("proxyModeSocks5")
                                     color: (root.selectedMode === 0) ? Theme.accent : Theme.textPrimary
-                                    font.pixelSize: 13
+                                    font.pixelSize: 12
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
                                 }
                                 Text {
-                                    text: I18n.t("proxyModeDirectDesc")
+                                    text: I18n.t("proxyModeSocks5Desc")
                                     color: Theme.textSecondary
-                                    font.pixelSize: 11
+                                    font.pixelSize: 10
                                     font.family: Theme.fontFamily
                                     elide: Text.ElideRight
                                     width: parent.width
@@ -306,7 +311,7 @@ Item {
                             }
 
                             Rectangle {
-                                width: 18; height: 18; radius: 9
+                                width: 16; height: 16; radius: 8
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: (root.selectedMode === 0) ? Theme.accent : "transparent"
                                 border.color: (root.selectedMode === 0) ? Theme.accent : Theme.borderBright
@@ -322,10 +327,10 @@ Item {
                         }
                     }
 
-                    // Mode 1: Cloudflare Stealth (DoH & Fast Tunnel)
+                    // Mode 1: HTTP / HTTPS
                     Rectangle {
                         width: parent.width
-                        implicitHeight: 62
+                        implicitHeight: 60
                         radius: Theme.radiusMd
                         color: (root.selectedMode === 1) ? Theme.activeTabBg : (m1Mouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
                         border.color: (root.selectedMode === 1) ? Theme.accent : Theme.borderDim
@@ -340,7 +345,6 @@ Item {
                                 root.selectedMode = 1
                                 if (typeof proxyManager !== "undefined") {
                                     proxyManager.proxyMode = 1
-                                    proxyManager.enabled = true
                                 }
                             }
                         }
@@ -348,30 +352,38 @@ Item {
                         Row {
                             anchors.fill: parent
                             anchors.margins: 12
-                            spacing: 14
+                            spacing: 12
 
-                            Text {
-                                text: "🛡️"
-                                font.pixelSize: 18
+                            Rectangle {
+                                width: 56; height: 22; radius: 4
+                                color: (root.selectedMode === 1) ? Theme.accent : "#222c3c"
                                 anchors.verticalCenter: parent.verticalCenter
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "HTTP"
+                                    color: (root.selectedMode === 1) ? "#07090e" : Theme.textSecondary
+                                    font.pixelSize: 10
+                                    font.weight: Font.Bold
+                                }
                             }
 
                             Column {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: 2
-                                width: parent.width - 70
+                                width: parent.width - 100
 
                                 Text {
-                                    text: I18n.t("proxyModeCloudflare")
+                                    text: I18n.t("proxyModeHttp")
                                     color: (root.selectedMode === 1) ? Theme.accent : Theme.textPrimary
-                                    font.pixelSize: 13
+                                    font.pixelSize: 12
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
                                 }
                                 Text {
-                                    text: I18n.t("proxyModeCloudflareDesc")
+                                    text: I18n.t("proxyModeHttpDesc")
                                     color: Theme.textSecondary
-                                    font.pixelSize: 11
+                                    font.pixelSize: 10
                                     font.family: Theme.fontFamily
                                     elide: Text.ElideRight
                                     width: parent.width
@@ -379,7 +391,7 @@ Item {
                             }
 
                             Rectangle {
-                                width: 18; height: 18; radius: 9
+                                width: 16; height: 16; radius: 8
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: (root.selectedMode === 1) ? Theme.accent : "transparent"
                                 border.color: (root.selectedMode === 1) ? Theme.accent : Theme.borderBright
@@ -394,158 +406,13 @@ Item {
                             }
                         }
                     }
-
-                    // Mode 2: Custom SOCKS5
-                    Rectangle {
-                        width: parent.width
-                        implicitHeight: 62
-                        radius: Theme.radiusMd
-                        color: (root.selectedMode === 2) ? Theme.activeTabBg : (m2Mouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
-                        border.color: (root.selectedMode === 2) ? Theme.accent : Theme.borderDim
-                        border.width: 1
-
-                        MouseArea {
-                            id: m2Mouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.selectedMode = 2
-                                if (typeof proxyManager !== "undefined") {
-                                    proxyManager.proxyMode = 2
-                                }
-                            }
-                        }
-
-                        Row {
-                            anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 14
-
-                            Text {
-                                text: "🧦"
-                                font.pixelSize: 18
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            Column {
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
-                                width: parent.width - 70
-
-                                Text {
-                                    text: I18n.t("proxyModeSocks5")
-                                    color: (root.selectedMode === 2) ? Theme.accent : Theme.textPrimary
-                                    font.pixelSize: 13
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.Bold
-                                }
-                                Text {
-                                    text: I18n.t("proxyModeSocks5Desc")
-                                    color: Theme.textSecondary
-                                    font.pixelSize: 11
-                                    font.family: Theme.fontFamily
-                                    elide: Text.ElideRight
-                                    width: parent.width
-                                }
-                            }
-
-                            Rectangle {
-                                width: 18; height: 18; radius: 9
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: (root.selectedMode === 2) ? Theme.accent : "transparent"
-                                border.color: (root.selectedMode === 2) ? Theme.accent : Theme.borderBright
-                                border.width: 2
-
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 6; height: 6; radius: 3
-                                    color: "#07090e"
-                                    visible: root.selectedMode === 2
-                                }
-                            }
-                        }
-                    }
-
-                    // Mode 3: Custom HTTP
-                    Rectangle {
-                        width: parent.width
-                        implicitHeight: 62
-                        radius: Theme.radiusMd
-                        color: (root.selectedMode === 3) ? Theme.activeTabBg : (m3Mouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
-                        border.color: (root.selectedMode === 3) ? Theme.accent : Theme.borderDim
-                        border.width: 1
-
-                        MouseArea {
-                            id: m3Mouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.selectedMode = 3
-                                if (typeof proxyManager !== "undefined") {
-                                    proxyManager.proxyMode = 3
-                                }
-                            }
-                        }
-
-                        Row {
-                            anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 14
-
-                            Text {
-                                text: "🌐"
-                                font.pixelSize: 18
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            Column {
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
-                                width: parent.width - 70
-
-                                Text {
-                                    text: I18n.t("proxyModeHttp")
-                                    color: (root.selectedMode === 3) ? Theme.accent : Theme.textPrimary
-                                    font.pixelSize: 13
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.Bold
-                                }
-                                Text {
-                                    text: I18n.t("proxyModeHttpDesc")
-                                    color: Theme.textSecondary
-                                    font.pixelSize: 11
-                                    font.family: Theme.fontFamily
-                                    elide: Text.ElideRight
-                                    width: parent.width
-                                }
-                            }
-
-                            Rectangle {
-                                width: 18; height: 18; radius: 9
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: (root.selectedMode === 3) ? Theme.accent : "transparent"
-                                border.color: (root.selectedMode === 3) ? Theme.accent : Theme.borderBright
-                                border.width: 2
-
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 6; height: 6; radius: 3
-                                    color: "#07090e"
-                                    visible: root.selectedMode === 3
-                                }
-                            }
-                        }
-                    }
                 }
             }
 
-            // Card 3: Custom Proxy Configuration (Only visible for SOCKS5 or HTTP)
+            // Card 3: Server Configuration & Quick Presets
             Rectangle {
-                visible: root.selectedMode === 2 || root.selectedMode === 3
                 width: parent.width
-                implicitHeight: configCol.implicitHeight + 36
+                implicitHeight: configCol.implicitHeight + 32
                 radius: Theme.radiusLg
                 color: Theme.bgCard
                 border.color: Theme.borderDim
@@ -554,38 +421,142 @@ Item {
                 Column {
                     id: configCol
                     anchors.fill: parent
-                    anchors.margins: 18
-                    spacing: 16
+                    anchors.margins: 16
+                    spacing: 14
 
-                    Text {
-                        text: I18n.t("proxyConfigTitle")
-                        color: Theme.textPrimary
-                        font.pixelSize: 14
-                        font.family: Theme.fontFamily
-                        font.weight: Font.Bold
+                    Row {
+                        width: parent.width
+                        spacing: 8
+
+                        Text {
+                            text: I18n.t("proxyConfigTitle")
+                            color: Theme.textPrimary
+                            font.pixelSize: 13
+                            font.family: Theme.fontFamily
+                            font.weight: Font.Bold
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Item { width: 10; height: 1 }
+
+                        // Quick Presets (Only shown for SOCKS5)
+                        Row {
+                            visible: root.selectedMode === 0
+                            spacing: 6
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            // WARP Preset
+                            Rectangle {
+                                height: 22
+                                width: warpTxt.implicitWidth + 14
+                                radius: 4
+                                color: warpMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
+                                border.color: (root.localPort === 40000) ? Theme.accent : Theme.borderDim
+                                border.width: 1
+
+                                Text {
+                                    id: warpTxt
+                                    anchors.centerIn: parent
+                                    text: "Cloudflare WARP (40000)"
+                                    color: (root.localPort === 40000) ? Theme.accent : Theme.textSecondary
+                                    font.pixelSize: 10
+                                    font.family: Theme.fontFamily
+                                }
+
+                                MouseArea {
+                                    id: warpMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.localHost = "127.0.0.1"
+                                        root.localPort = 40000
+                                    }
+                                }
+                            }
+
+                            // Tor Preset
+                            Rectangle {
+                                height: 22
+                                width: torTxt.implicitWidth + 14
+                                radius: 4
+                                color: torMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
+                                border.color: (root.localPort === 9050) ? Theme.accent : Theme.borderDim
+                                border.width: 1
+
+                                Text {
+                                    id: torTxt
+                                    anchors.centerIn: parent
+                                    text: "Tor (9050)"
+                                    color: (root.localPort === 9050) ? Theme.accent : Theme.textSecondary
+                                    font.pixelSize: 10
+                                    font.family: Theme.fontFamily
+                                }
+
+                                MouseArea {
+                                    id: torMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.localHost = "127.0.0.1"
+                                        root.localPort = 9050
+                                    }
+                                }
+                            }
+
+                            // Xray / v2ray Preset
+                            Rectangle {
+                                height: 22
+                                width: xrayTxt.implicitWidth + 14
+                                radius: 4
+                                color: xrayMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
+                                border.color: (root.localPort === 10808) ? Theme.accent : Theme.borderDim
+                                border.width: 1
+
+                                Text {
+                                    id: xrayTxt
+                                    anchors.centerIn: parent
+                                    text: "v2ray / Xray (10808)"
+                                    color: (root.localPort === 10808) ? Theme.accent : Theme.textSecondary
+                                    font.pixelSize: 10
+                                    font.family: Theme.fontFamily
+                                }
+
+                                MouseArea {
+                                    id: xrayMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.localHost = "127.0.0.1"
+                                        root.localPort = 10808
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     // Host & Port Row
                     Row {
                         width: parent.width
-                        spacing: 14
+                        spacing: 12
 
                         // Host Input
                         Column {
-                            width: (parent.width - 14) * 0.7
-                            spacing: 6
+                            width: (parent.width - 12) * 0.72
+                            spacing: 5
 
                             Text {
                                 text: I18n.t("proxyHost")
                                 color: Theme.textSecondary
                                 font.pixelSize: 11
                                 font.family: Theme.fontFamily
-                                font.weight: Font.DemiBold
                             }
 
                             Rectangle {
                                 width: parent.width
-                                height: 38
+                                height: 36
                                 radius: Theme.radiusMd
                                 color: Theme.bgElevated
                                 border.color: hostInput.activeFocus ? Theme.accent : Theme.borderDim
@@ -594,7 +565,7 @@ Item {
                                 TextInput {
                                     id: hostInput
                                     anchors.fill: parent
-                                    anchors.margins: 10
+                                    anchors.margins: 8
                                     text: root.localHost
                                     color: Theme.textPrimary
                                     font.pixelSize: 12
@@ -608,20 +579,19 @@ Item {
 
                         // Port Input
                         Column {
-                            width: (parent.width - 14) * 0.3
-                            spacing: 6
+                            width: (parent.width - 12) * 0.28
+                            spacing: 5
 
                             Text {
                                 text: I18n.t("proxyPort")
                                 color: Theme.textSecondary
                                 font.pixelSize: 11
                                 font.family: Theme.fontFamily
-                                font.weight: Font.DemiBold
                             }
 
                             Rectangle {
                                 width: parent.width
-                                height: 38
+                                height: 36
                                 radius: Theme.radiusMd
                                 color: Theme.bgElevated
                                 border.color: portInput.activeFocus ? Theme.accent : Theme.borderDim
@@ -630,7 +600,7 @@ Item {
                                 TextInput {
                                     id: portInput
                                     anchors.fill: parent
-                                    anchors.margins: 10
+                                    anchors.margins: 8
                                     text: root.localPort.toString()
                                     color: Theme.textPrimary
                                     font.pixelSize: 12
@@ -638,7 +608,7 @@ Item {
                                     verticalAlignment: TextInput.AlignVCenter
                                     selectByMouse: true
                                     validator: IntValidator { bottom: 1; top: 65535 }
-                                    onTextChanged: root.localPort = parseInt(text) || 10808
+                                    onTextChanged: root.localPort = parseInt(text) || 40000
                                 }
                             }
                         }
@@ -647,24 +617,23 @@ Item {
                     // Credentials Row (Optional)
                     Row {
                         width: parent.width
-                        spacing: 14
+                        spacing: 12
 
                         // Username Input
                         Column {
-                            width: (parent.width - 14) * 0.5
-                            spacing: 6
+                            width: (parent.width - 12) * 0.5
+                            spacing: 5
 
                             Text {
                                 text: I18n.t("proxyUser")
                                 color: Theme.textSecondary
                                 font.pixelSize: 11
                                 font.family: Theme.fontFamily
-                                font.weight: Font.DemiBold
                             }
 
                             Rectangle {
                                 width: parent.width
-                                height: 38
+                                height: 36
                                 radius: Theme.radiusMd
                                 color: Theme.bgElevated
                                 border.color: userInput.activeFocus ? Theme.accent : Theme.borderDim
@@ -673,7 +642,7 @@ Item {
                                 TextInput {
                                     id: userInput
                                     anchors.fill: parent
-                                    anchors.margins: 10
+                                    anchors.margins: 8
                                     text: root.localUser
                                     color: Theme.textPrimary
                                     font.pixelSize: 12
@@ -687,20 +656,19 @@ Item {
 
                         // Password Input
                         Column {
-                            width: (parent.width - 14) * 0.5
-                            spacing: 6
+                            width: (parent.width - 12) * 0.5
+                            spacing: 5
 
                             Text {
                                 text: I18n.t("proxyPass")
                                 color: Theme.textSecondary
                                 font.pixelSize: 11
                                 font.family: Theme.fontFamily
-                                font.weight: Font.DemiBold
                             }
 
                             Rectangle {
                                 width: parent.width
-                                height: 38
+                                height: 36
                                 radius: Theme.radiusMd
                                 color: Theme.bgElevated
                                 border.color: passInput.activeFocus ? Theme.accent : Theme.borderDim
@@ -709,7 +677,8 @@ Item {
                                 TextInput {
                                     id: passInput
                                     anchors.fill: parent
-                                    anchors.margins: 10
+                                    anchors.leftMargin: 8
+                                    anchors.rightMargin: 52
                                     text: root.localPass
                                     echoMode: root.showPassword ? TextInput.Normal : TextInput.Password
                                     color: Theme.textPrimary
@@ -724,9 +693,11 @@ Item {
                                     anchors.right: parent.right
                                     anchors.rightMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: root.showPassword ? "👁️" : "🔒"
-                                    font.pixelSize: 13
-                                    opacity: 0.6
+                                    text: root.showPassword ? "Hide" : "Show"
+                                    color: Theme.accent
+                                    font.pixelSize: 10
+                                    font.family: Theme.fontFamily
+                                    font.weight: Font.DemiBold
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
@@ -742,12 +713,12 @@ Item {
             // Card 4: Action Buttons (Test & Save)
             Row {
                 width: parent.width
-                spacing: 14
+                spacing: 12
 
                 // Test Connection Button
                 Rectangle {
-                    width: (parent.width - 14) * 0.45
-                    height: 44
+                    width: (parent.width - 12) * 0.42
+                    height: 42
                     radius: Theme.radiusMd
                     color: testMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
                     border.color: (typeof proxyManager !== "undefined" && proxyManager.isTesting) ? Theme.accent : Theme.borderBright
@@ -761,6 +732,7 @@ Item {
                         enabled: typeof proxyManager !== "undefined" && !proxyManager.isTesting
                         onClicked: {
                             if (typeof proxyManager !== "undefined") {
+                                proxyManager.setProxyMode(root.selectedMode)
                                 proxyManager.setHost(root.localHost)
                                 proxyManager.setPort(root.localPort)
                                 proxyManager.setUsername(root.localUser)
@@ -770,37 +742,24 @@ Item {
                         }
                     }
 
-                    Row {
+                    Text {
                         anchors.centerIn: parent
-                        spacing: 8
-
-                        Text {
-                            text: (typeof proxyManager !== "undefined" && proxyManager.isTesting) ? "⏳" : "📡"
-                            font.pixelSize: 14
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Text {
-                            text: (typeof proxyManager !== "undefined" && proxyManager.isTesting)
-                                  ? I18n.t("proxyStatusTesting")
-                                  : I18n.t("proxyTestBtn")
-                            color: Theme.textPrimary
-                            font.pixelSize: 12
-                            font.family: Theme.fontFamily
-                            font.weight: Font.DemiBold
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
+                        text: (typeof proxyManager !== "undefined" && proxyManager.isTesting)
+                              ? I18n.t("proxyStatusTesting")
+                              : I18n.t("proxyTestBtn")
+                        color: Theme.textPrimary
+                        font.pixelSize: 12
+                        font.family: Theme.fontFamily
+                        font.weight: Font.DemiBold
                     }
                 }
 
                 // Save & Apply Button
                 Rectangle {
-                    width: (parent.width - 14) * 0.55
-                    height: 44
+                    width: (parent.width - 12) * 0.58
+                    height: 42
                     radius: Theme.radiusMd
                     color: saveMouse.containsMouse ? "#00e5ab" : Theme.accent
-                    border.color: "#00d29d"
-                    border.width: 1
 
                     MouseArea {
                         id: saveMouse
@@ -814,9 +773,7 @@ Item {
                                 proxyManager.setPort(root.localPort)
                                 proxyManager.setUsername(root.localUser)
                                 proxyManager.setPassword(root.localPass)
-                                if (root.selectedMode !== 0) {
-                                    proxyManager.enabled = true
-                                }
+                                proxyManager.enabled = true
                                 proxyManager.applyProxy()
                                 proxyManager.saveSettings()
                                 root.savedNotification = true
@@ -825,27 +782,34 @@ Item {
                         }
                     }
 
-                    Row {
+                    Text {
                         anchors.centerIn: parent
-                        spacing: 8
-
-                        Text {
-                            text: "✓"
-                            color: "#07090e"
-                            font.pixelSize: 14
-                            font.weight: Font.Bold
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Text {
-                            text: I18n.t("proxySaveBtn")
-                            color: "#07090e"
-                            font.pixelSize: 13
-                            font.family: Theme.fontFamily
-                            font.weight: Font.Bold
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
+                        text: I18n.t("proxySaveBtn")
+                        color: "#07090e"
+                        font.pixelSize: 13
+                        font.family: Theme.fontFamily
+                        font.weight: Font.Bold
                     }
+                }
+            }
+
+            // Status message from test
+            Rectangle {
+                visible: (typeof proxyManager !== "undefined" && proxyManager.testStatus !== 0)
+                width: parent.width
+                height: 34
+                radius: Theme.radiusMd
+                color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? "#112a22" : "#2a1515"
+                border.color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? "#00d29d" : "#ef4444"
+                border.width: 1
+
+                Text {
+                    anchors.centerIn: parent
+                    text: (typeof proxyManager !== "undefined") ? proxyManager.testMessage : ""
+                    color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? "#00d29d" : "#ef4444"
+                    font.pixelSize: 11
+                    font.family: Theme.fontFamily
+                    font.weight: Font.DemiBold
                 }
             }
 
@@ -853,32 +817,19 @@ Item {
             Rectangle {
                 visible: root.savedNotification
                 width: parent.width
-                height: 38
+                height: 34
                 radius: Theme.radiusMd
                 color: "#112a22"
                 border.color: "#00d29d"
                 border.width: 1
 
-                Row {
+                Text {
                     anchors.centerIn: parent
-                    spacing: 8
-
-                    Text {
-                        text: "✓"
-                        color: "#00d29d"
-                        font.pixelSize: 14
-                        font.weight: Font.Bold
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Text {
-                        text: I18n.t("proxyAppliedSuccess")
-                        color: "#00d29d"
-                        font.pixelSize: 12
-                        font.family: Theme.fontFamily
-                        font.weight: Font.DemiBold
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+                    text: I18n.t("proxyAppliedSuccess")
+                    color: "#00d29d"
+                    font.pixelSize: 11
+                    font.family: Theme.fontFamily
+                    font.weight: Font.DemiBold
                 }
             }
         }

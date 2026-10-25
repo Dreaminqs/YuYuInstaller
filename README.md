@@ -1,8 +1,8 @@
 # YuYuInstaller
 
-[English](docs/README_en.md) | [Українська](docs/README_uk.md)
+**Türkçe** | [English](docs/README_en.md) | [Українська](docs/README_uk.md)
 
-YuYuInstaller, modern ve yüksek performanslı bir Windows medya indirme ve dönüştürme yazılımıdır. 4K'ya kadar video indirme, tek tıkla 320 kbps MP3 dönüştürme ve akıcı bir anime arayüzü sunar.
+YuYuInstaller, modern ve yüksek performanslı bir Windows medya indirme ve dönüştürme yazılımıdır. 4K'ya kadar video indirme, tek tıkla 320 kbps MP3 dönüştürme, güvenli Proxy/Tünel desteği ve akıcı bir anime arayüzü sunar.
 
 > [!NOTE]
 > **Otomatik Güncelleme:** Uygulamayı bir kez kurduktan sonra yeni sürümleri uygulama içindeki **Güncellemeler** sekmesinden tek tıkla otomatik olarak alabilirsiniz.
@@ -14,6 +14,7 @@ YuYuInstaller, modern ve yüksek performanslı bir Windows medya indirme ve dön
 - **Çoklu Platform:** YouTube, Instagram, TikTok, Twitter/X, Facebook, Animecix ve yüzlerce siteden medya indirme.
 - **Yüksek Kalite:** 4K UHD, 2K QHD ve 1080p FHD video seçenekleri; video başlığını indirmeden önce düzenleyebilme.
 - **320 kbps MP3:** FFmpeg motoru ile stüdyo kalitesinde kayıpsız ses ayıklama.
+- **Proxy & Gizli Tünel:** SOCKS5 (Tor, Cloudflare WARP, v2ray) ve HTTP proxy desteği ile okul/yurt ağlarında sansürsüz ve gizli indirme.
 - **Akıllı Kuyruk:** İndirme hız sınırı (MB/s), eşzamanlı / sıralı indirme modları ve duraklat/devam et kontrolleri.
 - **Çok Dilli:** Türkçe, İngilizce ve Ukraynaca arayüz desteği.
 
@@ -41,4 +42,4 @@ cd YuYuInstaller
 
 ## Lisans
 
-Bu proje [MIT Lisansı](LICENSE) ile korunmaktadır.
+Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır.

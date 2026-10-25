@@ -23,10 +23,8 @@ class ProxyManager : public QObject {
 
 public:
     enum ProxyMode {
-        ModeDirect = 0,         // Direct / Off
-        ModeCloudflareDoh = 1,  // Cloudflare Fast Privacy & DoH
-        ModeSocks5 = 2,         // Custom SOCKS5 (Tor, v2ray, Clash, SSH)
-        ModeHttp = 3            // Custom HTTP / HTTPS Proxy
+        ModeSocks5 = 0,         // SOCKS5 (Tor, Cloudflare WARP, v2ray, Clash, SSH)
+        ModeHttp = 1            // HTTP / HTTPS Proxy
     };
     Q_ENUM(ProxyMode)
 
@@ -82,9 +80,9 @@ private:
     static ProxyManager *s_instance;
 
     bool m_enabled{false};
-    int m_proxyMode{ModeDirect};
+    int m_proxyMode{ModeSocks5};
     QString m_host{"127.0.0.1"};
-    int m_port{10808};
+    int m_port{40000};
     QString m_username{""};
     QString m_password{""};
 

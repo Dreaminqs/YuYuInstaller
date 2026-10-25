@@ -27,7 +27,7 @@ ProxyManager* ProxyManager::instance() {
 }
 
 QString ProxyManager::proxyUrl() const {
-    if (!m_enabled || m_proxyMode == ModeDirect) {
+    if (!m_enabled) {
         return QString();
     }
 
@@ -45,11 +45,6 @@ QString ProxyManager::proxyUrl() const {
                 .arg(m_username, m_password, m_host, QString::number(m_port));
         }
         return QString("http://%1:%2").arg(m_host, QString::number(m_port));
-    }
-
-    if (m_proxyMode == ModeCloudflareDoh) {
-        // Fast Cloudflare DoH & Privacy mode
-        return QString();
     }
 
     return QString();
@@ -110,9 +105,9 @@ void ProxyManager::setPassword(const QString &pass) {
 }
 
 void ProxyManager::applyProxy() {
-    if (!m_enabled || m_proxyMode == ModeDirect) {
+    if (!m_enabled) {
         QNetworkProxy::setApplicationProxy(QNetworkProxy(QNetworkProxy::NoProxy));
-        std::cout << "[ProxyManager] Proxy disabled. Using direct connection." << std::endl;
+        std::cout << "[ProxyManager] Direct connection active (Proxy disabled)." << std::endl;
         return;
     }
 
@@ -124,10 +119,6 @@ void ProxyManager::applyProxy() {
         QNetworkProxy proxy(QNetworkProxy::HttpProxy, m_host, static_cast<quint16>(m_port), m_username, m_password);
         QNetworkProxy::setApplicationProxy(proxy);
         std::cout << "[ProxyManager] Applied HTTP proxy: " << m_host.toStdString() << ":" << m_port << std::endl;
-    } else if (m_proxyMode == ModeCloudflareDoh) {
-        // Direct mode with Cloudflare DoH security
-        QNetworkProxy::setApplicationProxy(QNetworkProxy(QNetworkProxy::NoProxy));
-        std::cout << "[ProxyManager] Cloudflare DoH Fast Privacy mode activated." << std::endl;
     }
 }
 
@@ -135,9 +126,9 @@ void ProxyManager::loadSettings() {
     QSettings s;
     s.beginGroup("Proxy");
     m_enabled = s.value("enabled", false).toBool();
-    m_proxyMode = s.value("mode", ModeDirect).toInt();
+    m_proxyMode = s.value("mode", ModeSocks5).toInt();
     m_host = s.value("host", "127.0.0.1").toString();
-    m_port = s.value("port", 10808).toInt();
+    m_port = s.value("port", 40000).toInt();
     m_username = s.value("username", "").toString();
     m_password = s.value("password", "").toString();
     s.endGroup();
@@ -153,7 +144,7 @@ void ProxyManager::saveSettings() {
     s.setValue("username", m_username);
     s.setValue("password", m_password);
     s.endGroup();
-    std::cout << "[ProxyManager] Settings saved." << std::endl;
+    std::cout << "[ProxyManager] Proxy settings saved." << std::endl;
 }
 
 void ProxyManager::testConnection() {
@@ -166,7 +157,6 @@ void ProxyManager::testConnection() {
     emit testStatusChanged();
     emit testMessageChanged();
 
-    // Prepare proxy for the test instance
     QNetworkProxy testProxy(QNetworkProxy::NoProxy);
     if (m_proxyMode == ModeSocks5) {
         testProxy = QNetworkProxy(QNetworkProxy::Socks5Proxy, m_host, static_cast<quint16>(m_port), m_username, m_password);
@@ -205,6 +195,8 @@ void ProxyManager::testConnection() {
             m_testStatus = StatusFailed;
             if (reply->error() == QNetworkReply::OperationCanceledError) {
                 m_testMessage = "Connection timed out (6s)";
+            } else if (reply->error() == QNetworkReply::ProxyConnectionRefusedError) {
+                m_testMessage = QString("Proxy not running on %1:%2").arg(m_host, QString::number(m_port));
             } else {
                 m_testMessage = reply->errorString();
             }
