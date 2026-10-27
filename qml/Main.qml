@@ -12,7 +12,7 @@ ApplicationWindow {
     visible: true
     title: I18n.t("appName") + " - " + I18n.t("appSubtitle")
     flags: Qt.Window | Qt.FramelessWindowHint
-    color: "transparent"
+    color: "#0a0d13"
 
     // Base dark fallback
     Rectangle {
@@ -67,9 +67,9 @@ ApplicationWindow {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 36
+        height: 32
         z: 1000
-        color: Theme.bgSidebar
+        color: "#33080b12"
 
         // Native window drag & double-click maximize
         MouseArea {
@@ -89,30 +89,13 @@ ApplicationWindow {
             }
         }
 
-        // Left Branding (Mini Icon + Title)
-        Row {
-            anchors.left: parent.left
-            anchors.leftMargin: 12
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 8
-
-            Image {
-                width: 16
-                height: 16
-                source: "qrc:/qt/qml/YuYuInstaller/assets/logo.png"
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-                mipmap: true
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Text {
-                text: I18n.t("appName") + " - " + I18n.t("appSubtitle")
-                color: Theme.textSecondary
-                font.pixelSize: 11
-                font.family: Theme.fontFamily
-                anchors.verticalCenter: parent.verticalCenter
-            }
+        // Center Subtle Title
+        Text {
+            anchors.centerIn: parent
+            text: I18n.t("appName") + " - " + I18n.t("appSubtitle")
+            color: Theme.textMuted
+            font.pixelSize: 11
+            font.family: Theme.fontFamily
         }
 
         // Right Window Controls (Minimize, Maximize / Restore, Close)
