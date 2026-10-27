@@ -26,11 +26,11 @@ ApplicationWindow {
         targetFps: 45
     }
 
-    // Frosted dark overlay for high contrast readability
+    // Hafif karartma: videonun görünmesi için düşük tutuldu
     Rectangle {
         anchors.fill: parent
         color: "#070a12"
-        opacity: 0.50
+        opacity: 0.15
     }
 
     // Subtle ambient gradient background glow
@@ -112,7 +112,7 @@ ApplicationWindow {
         width: 330
         implicitHeight: bannerCol.implicitHeight + 24
         radius: Theme.radiusLg
-        color: "#111827"
+        color: "#cc111827"
         border.color: isDownloading ? Theme.accent : Theme.borderBright
         border.width: 1
 

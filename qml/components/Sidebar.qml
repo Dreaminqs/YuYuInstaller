@@ -545,32 +545,50 @@ Rectangle {
                                 var ctx = getContext("2d");
                                 ctx.reset();
                                 ctx.strokeStyle = (root.activeTab === 4) ? Theme.accent : (tab3Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary);
+                                ctx.lineWidth = 1.75;
                                 ctx.lineCap = "round";
                                 ctx.lineJoin = "round";
 
-                                // 6 rounded thick gear teeth
-                                ctx.lineWidth = 2.2;
-                                for (var i = 0; i < 6; i++) {
-                                    var angle = i * Math.PI / 3;
-                                    var x1 = 9 + Math.cos(angle) * 4.2;
-                                    var y1 = 9 + Math.sin(angle) * 4.2;
-                                    var x2 = 9 + Math.cos(angle) * 7.4;
-                                    var y2 = 9 + Math.sin(angle) * 7.4;
-                                    ctx.beginPath();
-                                    ctx.moveTo(x1, y1);
-                                    ctx.lineTo(x2, y2);
-                                    ctx.stroke();
-                                }
+                                var cx = 9;
+                                var cy = 9;
+                                var rOuter = 7.3;
+                                var rInner = 5.0;
+                                var rHole = 2.3;
+                                var degToRad = Math.PI / 180;
 
-                                // Gear rim ring body
-                                ctx.lineWidth = 1.75;
+                                // Modern continuous 6-tooth gear contour
                                 ctx.beginPath();
-                                ctx.arc(9, 9, 4.8, 0, Math.PI * 2);
+                                for (var i = 0; i < 6; i++) {
+                                    var mid = -90 + i * 60;
+                                    var a1 = (mid - 11) * degToRad;
+                                    var a2 = (mid + 11) * degToRad;
+                                    var a3 = (mid + 19) * degToRad;
+                                    var a4 = (mid + 41) * degToRad;
+
+                                    var x1 = cx + rOuter * Math.cos(a1);
+                                    var y1 = cy + rOuter * Math.sin(a1);
+                                    var x2 = cx + rOuter * Math.cos(a2);
+                                    var y2 = cy + rOuter * Math.sin(a2);
+                                    var x3 = cx + rInner * Math.cos(a3);
+                                    var y3 = cy + rInner * Math.sin(a3);
+                                    var x4 = cx + rInner * Math.cos(a4);
+                                    var y4 = cy + rInner * Math.sin(a4);
+
+                                    if (i === 0) {
+                                        ctx.moveTo(x1, y1);
+                                    } else {
+                                        ctx.lineTo(x1, y1);
+                                    }
+                                    ctx.lineTo(x2, y2);
+                                    ctx.lineTo(x3, y3);
+                                    ctx.lineTo(x4, y4);
+                                }
+                                ctx.closePath();
                                 ctx.stroke();
 
                                 // Center axle hole
                                 ctx.beginPath();
-                                ctx.arc(9, 9, 2.2, 0, Math.PI * 2);
+                                ctx.arc(cx, cy, rHole, 0, Math.PI * 2);
                                 ctx.stroke();
                             }
                             Connections {
