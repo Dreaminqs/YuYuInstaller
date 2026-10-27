@@ -23,14 +23,19 @@ Item {
     Flickable {
         anchors.fill: parent
         anchors.margins: 28
-        contentHeight: contentCol.height + 40
+        contentHeight: Math.max(height, contentCol.y + contentCol.height + 40)
         clip: true
 
         Column {
             id: contentCol
             width: Math.min(parent.width, 760)
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 24
+            y: qualityBox.visible ? 10 : Math.max(30, (parent.height - height) / 2 - 40)
+            spacing: 28
+
+            Behavior on y {
+                NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+            }
 
             // Welcome & Title (Ortalanmış ve Ferah)
             Column {

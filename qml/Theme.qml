@@ -10,22 +10,22 @@ QtObject {
     readonly property color bgInput: "#800c1018"        // ~50% opacity input
     readonly property color bgElevated: "#8c131826"     // ~55% opacity elevated
 
-    // Signature Accents & Gradients (Mint/Teal to Electric Blue)
-    readonly property color accent: "#00d29d"          // Neon Mint/Teal
-    readonly property color accentHover: "#10e8b1"     // Lighter vibrant teal
+    // Signature Accents & Gradients (Electric Ice Cyan to Azure Blue - No More Green)
+    readonly property color accent: "#38bdf8"          // Electric Sky / Ice Cyan
+    readonly property color accentHover: "#7dd3fc"     // Lighter glowing cyan
     readonly property color accentBlue: "#2563eb"      // Electric Blue
     readonly property color accentBlueHover: "#3b82f6" // Brighter Blue
     readonly property color accentPurple: "#8b5cf6"
-    readonly property color accentSecondary: "#2563eb"
-    readonly property color accentCyan: "#06b6d4"
+    readonly property color accentSecondary: "#0284c7"
+    readonly property color accentCyan: "#38bdf8"
 
     // Active Sidebar Tab styling
-    readonly property color activeTabBg: "#e60a2822"
-    readonly property color activeTabBorder: "#00d29d"
-    readonly property color activeTabIndicator: "#00d29d"
-    readonly property color activeTabText: "#00d29d"
+    readonly property color activeTabBg: "#260284c7"
+    readonly property color activeTabBorder: "#38bdf8"
+    readonly property color activeTabIndicator: "#38bdf8"
+    readonly property color activeTabText: "#38bdf8"
 
-    readonly property color success: "#00d29d"
+    readonly property color success: "#38bdf8"
     readonly property color warning: "#f59e0b"
     readonly property color error: "#ef4444"
 
@@ -37,7 +37,7 @@ QtObject {
     // Borders
     readonly property color borderDim: "#1affffff"      // 10% translucent white frosted glass border
     readonly property color borderBright: "#40ffffff"
-    readonly property color borderHighlight: "#00d29d"
+    readonly property color borderHighlight: "#38bdf8"
 
     // Radii
     readonly property int radiusSm: 6

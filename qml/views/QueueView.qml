@@ -42,9 +42,9 @@ Item {
 
                 // 1. Download Mode Segmented Pill (All at Once | Sequential)
                 Rectangle {
-                    height: 36
-                    width: modeRow.width + 8
-                    radius: Theme.radiusMd
+                    height: 38
+                    width: modeRow.width + 10
+                    radius: 19
                     color: Theme.bgElevated
                     border.color: Theme.borderDim
                     border.width: 1
@@ -56,13 +56,15 @@ Item {
 
                         // Option 1: All at Once
                         Rectangle {
-                            height: 28
-                            width: concurrentContent.width + 20
-                            radius: Theme.radiusSm
-                            color: !downloadManager.sequentialMode ? (Theme.accent + "26") : (concurrentHover.containsMouse ? Theme.bgCardHover : "transparent")
+                            height: 30
+                            width: concurrentContent.width + 22
+                            radius: 15
+                            color: !downloadManager.sequentialMode ? (Theme.accent + "33") : (concurrentHover.containsMouse ? "#20ffffff" : "transparent")
                             border.color: !downloadManager.sequentialMode ? Theme.accent : "transparent"
                             border.width: 1
+                            scale: concurrentHover.containsMouse ? 1.04 : 1.0
 
+                            Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
                             Behavior on color { ColorAnimation { duration: 150 } }
                             Behavior on border.color { ColorAnimation { duration: 150 } }
 
@@ -91,13 +93,15 @@ Item {
 
                         // Option 2: Sequential
                         Rectangle {
-                            height: 28
-                            width: seqContent.width + 20
-                            radius: Theme.radiusSm
-                            color: downloadManager.sequentialMode ? (Theme.accent + "26") : (seqHover.containsMouse ? Theme.bgCardHover : "transparent")
+                            height: 30
+                            width: seqContent.width + 22
+                            radius: 15
+                            color: downloadManager.sequentialMode ? (Theme.accent + "33") : (seqHover.containsMouse ? "#20ffffff" : "transparent")
                             border.color: downloadManager.sequentialMode ? Theme.accent : "transparent"
                             border.width: 1
+                            scale: seqHover.containsMouse ? 1.04 : 1.0
 
+                            Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
                             Behavior on color { ColorAnimation { duration: 150 } }
                             Behavior on border.color { ColorAnimation { duration: 150 } }
 
@@ -130,13 +134,15 @@ Item {
                 Rectangle {
                     id: limitCard
                     property bool isActive: downloadManager.speedLimitEnabled
-                    height: 36
-                    width: limitMainRow.width + 16
-                    radius: Theme.radiusMd
-                    color: isActive ? "#162332" : Theme.bgElevated
+                    height: 38
+                    width: limitMainRow.width + 18
+                    radius: 19
+                    color: isActive ? "#182c42" : Theme.bgElevated
                     border.color: isActive ? Theme.accent : (limitCardMouse.containsMouse ? Theme.borderBright : Theme.borderDim)
                     border.width: 1
+                    scale: limitCardMouse.containsMouse ? 1.02 : 1.0
 
+                    Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
                     Behavior on color { ColorAnimation { duration: 180 } }
                     Behavior on border.color { ColorAnimation { duration: 180 } }
 
@@ -203,9 +209,9 @@ Item {
 
                                 // Mini Status Badge (ON / OFF)
                                 Rectangle {
-                                    width: 24
-                                    height: 16
-                                    radius: 4
+                                    width: 26
+                                    height: 18
+                                    radius: 9
                                     color: limitCard.isActive ? (Theme.accent + "33") : Theme.borderDim
                                     border.color: limitCard.isActive ? (Theme.accent + "66") : "transparent"
                                     border.width: 1
@@ -255,13 +261,15 @@ Item {
 
                             // Decrement Button [-]
                             Rectangle {
-                                width: 22
-                                height: 22
-                                radius: 5
+                                width: 24
+                                height: 24
+                                radius: 12
                                 color: minusMouse.containsMouse ? Theme.bgCardHover : (limitCard.isActive ? "#1d2e40" : Theme.bgElevated)
                                 border.color: minusMouse.containsMouse ? Theme.accent : Theme.borderDim
                                 border.width: 1
                                 anchors.verticalCenter: parent.verticalCenter
+                                scale: minusMouse.containsMouse ? 1.15 : 1.0
+                                Behavior on scale { NumberAnimation { duration: 120 } }
 
                                 MouseArea {
                                     id: minusMouse
@@ -289,8 +297,8 @@ Item {
                             // Stepper Value Display Pill: e.g. "2 MB/s"
                             Rectangle {
                                 width: speedValText.implicitWidth + 14
-                                height: 22
-                                radius: 5
+                                height: 24
+                                radius: 12
                                 color: limitCard.isActive ? (Theme.accent + "2D") : Theme.bgElevated
                                 border.color: limitCard.isActive ? (Theme.accent + "55") : Theme.borderDim
                                 border.width: 1
@@ -309,13 +317,15 @@ Item {
 
                             // Increment Button [+]
                             Rectangle {
-                                width: 22
-                                height: 22
-                                radius: 5
+                                width: 24
+                                height: 24
+                                radius: 12
                                 color: plusMouse.containsMouse ? Theme.bgCardHover : (limitCard.isActive ? "#1d2e40" : Theme.bgElevated)
                                 border.color: plusMouse.containsMouse ? Theme.accent : Theme.borderDim
                                 border.width: 1
                                 anchors.verticalCenter: parent.verticalCenter
+                                scale: plusMouse.containsMouse ? 1.15 : 1.0
+                                Behavior on scale { NumberAnimation { duration: 120 } }
 
                                 MouseArea {
                                     id: plusMouse
@@ -343,15 +353,20 @@ Item {
                     }
                 }
 
-                // Clear Completed Button
+                // Clear Completed Button (Tatlı Pill)
                 Rectangle {
                     visible: queueModel.totalDownloadCount > 0
                     width: 136
-                    height: 36
-                    radius: Theme.radiusMd
-                    color: clearMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
+                    height: 38
+                    radius: 19
+                    color: clearMouse.containsMouse ? "#20ffffff" : Theme.bgElevated
                     border.color: clearMouse.containsMouse ? Theme.accent : Theme.borderDim
                     border.width: 1
+                    scale: clearMouse.containsMouse ? 1.04 : 1.0
+
+                    Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
 
                     MouseArea {
                         id: clearMouse
@@ -396,14 +411,19 @@ Item {
                     }
                 }
 
-                // Error Diagnostics Log Button
+                // Error Diagnostics Log Button (Tatlı Pill)
                 Rectangle {
                     width: 110
                     height: 38
-                    radius: Theme.radiusMd
-                    color: logHeaderMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
-                    border.color: logHeaderMouse.containsMouse ? Theme.accentCyan : Theme.borderDim
+                    radius: 19
+                    color: logHeaderMouse.containsMouse ? "#20ffffff" : Theme.bgElevated
+                    border.color: logHeaderMouse.containsMouse ? Theme.accent : Theme.borderDim
                     border.width: 1
+                    scale: logHeaderMouse.containsMouse ? 1.04 : 1.0
+
+                    Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
 
                     MouseArea {
                         id: logHeaderMouse

@@ -91,10 +91,14 @@ Item {
                         Rectangle {
                             width: (parent.width - 24) / 3
                             height: 42
-                            radius: Theme.radiusMd
-                            color: (I18n.language === "en") ? Theme.activeTabBg : (enMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
+                            radius: 21
+                            color: (I18n.language === "en") ? Theme.activeTabBg : (enMouse.containsMouse ? "#20ffffff" : Theme.bgElevated)
                             border.color: (I18n.language === "en") ? Theme.accent : Theme.borderDim
                             border.width: (I18n.language === "en") ? 2 : 1
+                            scale: enMouse.containsMouse ? 1.04 : 1.0
+                            Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
 
                             MouseArea {
                                 id: enMouse
@@ -108,7 +112,7 @@ Item {
                                 anchors.centerIn: parent
                                 spacing: 10
                                 Rectangle {
-                                    width: 28; height: 20; radius: 4
+                                    width: 28; height: 20; radius: 10
                                     color: (I18n.language === "en") ? Theme.accent : Theme.borderBright
                                     anchors.verticalCenter: parent.verticalCenter
                                     Text {
@@ -135,10 +139,14 @@ Item {
                         Rectangle {
                             width: (parent.width - 24) / 3
                             height: 42
-                            radius: Theme.radiusMd
-                            color: (I18n.language === "tr") ? Theme.activeTabBg : (trMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
+                            radius: 21
+                            color: (I18n.language === "tr") ? Theme.activeTabBg : (trMouse.containsMouse ? "#20ffffff" : Theme.bgElevated)
                             border.color: (I18n.language === "tr") ? Theme.accent : Theme.borderDim
                             border.width: (I18n.language === "tr") ? 2 : 1
+                            scale: trMouse.containsMouse ? 1.04 : 1.0
+                            Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
 
                             MouseArea {
                                 id: trMouse
@@ -152,7 +160,7 @@ Item {
                                 anchors.centerIn: parent
                                 spacing: 10
                                 Rectangle {
-                                    width: 28; height: 20; radius: 4
+                                    width: 28; height: 20; radius: 10
                                     color: (I18n.language === "tr") ? Theme.accent : Theme.borderBright
                                     anchors.verticalCenter: parent.verticalCenter
                                     Text {
@@ -179,10 +187,14 @@ Item {
                         Rectangle {
                             width: (parent.width - 24) / 3
                             height: 42
-                            radius: Theme.radiusMd
-                            color: (I18n.language === "uk") ? Theme.activeTabBg : (ukMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
+                            radius: 21
+                            color: (I18n.language === "uk") ? Theme.activeTabBg : (ukMouse.containsMouse ? "#20ffffff" : Theme.bgElevated)
                             border.color: (I18n.language === "uk") ? Theme.accent : Theme.borderDim
                             border.width: (I18n.language === "uk") ? 2 : 1
+                            scale: ukMouse.containsMouse ? 1.04 : 1.0
+                            Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
 
                             MouseArea {
                                 id: ukMouse
@@ -196,7 +208,7 @@ Item {
                                 anchors.centerIn: parent
                                 spacing: 10
                                 Rectangle {
-                                    width: 28; height: 20; radius: 4
+                                    width: 28; height: 20; radius: 10
                                     color: (I18n.language === "uk") ? Theme.accent : Theme.borderBright
                                     anchors.verticalCenter: parent.verticalCenter
                                     Text {
@@ -366,10 +378,14 @@ Item {
                         Rectangle {
                             width: 108
                             height: 40
-                            radius: Theme.radiusMd
-                            color: dirMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
+                            radius: 20
+                            color: dirMouse.containsMouse ? "#20ffffff" : Theme.bgElevated
                             border.color: dirMouse.containsMouse ? Theme.accent : Theme.borderDim
                             border.width: 1
+                            scale: dirMouse.containsMouse ? 1.04 : 1.0
+                            Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
 
                             MouseArea {
                                 id: dirMouse
@@ -693,10 +709,14 @@ Item {
                         Rectangle {
                             width: 110
                             height: 36
-                            radius: Theme.radiusMd
-                            color: openLogBtnMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
-                            border.color: openLogBtnMouse.containsMouse ? Theme.accentCyan : Theme.borderDim
+                            radius: 18
+                            color: openLogBtnMouse.containsMouse ? "#20ffffff" : Theme.bgElevated
+                            border.color: openLogBtnMouse.containsMouse ? Theme.accent : Theme.borderDim
                             border.width: 1
+                            scale: openLogBtnMouse.containsMouse ? 1.04 : 1.0
+                            Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
 
                             MouseArea {
                                 id: openLogBtnMouse
@@ -724,10 +744,14 @@ Item {
                         Rectangle {
                             width: 90
                             height: 36
-                            radius: Theme.radiusMd
+                            radius: 18
                             color: clearLogBtnMouse.containsMouse ? Theme.error + "22" : Theme.bgElevated
                             border.color: clearLogBtnMouse.containsMouse ? Theme.error + "66" : Theme.borderDim
                             border.width: 1
+                            scale: clearLogBtnMouse.containsMouse ? 1.04 : 1.0
+                            Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
 
                             MouseArea {
                                 id: clearLogBtnMouse

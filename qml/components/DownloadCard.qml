@@ -213,10 +213,14 @@ Rectangle {
                 opacity: index > 0 ? 1.0 : 0.25
                 width: 34
                 height: 34
-                radius: Theme.radiusSm
-                color: (upMouse.containsMouse && index > 0) ? Theme.bgCardHover : Theme.bgElevated
+                radius: 17
+                color: (upMouse.containsMouse && index > 0) ? "#20ffffff" : Theme.bgElevated
                 border.color: (upMouse.containsMouse && index > 0) ? Theme.accent : Theme.borderDim
                 border.width: 1
+                scale: (upMouse.containsMouse && index > 0) ? 1.08 : 1.0
+                Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
 
                 MouseArea {
                     id: upMouse
@@ -242,10 +246,14 @@ Rectangle {
                 opacity: index < (queueModel.totalDownloadCount - 1) ? 1.0 : 0.25
                 width: 34
                 height: 34
-                radius: Theme.radiusSm
-                color: (downMouse.containsMouse && index < (queueModel.totalDownloadCount - 1)) ? Theme.bgCardHover : Theme.bgElevated
+                radius: 17
+                color: (downMouse.containsMouse && index < (queueModel.totalDownloadCount - 1)) ? "#20ffffff" : Theme.bgElevated
                 border.color: (downMouse.containsMouse && index < (queueModel.totalDownloadCount - 1)) ? Theme.accent : Theme.borderDim
                 border.width: 1
+                scale: (downMouse.containsMouse && index < (queueModel.totalDownloadCount - 1)) ? 1.08 : 1.0
+                Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
 
                 MouseArea {
                     id: downMouse
@@ -270,10 +278,14 @@ Rectangle {
                 visible: model.status === "Completed"
                 width: 34
                 height: 34
-                radius: Theme.radiusSm
-                color: folderMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
+                radius: 17
+                color: folderMouse.containsMouse ? "#20ffffff" : Theme.bgElevated
                 border.color: folderMouse.containsMouse ? Theme.accent : Theme.borderDim
                 border.width: 1
+                scale: folderMouse.containsMouse ? 1.08 : 1.0
+                Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
 
                 MouseArea {
                     id: folderMouse
@@ -317,10 +329,14 @@ Rectangle {
                 visible: model.status === "Failed"
                 width: 34
                 height: 34
-                radius: Theme.radiusSm
-                color: logMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
-                border.color: logMouse.containsMouse ? Theme.accentCyan : Theme.borderDim
+                radius: 17
+                color: logMouse.containsMouse ? "#20ffffff" : Theme.bgElevated
+                border.color: logMouse.containsMouse ? Theme.accent : Theme.borderDim
                 border.width: 1
+                scale: logMouse.containsMouse ? 1.08 : 1.0
+                Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
 
                 MouseArea {
                     id: logMouse
@@ -363,10 +379,14 @@ Rectangle {
                 visible: model.status === "Downloading" || model.status === "Paused" || model.status === "Queued" || model.status === "Failed"
                 width: 34
                 height: 34
-                radius: Theme.radiusSm
-                color: pauseMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
+                radius: 17
+                color: pauseMouse.containsMouse ? "#20ffffff" : Theme.bgElevated
                 border.color: pauseMouse.containsMouse ? Theme.accent : Theme.borderDim
                 border.width: 1
+                scale: pauseMouse.containsMouse ? 1.08 : 1.0
+                Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
 
                 MouseArea {
                     id: pauseMouse
@@ -398,10 +418,14 @@ Rectangle {
             Rectangle {
                 width: 34
                 height: 34
-                radius: Theme.radiusSm
+                radius: 17
                 color: cancelMouse.containsMouse ? Theme.error + "22" : Theme.bgElevated
                 border.color: cancelMouse.containsMouse ? Theme.error + "66" : Theme.borderDim
                 border.width: 1
+                scale: cancelMouse.containsMouse ? 1.08 : 1.0
+                Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
 
                 MouseArea {
                     id: cancelMouse

@@ -143,14 +143,19 @@ Item {
                         }
 
                         Rectangle {
-                            width: 138
+                            width: 142
                             height: 42
-                            radius: Theme.radiusMd
+                            radius: 21
+                            scale: checkBtnMouse.pressed ? 0.95 : (checkBtnMouse.containsMouse ? 1.04 : 1.0)
+                            Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
+
                             color: {
                                 if (typeof updateManager === "undefined") return Theme.bgElevated
                                 if (updateManager.downloading) return Theme.bgElevated
                                 if (updateManager.updateAvailable) return Theme.accent
-                                if (checkBtnMouse.containsMouse) return Theme.bgCardHover
+                                if (checkBtnMouse.containsMouse) return "#25ffffff"
                                 return Theme.bgElevated
                             }
                             border.color: {

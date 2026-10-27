@@ -481,17 +481,17 @@ Rectangle {
 
                     Item { width: 4; height: 1 }
 
-                    // Glowing green indicator when proxy is actively enabled
+                    // Glowing indicator when proxy is actively enabled
                     Rectangle {
                         visible: (typeof proxyManager !== "undefined" && proxyManager.enabled && proxyManager.proxyMode !== 0)
                         width: 7; height: 7; radius: 3.5
-                        color: "#00d29d"
+                        color: Theme.accent
                         anchors.verticalCenter: parent.verticalCenter
 
                         Rectangle {
                             anchors.centerIn: parent
                             width: 12; height: 12; radius: 6
-                            color: "#00d29d"
+                            color: Theme.accent
                             opacity: 0.35
                         }
                     }

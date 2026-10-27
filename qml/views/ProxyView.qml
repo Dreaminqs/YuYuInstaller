@@ -84,7 +84,7 @@ Item {
                                 Rectangle {
                                     anchors.centerIn: parent
                                     width: 26; height: 26; radius: 13
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? "#00d29d" : "#64748b"
+                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? Theme.accent : "#64748b"
                                     opacity: 0.15
 
                                     SequentialAnimation on scale {
@@ -98,7 +98,7 @@ Item {
                                 Rectangle {
                                     anchors.centerIn: parent
                                     width: 12; height: 12; radius: 6
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? "#00d29d" : "#64748b"
+                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? Theme.accent : "#64748b"
                                 }
                             }
 
@@ -120,7 +120,7 @@ Item {
                                           ? I18n.t("proxyStatusActive")
                                           : I18n.t("proxyStatusInactive")
                                     color: (typeof proxyManager !== "undefined" && proxyManager.enabled)
-                                           ? "#00d29d"
+                                           ? Theme.accent
                                            : Theme.textPrimary
                                     font.pixelSize: 13
                                     font.family: Theme.fontFamily
@@ -213,8 +213,8 @@ Item {
                                 height: 20
                                 width: latencyTxt.implicitWidth + 12
                                 radius: 10
-                                color: "#143a2d"
-                                border.color: "#00d29d"
+                                color: Theme.accent + "22"
+                                border.color: Theme.accent
                                 border.width: 1
                                 anchors.verticalCenter: parent.verticalCenter
 
@@ -222,7 +222,7 @@ Item {
                                     id: latencyTxt
                                     anchors.centerIn: parent
                                     text: (typeof proxyManager !== "undefined") ? proxyManager.testMessage : ""
-                                    color: "#00d29d"
+                                    color: Theme.accent
                                     font.pixelSize: 10
                                     font.family: Theme.fontFamily
                                     font.weight: Font.DemiBold
@@ -624,8 +624,8 @@ Item {
                             height: 22
                             width: autoStatusChipTxt.implicitWidth + 16
                             radius: 11
-                            color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? "#143a2d" : "#222c3c"
-                            border.color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? "#00d29d" : Theme.borderDim
+                            color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? (Theme.accent + "22") : "#222c3c"
+                            border.color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? Theme.accent : Theme.borderDim
                             border.width: 1
                             anchors.verticalCenter: parent.verticalCenter
 
@@ -638,7 +638,7 @@ Item {
                                     if (proxyManager.autoConnected) return proxyManager.autoLocation + " (" + proxyManager.autoLatency + " ms)"
                                     return proxyManager.autoStatusMessage
                                 }
-                                color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? "#00d29d" : Theme.textSecondary
+                                color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? Theme.accent : Theme.textSecondary
                                 font.pixelSize: 10
                                 font.family: Theme.fontFamily
                                 font.weight: Font.DemiBold
@@ -684,7 +684,7 @@ Item {
                                 Text {
                                     visible: (typeof proxyManager !== "undefined" && proxyManager.autoConnected)
                                     text: I18n.t("proxyExitIpLabel") + " " + ((proxyManager.autoExitIp !== "") ? proxyManager.autoExitIp : "Detecting...")
-                                    color: "#00d29d"
+                                    color: Theme.accent
                                     font.pixelSize: 10
                                     font.family: Theme.fontFamily
                                     font.weight: Font.DemiBold
@@ -706,7 +706,7 @@ Item {
                                     text: (typeof proxyManager !== "undefined" && proxyManager.autoConnected)
                                           ? proxyManager.autoProtocol + " • " + proxyManager.autoLatency + " ms"
                                           : "--"
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? "#00d29d" : Theme.textSecondary
+                                    color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? Theme.accent : Theme.textSecondary
                                     font.pixelSize: 12
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
@@ -1190,14 +1190,14 @@ Item {
                 width: parent.width
                 height: 34
                 radius: Theme.radiusMd
-                color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? "#112a22" : "#2a1515"
-                border.color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? "#00d29d" : "#ef4444"
+                color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? (Theme.accent + "22") : "#2a1515"
+                border.color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? Theme.accent : "#ef4444"
                 border.width: 1
 
                 Text {
                     anchors.centerIn: parent
                     text: (typeof proxyManager !== "undefined") ? proxyManager.testMessage : ""
-                    color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? "#00d29d" : "#ef4444"
+                    color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? Theme.accent : "#ef4444"
                     font.pixelSize: 11
                     font.family: Theme.fontFamily
                     font.weight: Font.DemiBold
@@ -1210,14 +1210,14 @@ Item {
                 width: parent.width
                 height: 34
                 radius: Theme.radiusMd
-                color: "#112a22"
-                border.color: "#00d29d"
+                color: Theme.accent + "22"
+                border.color: Theme.accent
                 border.width: 1
 
                 Text {
                     anchors.centerIn: parent
                     text: I18n.t("proxyAppliedSuccess")
-                    color: "#00d29d"
+                    color: Theme.accent
                     font.pixelSize: 11
                     font.family: Theme.fontFamily
                     font.weight: Font.DemiBold
