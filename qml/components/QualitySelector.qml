@@ -642,11 +642,13 @@ Rectangle {
                     Rectangle {
                         id: changeChip
                         height: 24
-                        width: changeTxt.implicitWidth + 14
+                        width: changeTxt.implicitWidth + 16
                         radius: 12
                         color: folderHover.hovered ? Theme.accent : Theme.bgElevated
                         border.color: folderHover.hovered ? Theme.accent : Theme.borderBright
                         border.width: 1
+                        scale: folderHover.hovered ? 1.05 : 1.0
+                        Behavior on scale { NumberAnimation { duration: 130 } }
                         anchors.verticalCenter: parent.verticalCenter
 
                         Text {
@@ -662,55 +664,76 @@ Rectangle {
                 }
             }
 
-            // Start Download Button
-            Rectangle {
-                id: downloadBtn
-                width: 148
+            // Start Download Button (Tatlı Glowing Pill)
+            Item {
+                width: 156
                 height: 44
-                radius: Theme.radiusMd
 
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: dlHover.hovered ? Theme.accentHover : Theme.accent }
-                    GradientStop { position: 1.0; color: dlHover.hovered ? Theme.accentBlueHover : Theme.accentBlue }
-                }
-
-                HoverHandler { id: dlHover }
-
-                Row {
+                // Soft neon aura glow behind
+                Rectangle {
                     anchors.centerIn: parent
-                    spacing: 8
-
-                    Text {
-                        text: "▷"
-                        color: "#FFFFFF"
-                        font.pixelSize: 14
-                        font.bold: true
-                    }
-
-                    Text {
-                        text: I18n.t("startDownload")
-                        color: "#FFFFFF"
-                        font.pixelSize: 13
-                        font.family: Theme.fontFamily
-                        font.weight: Font.Bold
-                    }
+                    width: parent.width + 8
+                    height: parent.height + 8
+                    radius: 26
+                    color: Theme.accent
+                    opacity: dlHover.hovered ? 0.40 : 0.0
+                    Behavior on opacity { NumberAnimation { duration: 180 } }
                 }
 
-                TapHandler {
-                    onTapped: {
-                        if (root.mediaInfo) {
-                            if (root.isEditingTitle && titleInput.text.trim().length > 0) {
-                                root.customTitle = titleInput.text.trim()
-                                root.isEditingTitle = false
+                Rectangle {
+                    id: downloadBtn
+                    anchors.fill: parent
+                    radius: 22
+                    scale: dlTap.pressed ? 0.94 : (dlHover.hovered ? 1.04 : 1.0)
+                    Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0.0; color: dlHover.hovered ? Theme.accentHover : Theme.accent }
+                        GradientStop { position: 1.0; color: dlHover.hovered ? Theme.accentCyan : Theme.accentBlue }
+                    }
+
+                    HoverHandler {
+                        id: dlHover
+                        cursorShape: Qt.PointingHandCursor
+                    }
+
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 8
+
+                        Text {
+                            text: "▷"
+                            color: "#07090e"
+                            font.pixelSize: 14
+                            font.bold: true
+                        }
+
+                        Text {
+                            text: I18n.t("startDownload")
+                            color: "#07090e"
+                            font.pixelSize: 13
+                            font.family: Theme.fontFamily
+                            font.weight: Font.Bold
+                        }
+                    }
+
+                    TapHandler {
+                        id: dlTap
+                        onTapped: {
+                            if (root.mediaInfo) {
+                                if (root.isEditingTitle && titleInput.text.trim().length > 0) {
+                                    root.customTitle = titleInput.text.trim()
+                                    root.isEditingTitle = false
+                                }
+                                var titleToUse = (root.customTitle && root.customTitle.trim().length > 0) ? root.customTitle.trim() : root.mediaInfo.title
+                                root.downloadTriggered(
+                                    root.mediaInfo.url,
+                                    titleToUse,
+                                    root.selectedOptionId,
+                                    root.customFolder
+                                )
                             }
-                            var titleToUse = (root.customTitle && root.customTitle.trim().length > 0) ? root.customTitle.trim() : root.mediaInfo.title
-                            root.downloadTriggered(
-                                root.mediaInfo.url,
-                                titleToUse,
-                                root.selectedOptionId,
-                                root.customFolder
-                            )
                         }
                     }
                 }

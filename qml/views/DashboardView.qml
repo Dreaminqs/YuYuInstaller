@@ -32,21 +32,28 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 24
 
-            // Welcome & Title
+            // Welcome & Title (Ortalanmış ve Ferah)
             Column {
-                spacing: 6
+                width: parent.width
+                spacing: 8
+                anchors.horizontalCenter: parent.horizontalCenter
+
                 Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
                     text: I18n.t("dashTitle")
                     color: Theme.textPrimary
-                    font.pixelSize: 24
+                    font.pixelSize: 28
                     font.family: Theme.fontFamily
                     font.weight: Font.Bold
+                    horizontalAlignment: Text.AlignHCenter
                 }
                 Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
                     text: I18n.t("dashSubtitle")
                     color: Theme.textSecondary
                     font.pixelSize: 13
                     font.family: Theme.fontFamily
+                    horizontalAlignment: Text.AlignHCenter
                 }
             }
 
@@ -54,6 +61,7 @@ Item {
             UrlInputField {
                 id: urlInputField
                 width: parent.width
+                anchors.horizontalCenter: parent.horizontalCenter
                 onAnalyzeRequested: function(rawUrl) {
                     root.currentErrorMessage = ""
                     urlAnalyzer.analyzeUrl(rawUrl)
@@ -121,90 +129,6 @@ Item {
                     urlInputField.clear()
                     urlAnalyzer.clear()
                     root.navigateToQueue()
-                }
-            }
-
-            // Quick Info Cards (Supported Formats & FFmpeg)
-            Row {
-                width: parent.width
-                spacing: 16
-
-                Rectangle {
-                    width: (parent.width - 16) / 2
-                    height: 110
-                    radius: Theme.radiusLg
-                    color: Theme.bgCard
-                    border.color: Theme.borderDim
-                    border.width: 1
-
-                    Column {
-                        anchors.fill: parent
-                        anchors.margins: 16
-                        spacing: 6
-
-                        Row {
-                            spacing: 8
-                            Rectangle {
-                                width: 6; height: 6; radius: 3
-                                color: Theme.accent
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            Text {
-                                text: I18n.t("feature1Title")
-                                color: Theme.textPrimary
-                                font.pixelSize: 13
-                                font.family: Theme.fontFamily
-                                font.weight: Font.DemiBold
-                            }
-                        }
-                        Text {
-                            text: I18n.t("feature1Desc")
-                            color: Theme.textMuted
-                            font.pixelSize: 11
-                            font.family: Theme.fontFamily
-                            wrapMode: Text.WordWrap
-                            width: parent.width
-                        }
-                    }
-                }
-
-                Rectangle {
-                    width: (parent.width - 16) / 2
-                    height: 110
-                    radius: Theme.radiusLg
-                    color: Theme.bgCard
-                    border.color: Theme.borderDim
-                    border.width: 1
-
-                    Column {
-                        anchors.fill: parent
-                        anchors.margins: 16
-                        spacing: 6
-
-                        Row {
-                            spacing: 8
-                            Rectangle {
-                                width: 6; height: 6; radius: 3
-                                color: Theme.accentBlue
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            Text {
-                                text: I18n.t("feature2Title")
-                                color: Theme.textPrimary
-                                font.pixelSize: 13
-                                font.family: Theme.fontFamily
-                                font.weight: Font.DemiBold
-                            }
-                        }
-                        Text {
-                            text: I18n.t("feature2Desc")
-                            color: Theme.textMuted
-                            font.pixelSize: 11
-                            font.family: Theme.fontFamily
-                            wrapMode: Text.WordWrap
-                            width: parent.width
-                        }
-                    }
                 }
             }
         }

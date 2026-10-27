@@ -4,7 +4,7 @@ import YuYuInstaller
 
 Item {
     id: root
-    implicitHeight: 70
+    implicitHeight: 64
     implicitWidth: 600
 
     property alias text: textInput.text
@@ -17,7 +17,7 @@ Item {
     Rectangle {
         id: container
         anchors.fill: parent
-        radius: Theme.radiusLg
+        radius: 20
         color: Theme.bgInput
         border.color: textInput.activeFocus ? Theme.borderHighlight : (containerHover.hovered ? Theme.borderBright : Theme.borderDim)
         border.width: textInput.activeFocus ? 2 : 1
@@ -71,7 +71,7 @@ Item {
             // Input Field
             TextInput {
                 id: textInput
-                width: parent.width - 240
+                width: parent.width - 248
                 anchors.verticalCenter: parent.verticalCenter
                 color: Theme.textPrimary
                 font.pixelSize: 14
@@ -99,29 +99,38 @@ Item {
                 }
             }
 
-            // Paste Button
+            // Paste Button (Tatlı Frosted Glass Pill)
             Rectangle {
                 id: pasteBtn
-                width: 70
+                width: 76
                 height: 38
                 anchors.verticalCenter: parent.verticalCenter
-                radius: Theme.radiusMd
-                color: pasteHover.hovered ? Theme.bgCardHover : Theme.bgElevated
-                border.color: Theme.borderDim
+                radius: 19
+                color: pasteHover.hovered ? "#35ffffff" : "#18ffffff"
+                border.color: pasteHover.hovered ? Theme.accent : "#25ffffff"
                 border.width: 1
+                scale: pasteTap.pressed ? 0.94 : (pasteHover.hovered ? 1.05 : 1.0)
 
-                HoverHandler { id: pasteHover }
+                Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                HoverHandler {
+                    id: pasteHover
+                    cursorShape: Qt.PointingHandCursor
+                }
 
                 Text {
                     anchors.centerIn: parent
                     text: I18n.t("pasteBtn")
-                    color: pasteHover.hovered ? Theme.textPrimary : Theme.textSecondary
+                    color: pasteHover.hovered ? "#ffffff" : Theme.textSecondary
                     font.pixelSize: 12
                     font.family: Theme.fontFamily
-                    font.weight: Font.Medium
+                    font.weight: Font.DemiBold
                 }
 
                 TapHandler {
+                    id: pasteTap
                     onTapped: {
                         textInput.paste()
                         if (textInput.text.trim().length > 0) {
@@ -131,56 +140,80 @@ Item {
                 }
             }
 
-            // Analyze Button
-            Rectangle {
-                id: analyzeBtn
-                width: 110
+            // Analyze Button (Tatlı Glowing Neon Pill)
+            Item {
+                width: 114
                 height: 42
                 anchors.verticalCenter: parent.verticalCenter
-                radius: Theme.radiusMd
-                enabled: !urlAnalyzer.isAnalyzing && textInput.text.trim().length > 0
-                opacity: enabled ? 1.0 : 0.6
 
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: analyzeHover.hovered ? Theme.accentHover : Theme.accent }
-                    GradientStop { position: 1.0; color: analyzeHover.hovered ? Theme.accentBlueHover : Theme.accentBlue }
+                // Soft neon aura glow behind the button
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: parent.width + 6
+                    height: parent.height + 6
+                    radius: 24
+                    color: Theme.accent
+                    opacity: (analyzeHover.hovered && analyzeBtn.enabled) ? 0.40 : 0.0
+                    Behavior on opacity { NumberAnimation { duration: 180 } }
                 }
 
-                HoverHandler { id: analyzeHover }
+                Rectangle {
+                    id: analyzeBtn
+                    anchors.fill: parent
+                    radius: 21
+                    enabled: !urlAnalyzer.isAnalyzing && textInput.text.trim().length > 0
+                    opacity: enabled ? 1.0 : 0.55
+                    scale: analyzeTap.pressed ? 0.94 : (analyzeHover.hovered && enabled ? 1.04 : 1.0)
 
-                Row {
-                    anchors.centerIn: parent
-                    spacing: 6
+                    Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
 
-                    Text {
-                        id: spinner
-                        text: "⟳"
-                        color: "#FFFFFF"
-                        font.pixelSize: 16
-                        visible: urlAnalyzer.isAnalyzing
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0.0; color: analyzeHover.hovered ? Theme.accentHover : Theme.accent }
+                        GradientStop { position: 1.0; color: analyzeHover.hovered ? Theme.accentCyan : Theme.accentBlue }
+                    }
 
-                        NumberAnimation on rotation {
-                            from: 0; to: 360
-                            duration: 900
-                            loops: Animation.Infinite
-                            running: urlAnalyzer.isAnalyzing
+                    HoverHandler {
+                        id: analyzeHover
+                        cursorShape: analyzeBtn.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    }
+
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Text {
+                            id: spinner
+                            text: "⟳"
+                            color: "#070a12"
+                            font.pixelSize: 15
+                            font.bold: true
+                            visible: urlAnalyzer.isAnalyzing
+
+                            NumberAnimation on rotation {
+                                from: 0; to: 360
+                                duration: 900
+                                loops: Animation.Infinite
+                                running: urlAnalyzer.isAnalyzing
+                            }
+                        }
+
+                        Text {
+                            text: urlAnalyzer.isAnalyzing ? "..." : I18n.t("analyzeBtn")
+                            color: "#070a12"
+                            font.pixelSize: 13
+                            font.family: Theme.fontFamily
+                            font.weight: Font.Bold
                         }
                     }
 
-                    Text {
-                        text: urlAnalyzer.isAnalyzing ? "..." : I18n.t("analyzeBtn")
-                        color: "#FFFFFF"
-                        font.pixelSize: 13
-                        font.family: Theme.fontFamily
-                        font.weight: Font.DemiBold
-                    }
-                }
-
-                TapHandler {
-                    onTapped: {
-                        if (textInput.text.trim().length > 0 && !urlAnalyzer.isAnalyzing) {
-                            root.analyzeRequested(textInput.text.trim())
+                    TapHandler {
+                        id: analyzeTap
+                        onTapped: {
+                            if (textInput.text.trim().length > 0 && !urlAnalyzer.isAnalyzing) {
+                                root.analyzeRequested(textInput.text.trim())
+                            }
                         }
                     }
                 }

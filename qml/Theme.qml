@@ -35,7 +35,7 @@ QtObject {
     readonly property color textMuted: "#5e6a7c"
 
     // Borders
-    readonly property color borderDim: "#1a1f2b"
+    readonly property color borderDim: "#1affffff"      // 10% translucent white frosted glass border
     readonly property color borderBright: "#40ffffff"
     readonly property color borderHighlight: "#00d29d"
 

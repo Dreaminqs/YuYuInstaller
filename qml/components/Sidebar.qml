@@ -5,15 +5,14 @@ Rectangle {
     id: root
     implicitWidth: 220
     color: Theme.bgSidebar
-    border.color: Theme.borderDim
-    border.width: 1
+    border.width: 0
 
     property int activeTab: 0 // 0: Dashboard, 1: Queue, 2: Updates, 3: Proxy, 4: Settings
 
     Column {
         anchors.fill: parent
         anchors.margins: 16
-        spacing: 24
+        spacing: 20
 
         // Logo & Branding
         Row {
@@ -57,10 +56,9 @@ Rectangle {
             }
         }
 
-        Rectangle {
+        Item {
             width: parent.width
             height: 1
-            color: Theme.borderDim
         }
 
         // Navigation Menu
