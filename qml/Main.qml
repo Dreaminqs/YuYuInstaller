@@ -11,6 +11,9 @@ ApplicationWindow {
     minimumHeight: 560
     visible: true
     title: I18n.t("appName") + " - " + I18n.t("appSubtitle")
+    flags: Qt.Window | Qt.FramelessWindowHint
+    color: "transparent"
+
     // Base dark fallback
     Rectangle {
         anchors.fill: parent
@@ -56,8 +59,160 @@ ApplicationWindow {
         color: Theme.accent
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // Custom Glass Title Bar (Frameless Seamless Window Header)
+    // ═══════════════════════════════════════════════════════════════
+    Rectangle {
+        id: customTitleBar
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 36
+        z: 1000
+        color: Theme.bgSidebar
+
+        // Native window drag & double-click maximize
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
+            onPressed: {
+                if (mouse.button === Qt.LeftButton) {
+                    window.startSystemMove();
+                }
+            }
+            onDoubleClicked: {
+                if (window.visibility === Window.Maximized) {
+                    window.showNormal();
+                } else {
+                    window.showMaximized();
+                }
+            }
+        }
+
+        // Left Branding (Mini Icon + Title)
+        Row {
+            anchors.left: parent.left
+            anchors.leftMargin: 12
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 8
+
+            Image {
+                width: 16
+                height: 16
+                source: "qrc:/qt/qml/YuYuInstaller/assets/logo.png"
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                mipmap: true
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                text: I18n.t("appName") + " - " + I18n.t("appSubtitle")
+                color: Theme.textSecondary
+                font.pixelSize: 11
+                font.family: Theme.fontFamily
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+        // Right Window Controls (Minimize, Maximize / Restore, Close)
+        Row {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            spacing: 0
+
+            // Minimize
+            Rectangle {
+                width: 46
+                height: parent.height
+                color: minBtnMa.containsMouse ? "#20ffffff" : "transparent"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "—"
+                    color: minBtnMa.containsMouse ? "#ffffff" : Theme.textSecondary
+                    font.pixelSize: 10
+                    font.family: "Segoe UI"
+                }
+
+                MouseArea {
+                    id: minBtnMa
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: window.showMinimized()
+                }
+            }
+
+            // Maximize / Restore
+            Rectangle {
+                width: 46
+                height: parent.height
+                color: maxBtnMa.containsMouse ? "#20ffffff" : "transparent"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: window.visibility === Window.Maximized ? "❐" : "▢"
+                    color: maxBtnMa.containsMouse ? "#ffffff" : Theme.textSecondary
+                    font.pixelSize: 12
+                    font.family: "Segoe UI"
+                }
+
+                MouseArea {
+                    id: maxBtnMa
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (window.visibility === Window.Maximized) {
+                            window.showNormal();
+                        } else {
+                            window.showMaximized();
+                        }
+                    }
+                }
+            }
+
+            // Close
+            Rectangle {
+                width: 46
+                height: parent.height
+                color: closeBtnMa.containsMouse ? "#e81123" : "transparent"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "✕"
+                    color: closeBtnMa.containsMouse ? "#ffffff" : Theme.textSecondary
+                    font.pixelSize: 11
+                    font.family: "Segoe UI"
+                }
+
+                MouseArea {
+                    id: closeBtnMa
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: window.close()
+                }
+            }
+        }
+
+        // Bottom frosted divider line
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: Theme.borderDim
+        }
+    }
+
     Row {
-        anchors.fill: parent
+        anchors.top: customTitleBar.bottom
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
 
         // Sidebar
         Sidebar {
@@ -316,6 +471,74 @@ ApplicationWindow {
                     }
                 }
             }
+        }
+    }
+
+    // Outer window border (when not maximized)
+    Rectangle {
+        anchors.fill: parent
+        color: "transparent"
+        border.color: Theme.borderDim
+        border.width: window.visibility === Window.Maximized ? 0 : 1
+        z: 9999
+        enabled: false
+    }
+
+    // Resize handles for frameless window
+    Item {
+        id: resizeHandles
+        anchors.fill: parent
+        enabled: window.visibility !== Window.Maximized
+        z: 2000
+
+        // Left
+        MouseArea {
+            anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
+            anchors.topMargin: 8; anchors.bottomMargin: 8; width: 6
+            cursorShape: Qt.SizeHorCursor
+            onPressed: window.startSystemResize(Qt.LeftEdge)
+        }
+        // Right
+        MouseArea {
+            anchors.right: parent.right; anchors.top: parent.top; anchors.bottom: parent.bottom
+            anchors.topMargin: 8; anchors.bottomMargin: 8; width: 6
+            cursorShape: Qt.SizeHorCursor
+            onPressed: window.startSystemResize(Qt.RightEdge)
+        }
+        // Top
+        MouseArea {
+            anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+            anchors.leftMargin: 8; anchors.rightMargin: 8; height: 4
+            cursorShape: Qt.SizeVerCursor
+            onPressed: window.startSystemResize(Qt.TopEdge)
+        }
+        // Bottom
+        MouseArea {
+            anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right
+            anchors.leftMargin: 8; anchors.rightMargin: 8; height: 6
+            cursorShape: Qt.SizeVerCursor
+            onPressed: window.startSystemResize(Qt.BottomEdge)
+        }
+        // Corners
+        MouseArea {
+            anchors.top: parent.top; anchors.left: parent.left; width: 8; height: 8
+            cursorShape: Qt.SizeFDiagCursor
+            onPressed: window.startSystemResize(Qt.TopEdge | Qt.LeftEdge)
+        }
+        MouseArea {
+            anchors.top: parent.top; anchors.right: parent.right; width: 8; height: 8
+            cursorShape: Qt.SizeBDiagCursor
+            onPressed: window.startSystemResize(Qt.TopEdge | Qt.RightEdge)
+        }
+        MouseArea {
+            anchors.bottom: parent.bottom; anchors.left: parent.left; width: 8; height: 8
+            cursorShape: Qt.SizeBDiagCursor
+            onPressed: window.startSystemResize(Qt.BottomEdge | Qt.LeftEdge)
+        }
+        MouseArea {
+            anchors.bottom: parent.bottom; anchors.right: parent.right; width: 8; height: 8
+            cursorShape: Qt.SizeFDiagCursor
+            onPressed: window.startSystemResize(Qt.BottomEdge | Qt.RightEdge)
         }
     }
 }

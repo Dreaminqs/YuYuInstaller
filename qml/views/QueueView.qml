@@ -45,7 +45,7 @@ Item {
                     height: 38
                     width: modeRow.width + 10
                     radius: 19
-                    color: Theme.bgElevated
+                    color: "transparent"
                     border.color: Theme.borderDim
                     border.width: 1
 
@@ -59,7 +59,7 @@ Item {
                             height: 30
                             width: concurrentContent.width + 22
                             radius: 15
-                            color: !downloadManager.sequentialMode ? (Theme.accent + "33") : (concurrentHover.containsMouse ? "#20ffffff" : "transparent")
+                            color: !downloadManager.sequentialMode ? "transparent" : (concurrentHover.containsMouse ? "#20ffffff" : "transparent")
                             border.color: !downloadManager.sequentialMode ? Theme.accent : "transparent"
                             border.width: 1
                             scale: concurrentHover.containsMouse ? 1.04 : 1.0
@@ -82,7 +82,7 @@ Item {
 
                                 Text {
                                     text: I18n.t("downloadModeConcurrent")
-                                    color: !downloadManager.sequentialMode ? Theme.textPrimary : Theme.textSecondary
+                                    color: !downloadManager.sequentialMode ? Theme.accent : Theme.textSecondary
                                     font.pixelSize: 11
                                     font.family: Theme.fontFamily
                                     font.weight: !downloadManager.sequentialMode ? Font.Bold : Font.DemiBold
@@ -96,7 +96,7 @@ Item {
                             height: 30
                             width: seqContent.width + 22
                             radius: 15
-                            color: downloadManager.sequentialMode ? (Theme.accent + "33") : (seqHover.containsMouse ? "#20ffffff" : "transparent")
+                            color: downloadManager.sequentialMode ? "transparent" : (seqHover.containsMouse ? "#20ffffff" : "transparent")
                             border.color: downloadManager.sequentialMode ? Theme.accent : "transparent"
                             border.width: 1
                             scale: seqHover.containsMouse ? 1.04 : 1.0
@@ -119,7 +119,7 @@ Item {
 
                                 Text {
                                     text: I18n.t("downloadModeSequential")
-                                    color: downloadManager.sequentialMode ? Theme.textPrimary : Theme.textSecondary
+                                    color: downloadManager.sequentialMode ? Theme.accent : Theme.textSecondary
                                     font.pixelSize: 11
                                     font.family: Theme.fontFamily
                                     font.weight: downloadManager.sequentialMode ? Font.Bold : Font.DemiBold
@@ -137,7 +137,7 @@ Item {
                     height: 38
                     width: limitMainRow.width + 18
                     radius: 19
-                    color: isActive ? "#182c42" : Theme.bgElevated
+                    color: "transparent"
                     border.color: isActive ? Theme.accent : (limitCardMouse.containsMouse ? Theme.borderBright : Theme.borderDim)
                     border.width: 1
                     scale: limitCardMouse.containsMouse ? 1.02 : 1.0
@@ -200,7 +200,7 @@ Item {
 
                                 Text {
                                     text: I18n.t("downloadModeLimit")
-                                    color: limitCard.isActive ? Theme.textPrimary : Theme.textSecondary
+                                    color: limitCard.isActive ? Theme.accent : Theme.textSecondary
                                     font.pixelSize: 11
                                     font.family: Theme.fontFamily
                                     font.weight: limitCard.isActive ? Font.Bold : Font.DemiBold
@@ -212,8 +212,8 @@ Item {
                                     width: 26
                                     height: 18
                                     radius: 9
-                                    color: limitCard.isActive ? (Theme.accent + "33") : Theme.borderDim
-                                    border.color: limitCard.isActive ? (Theme.accent + "66") : "transparent"
+                                    color: "transparent"
+                                    border.color: limitCard.isActive ? Theme.accent : Theme.borderDim
                                     border.width: 1
                                     anchors.verticalCenter: parent.verticalCenter
 
@@ -264,8 +264,8 @@ Item {
                                 width: 24
                                 height: 24
                                 radius: 12
-                                color: minusMouse.containsMouse ? Theme.bgCardHover : (limitCard.isActive ? "#1d2e40" : Theme.bgElevated)
-                                border.color: minusMouse.containsMouse ? Theme.accent : Theme.borderDim
+                                color: minusMouse.containsMouse ? "#20ffffff" : "transparent"
+                                border.color: minusMouse.containsMouse ? Theme.accent : (limitCard.isActive ? Theme.accent : Theme.borderDim)
                                 border.width: 1
                                 anchors.verticalCenter: parent.verticalCenter
                                 scale: minusMouse.containsMouse ? 1.15 : 1.0
@@ -288,7 +288,7 @@ Item {
                                 Text {
                                     anchors.centerIn: parent
                                     text: "−"
-                                    color: limitCard.isActive ? Theme.textPrimary : Theme.textSecondary
+                                    color: limitCard.isActive ? Theme.accent : Theme.textSecondary
                                     font.pixelSize: 12
                                     font.bold: true
                                 }
@@ -299,8 +299,8 @@ Item {
                                 width: speedValText.implicitWidth + 14
                                 height: 24
                                 radius: 12
-                                color: limitCard.isActive ? (Theme.accent + "2D") : Theme.bgElevated
-                                border.color: limitCard.isActive ? (Theme.accent + "55") : Theme.borderDim
+                                color: "transparent"
+                                border.color: limitCard.isActive ? Theme.accent : Theme.borderDim
                                 border.width: 1
                                 anchors.verticalCenter: parent.verticalCenter
 
@@ -320,8 +320,8 @@ Item {
                                 width: 24
                                 height: 24
                                 radius: 12
-                                color: plusMouse.containsMouse ? Theme.bgCardHover : (limitCard.isActive ? "#1d2e40" : Theme.bgElevated)
-                                border.color: plusMouse.containsMouse ? Theme.accent : Theme.borderDim
+                                color: plusMouse.containsMouse ? "#20ffffff" : "transparent"
+                                border.color: plusMouse.containsMouse ? Theme.accent : (limitCard.isActive ? Theme.accent : Theme.borderDim)
                                 border.width: 1
                                 anchors.verticalCenter: parent.verticalCenter
                                 scale: plusMouse.containsMouse ? 1.15 : 1.0
@@ -344,7 +344,7 @@ Item {
                                 Text {
                                     anchors.centerIn: parent
                                     text: "+"
-                                    color: limitCard.isActive ? Theme.textPrimary : Theme.textSecondary
+                                    color: limitCard.isActive ? Theme.accent : Theme.textSecondary
                                     font.pixelSize: 12
                                     font.bold: true
                                 }
@@ -359,7 +359,7 @@ Item {
                     width: 136
                     height: 38
                     radius: 19
-                    color: clearMouse.containsMouse ? "#20ffffff" : Theme.bgElevated
+                    color: clearMouse.containsMouse ? "#20ffffff" : "transparent"
                     border.color: clearMouse.containsMouse ? Theme.accent : Theme.borderDim
                     border.width: 1
                     scale: clearMouse.containsMouse ? 1.04 : 1.0
@@ -416,7 +416,7 @@ Item {
                     width: 110
                     height: 38
                     radius: 19
-                    color: logHeaderMouse.containsMouse ? "#20ffffff" : Theme.bgElevated
+                    color: logHeaderMouse.containsMouse ? "#20ffffff" : "transparent"
                     border.color: logHeaderMouse.containsMouse ? Theme.accent : Theme.borderDim
                     border.width: 1
                     scale: logHeaderMouse.containsMouse ? 1.04 : 1.0

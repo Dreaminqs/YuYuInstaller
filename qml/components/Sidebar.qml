@@ -17,18 +17,12 @@ Rectangle {
         // Logo & Branding
         Row {
             spacing: 12
-            Rectangle {
-                width: 42
-                height: 42
-                radius: 12
-                color: Theme.bgElevated
-                border.color: Theme.borderBright
-                border.width: 1
-                clip: true
+            Item {
+                width: 44
+                height: 44
 
                 Image {
                     anchors.fill: parent
-                    anchors.margins: 2
                     source: "qrc:/qt/qml/YuYuInstaller/assets/logo.png"
                     fillMode: Image.PreserveAspectFit
                     smooth: true

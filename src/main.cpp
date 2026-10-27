@@ -117,6 +117,14 @@ int main(int argc, char *argv[]) {
             if (hwnd) {
                 BOOL darkMode = TRUE;
                 DwmSetWindowAttribute(hwnd, 20 /* DWMWA_USE_IMMERSIVE_DARK_MODE */, &darkMode, sizeof(darkMode));
+
+                // Retain native Windows 11 drop shadow for frameless window
+                const MARGINS shadow = { 1, 1, 1, 1 };
+                DwmExtendFrameIntoClientArea(hwnd, &shadow);
+
+                // Enable Windows 11 rounded window corners
+                DWORD cornerPreference = 2; // DWMWCP_ROUND
+                DwmSetWindowAttribute(hwnd, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */, &cornerPreference, sizeof(cornerPreference));
             }
 #endif
             if (!appIcon.isNull()) {

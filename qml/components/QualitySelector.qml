@@ -312,20 +312,20 @@ Rectangle {
                     spacing: 8
                     Rectangle {
                         height: 20
-                        width: badgeText.width + 12
-                        radius: 4
-                        color: Theme.accent + "22"
-                        border.color: Theme.accent + "66"
+                        width: badgeText.width + 14
+                        radius: 10
+                        color: "transparent"
+                        border.color: Theme.accent
                         border.width: 1
 
                         Text {
                             id: badgeText
                             anchors.centerIn: parent
                             text: (root.mediaInfo && root.mediaInfo.isDirectFile) ? I18n.t("directFileBadge") : "Online Stream"
-                            color: Theme.accentHover
+                            color: Theme.accent
                             font.pixelSize: 10
                             font.family: Theme.fontFamily
-                            font.weight: Font.Medium
+                            font.weight: Font.DemiBold
                         }
                     }
 

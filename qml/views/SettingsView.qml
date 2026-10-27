@@ -467,8 +467,8 @@ Item {
                         width: ffmpegBadgeText.width + 18
                         radius: 14
                         anchors.verticalCenter: parent.verticalCenter
-                        color: ffmpegProcessor.isFFmpegAvailable ? Theme.success + "22" : Theme.warning + "22"
-                        border.color: ffmpegProcessor.isFFmpegAvailable ? Theme.success : Theme.warning
+                        color: ffmpegProcessor.isFFmpegAvailable ? "transparent" : (Theme.warning + "22")
+                        border.color: ffmpegProcessor.isFFmpegAvailable ? Theme.accent : Theme.warning
                         border.width: 1
 
                         Text {
@@ -543,8 +543,8 @@ Item {
                         width: ytdlpBadgeText.width + 18
                         radius: 14
                         anchors.verticalCenter: parent.verticalCenter
-                        color: ffmpegProcessor.isYtDlpAvailable ? Theme.success + "22" : Theme.warning + "22"
-                        border.color: ffmpegProcessor.isYtDlpAvailable ? Theme.success : Theme.warning
+                        color: ffmpegProcessor.isYtDlpAvailable ? "transparent" : (Theme.warning + "22")
+                        border.color: ffmpegProcessor.isYtDlpAvailable ? Theme.accent : Theme.warning
                         border.width: 1
 
                         Text {
@@ -617,8 +617,8 @@ Item {
                         width: coreEngineBadgeText.width + 18
                         radius: 14
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.success + "22"
-                        border.color: Theme.success
+                        color: "transparent"
+                        border.color: Theme.accent
                         border.width: 1
 
                         Text {
