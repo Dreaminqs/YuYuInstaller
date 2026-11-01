@@ -13,6 +13,34 @@ Downloader::Downloader(const QString &id, const QString &url, const QString &tar
     m_throttleTimer = new QTimer(this);
     m_throttleTimer->setInterval(50);
     connect(m_throttleTimer, &QTimer::timeout, this, &Downloader::onThrottleTimeout);
+
+    m_connectTimeoutTimer = new QTimer(this);
+    m_connectTimeoutTimer->setSingleShot(true);
+    m_connectTimeoutTimer->setInterval(15000); // 15 seconds connect timeout
+    connect(m_connectTimeoutTimer, &QTimer::timeout, this, [this]() {
+        if (m_isRunning && m_downloadedBytes == 0) {
+            QString err = "Bağlantı zaman aşımına uğradı (Sunucu yanıt vermedi). Okul/yurt ağı (Eduroam) medya akışını engelliyor olabilir. Lütfen Cloudflare WARP açmayı deneyin.";
+            QString details = QString("Connection to URL timed out after 15s with 0 bytes received.\nURL: %1\nTarget: %2").arg(m_url, m_targetPath);
+            m_isRunning = false;
+            cleanup();
+            emit runningChanged();
+            emit downloadFailed(m_id, err, details);
+        }
+    });
+
+    m_stallTimer = new QTimer(this);
+    m_stallTimer->setSingleShot(true);
+    m_stallTimer->setInterval(25000); // 25 seconds stall timeout
+    connect(m_stallTimer, &QTimer::timeout, this, [this]() {
+        if (m_isRunning && !m_isPaused) {
+            QString err = "İndirme akışı kesildi veya zaman aşımına uğradı (Güvenlik duvarı bağlantıyı düşürmüş olabilir).";
+            QString details = QString("Download stalled with no data received for 25s.\nURL: %1\nTarget: %2").arg(m_url, m_targetPath);
+            m_isRunning = false;
+            cleanup();
+            emit runningChanged();
+            emit downloadFailed(m_id, err, details);
+        }
+    });
 }
 
 Downloader::~Downloader() {
@@ -93,6 +121,9 @@ void Downloader::start() {
     m_lastSampleBytes = m_downloadedBytes;
     emit runningChanged();
 
+    if (m_connectTimeoutTimer) m_connectTimeoutTimer->start();
+    if (m_stallTimer) m_stallTimer->stop();
+
     m_reply = m_netManager.get(request);
     m_reply->ignoreSslErrors();
 
@@ -130,6 +161,12 @@ void Downloader::pause() {
     if (m_throttleTimer) {
         m_throttleTimer->stop();
     }
+    if (m_connectTimeoutTimer) {
+        m_connectTimeoutTimer->stop();
+    }
+    if (m_stallTimer) {
+        m_stallTimer->stop();
+    }
     emit runningChanged();
 
     if (m_reply) {
@@ -165,6 +202,13 @@ void Downloader::cancel() {
 }
 
 void Downloader::onReadyRead() {
+    if (m_connectTimeoutTimer && m_connectTimeoutTimer->isActive()) {
+        m_connectTimeoutTimer->stop();
+    }
+    if (m_stallTimer && m_isRunning && !m_isPaused) {
+        m_stallTimer->start();
+    }
+
     if (!m_reply || !m_outputFile.isOpen()) return;
 
     if (m_speedLimitMBps <= 0) {
@@ -209,6 +253,15 @@ void Downloader::processThrottledRead() {
 
 void Downloader::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal) {
     if (m_isPaused) return;
+
+    if (bytesReceived > 0) {
+        if (m_connectTimeoutTimer && m_connectTimeoutTimer->isActive()) {
+            m_connectTimeoutTimer->stop();
+        }
+        if (m_stallTimer && m_isRunning && !m_isPaused) {
+            m_stallTimer->start();
+        }
+    }
 
     qint64 currentDownloaded = m_downloadedBytes + bytesReceived;
     qint64 actualTotal = (bytesTotal > 0) ? (bytesTotal + m_downloadedBytes) : m_totalBytes;
@@ -325,6 +378,12 @@ void Downloader::onErrorOccurred(QNetworkReply::NetworkError code) {
 void Downloader::cleanup() {
     if (m_throttleTimer) {
         m_throttleTimer->stop();
+    }
+    if (m_connectTimeoutTimer) {
+        m_connectTimeoutTimer->stop();
+    }
+    if (m_stallTimer) {
+        m_stallTimer->stop();
     }
     if (m_outputFile.isOpen()) {
         m_outputFile.flush();

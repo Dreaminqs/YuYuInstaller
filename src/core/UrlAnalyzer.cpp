@@ -252,9 +252,15 @@ void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
     // Step 1: Query batch-download/{titleId}/episodes to extract title, episode name, and poster
     QString episodesApiUrl = QString("https://animecix.tv/secure/batch-download/%1/episodes").arg(titleId);
     QNetworkRequest request((QUrl(episodesApiUrl)));
-    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
     request.setRawHeader("Accept", "application/json, text/plain, */*");
     request.setRawHeader("Referer", url.toString().toUtf8());
+    request.setRawHeader("sec-ch-ua", "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"");
+    request.setRawHeader("sec-ch-ua-mobile", "?0");
+    request.setRawHeader("sec-ch-ua-platform", "\"Windows\"");
+    request.setRawHeader("Sec-Fetch-Dest", "empty");
+    request.setRawHeader("Sec-Fetch-Mode", "cors");
+    request.setRawHeader("Sec-Fetch-Site", "same-origin");
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
 
     QNetworkReply *reply = m_netManager.get(request);
@@ -469,9 +475,9 @@ void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
                         m_isAnalyzing = false;
                         emit analyzingChanged();
                         if (vStatus == 0 || fvStatus == 0) {
-                            emit analysisError("Animecix: Connection failed (network or firewall blocked). Please enable Stealth Tunnel / VPN.");
+                            emit analysisError("Animecix: Bağlantı kurulamadı (Eduroam veya güvenlik duvarı engeli). Lütfen Cloudflare WARP açmayı deneyin.");
                         } else {
-                            emit analysisError(QString("Animecix: Video stream not found for Season %1 Episode %2.").arg(targetSeason).arg(targetEp));
+                            emit analysisError(QString("Animecix: %1. Sezon %2. Bölüm akışı bulunamadı (Eduroam ağında iseniz Cloudflare WARP açmayı deneyin).").arg(targetSeason).arg(targetEp));
                         }
                     }
                 });
@@ -579,7 +585,7 @@ void UrlAnalyzer::startTauVideoResolve(const QString &tauId, const QString &anim
 
         m_isAnalyzing = false;
         emit analyzingChanged();
-        emit analysisError("Animecix: Video stream URL unreachable or server did not respond.");
+        emit analysisError("Animecix: Video sunucusuna ulaşılamadı (Eduroam / ağ engeli tespit edildi). Lütfen Cloudflare WARP açarak tekrar deneyin.");
     });
 }
 
@@ -1294,8 +1300,9 @@ void UrlAnalyzer::startYtDlpProbe(const QString &rawUrl) {
     args << "--no-warnings";
     args << "--no-playlist";
     args << "--no-check-certificates";
-    args << "--socket-timeout" << "25";
-    args << "--retries" << "5";
+    args << "--socket-timeout" << "15";
+    args << "--retries" << "3";
+    args << "--dns-servers" << "1.1.1.1,8.8.8.8";
     if (ProxyManager::instance() && !ProxyManager::instance()->proxyUrl().isEmpty()) {
         args << "--proxy" << ProxyManager::instance()->proxyUrl();
         args << "--geo-bypass";
@@ -1410,6 +1417,13 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
         if (match.hasMatch()) {
             cleanErr = match.captured(1).trimmed();
         }
+    }
+    if (cleanErr.contains("timed out", Qt::CaseInsensitive) ||
+        cleanErr.contains("10060") ||
+        cleanErr.contains("unreachable", Qt::CaseInsensitive) ||
+        cleanErr.contains("Sign in to confirm", Qt::CaseInsensitive) ||
+        cleanErr.contains("403: Forbidden", Qt::CaseInsensitive)) {
+        cleanErr += " (Okul/yurt ağı (Eduroam) engeli tespit edildi. Cloudflare WARP açmayı deneyin.)";
     }
     emit analysisError(cleanErr);
 }

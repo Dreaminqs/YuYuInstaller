@@ -233,6 +233,148 @@ Item {
                 }
             }
 
+            // Card: Embedded Cloudflare WARP In-App Tunnel Toggle
+            Rectangle {
+                width: parent.width
+                implicitHeight: eduroamCol.implicitHeight + 28
+                radius: Theme.radiusLg
+                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? "#102334" : "#131b26"
+                border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : (Theme.accent + "55")
+                border.width: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? 1.5 : 1
+
+                Behavior on color { ColorAnimation { duration: 250 } }
+                Behavior on border.color { ColorAnimation { duration: 250 } }
+
+                Column {
+                    id: eduroamCol
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: 16
+                    spacing: 12
+
+                    Row {
+                        width: parent.width
+                        spacing: 12
+
+                        Rectangle {
+                            width: 36; height: 36; radius: 18
+                            color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : (Theme.accent + "25")
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "⚡"
+                                font.pixelSize: 16
+                            }
+                        }
+
+                        Column {
+                            width: parent.width - 180
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 4
+
+                            Row {
+                                spacing: 8
+                                Text {
+                                    text: I18n.language === "tr" ? "Cloudflare WARP (Uygulama İçi Tünel)" : "Cloudflare WARP (In-App Tunnel)"
+                                    color: Theme.textPrimary
+                                    font.pixelSize: 13
+                                    font.family: Theme.fontFamily
+                                    font.weight: Font.Bold
+                                }
+
+                                Rectangle {
+                                    height: 18
+                                    width: warpBadgeTxt.implicitWidth + 10
+                                    radius: 9
+                                    color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                           ? Theme.accent + "22"
+                                           : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#eab30822" : "#222c3c"
+                                    border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                                  ? Theme.accent
+                                                  : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#eab308" : Theme.borderDim
+                                    border.width: 1
+                                    anchors.verticalCenter: parent.verticalCenter
+
+                                    Text {
+                                        id: warpBadgeTxt
+                                        anchors.centerIn: parent
+                                        text: {
+                                            if (typeof proxyManager === "undefined") return "Kapalı"
+                                            if (proxyManager.autoConnecting) return "Bağlanıyor..."
+                                            if (proxyManager.warpRunning) return "Aktif • 127.0.0.1:40000"
+                                            return "Devre Dışı"
+                                        }
+                                        color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                               ? Theme.accent
+                                               : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#eab308" : Theme.textSecondary
+                                        font.pixelSize: 9
+                                        font.family: Theme.fontFamily
+                                        font.weight: Font.DemiBold
+                                    }
+                                }
+                            }
+
+                            Text {
+                                width: parent.width
+                                text: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                      ? (I18n.language === "tr" ? "Aktif: Yalnızca YuYuInstaller Cloudflare ağına tünellendi. Bilgisayarınızın geri kalanı veya oyunlar etkilenmez." : "Active: Only YuYuInstaller traffic is routed through Cloudflare. System is unaffected.")
+                                      : (I18n.language === "tr" ? "Eduroam, üniversite ve yurt engellerini aşar. Sadece uygulama içinde çalışır, sisteme harici VPN kurmaz." : "Bypasses campus firewalls. Works only inside app with zero system VPN install.")
+                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : Theme.textSecondary
+                                font.pixelSize: 11
+                                font.family: Theme.fontFamily
+                                wrapMode: Text.WordWrap
+                                lineHeight: 1.25
+                            }
+                        }
+
+                        // Toggle Action Button
+                        Rectangle {
+                            width: 120; height: 34
+                            radius: Theme.radiusMd
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                   ? (warpBtnMouse.containsMouse ? "#dc2626" : Theme.error)
+                                   : ((typeof proxyManager !== "undefined" && proxyManager.autoConnecting)
+                                      ? "#334155"
+                                      : (warpBtnMouse.containsMouse ? "#00e5ab" : Theme.accent))
+
+                            Behavior on color { ColorAnimation { duration: 150 } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: {
+                                    if (typeof proxyManager === "undefined") return "Aç"
+                                    if (proxyManager.autoConnecting) return I18n.language === "tr" ? "Bağlanıyor..." : "Connecting..."
+                                    if (proxyManager.warpRunning) return I18n.language === "tr" ? "Tüneli Kapat" : "Disconnect"
+                                    return I18n.language === "tr" ? "Tüneli Aç" : "Connect Tunnel"
+                                }
+                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                       ? "#ffffff"
+                                       : ((typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#94a3b8" : "#070a12")
+                                font.pixelSize: 11
+                                font.family: Theme.fontFamily
+                                font.weight: Font.Bold
+                            }
+
+                            MouseArea {
+                                id: warpBtnMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                enabled: (typeof proxyManager !== "undefined" && !proxyManager.autoConnecting)
+                                onClicked: {
+                                    if (typeof proxyManager !== "undefined") {
+                                        proxyManager.toggleWarpTunnel();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Card 2: Tunnel Mode Selection (Auto VPN, SOCKS5, HTTP)
             Rectangle {
                 width: parent.width

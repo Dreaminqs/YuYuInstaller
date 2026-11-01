@@ -1,6 +1,6 @@
 ; YuYuInstaller Professional Inno Setup Script
 #define MyAppName "YuYuInstaller"
-#define MyAppVersion "1.1.9"
+#define MyAppVersion "1.2.0"
 #define MyAppPublisher "YuYuDev"
 #define MyAppExeName "YuYuInstaller.exe"
 #define MyAppAssocName MyAppName + " Media Package"
@@ -52,9 +52,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "build\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
-; Tools (ffmpeg & yt-dlp)
+; Tools (ffmpeg & yt-dlp & embedded warp-plus)
 Source: "build\ffmpeg.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\yt-dlp.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\warp-plus.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Qt 6 & Windows Runtime DLLs
 Source: "build\*.dll"; DestDir: "{app}"; Flags: ignoreversion

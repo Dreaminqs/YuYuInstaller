@@ -54,8 +54,9 @@ void YtDlpDownloader::start() {
     args << "--no-playlist";
     args << "--no-check-certificates";
     args << "--continue";
-    args << "--socket-timeout" << "30";
-    args << "--retries" << "5";
+    args << "--socket-timeout" << "15";
+    args << "--retries" << "3";
+    args << "--dns-servers" << "1.1.1.1,8.8.8.8";
     if (!m_impersonateRetried) {
         args << "--impersonate" << "Chrome";
     }
@@ -362,6 +363,15 @@ void YtDlpDownloader::onProcessFinished(int exitCode, QProcess::ExitStatus exitS
             errorReason = QString("Download failed (Process exit code: %1)").arg(exitCode);
         }
         QString details = m_errorLogs.join("\n");
+        if (details.contains("timed out", Qt::CaseInsensitive) ||
+            details.contains("10060") ||
+            details.contains("unreachable", Qt::CaseInsensitive) ||
+            details.contains("Connection refused", Qt::CaseInsensitive) ||
+            details.contains("403: Forbidden", Qt::CaseInsensitive) ||
+            details.contains("Sign in to confirm", Qt::CaseInsensitive) ||
+            errorReason.contains("timed out", Qt::CaseInsensitive)) {
+            errorReason += " (Okul/yurt ağı (Eduroam) video akışını veya bot korumasını engelliyor olabilir. Cloudflare WARP açmayı deneyin.)";
+        }
         emit downloadFailed(m_id, errorReason, details);
     }
 

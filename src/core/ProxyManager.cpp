@@ -2,6 +2,10 @@
 #include <QNetworkProxy>
 #include <QUrl>
 #include <QRegularExpression>
+#include <QCoreApplication>
+#include <QFileInfo>
+#include <QDir>
+#include <QStandardPaths>
 #include <iostream>
 
 ProxyManager *ProxyManager::s_instance = nullptr;
@@ -19,6 +23,7 @@ ProxyManager::ProxyManager(QObject *parent)
 }
 
 ProxyManager::~ProxyManager() {
+    stopWarpTunnel();
     if (s_instance == this) {
         s_instance = nullptr;
     }
@@ -31,15 +36,14 @@ ProxyManager* ProxyManager::instance() {
 void ProxyManager::initAutoPool() {
     m_autoPool.clear();
 
+    // Priority 0: Cloudflare WARP / Local SOCKS5 Tunnel (Fastest & Unblocked)
+    m_autoPool.append({"Cloudflare WARP (Yerel Güvenli Tünel)", "CF", "127.0.0.1", 40000, true, -1});
+    m_autoPool.append({"SOCKS5 Local Tunnel", "LOCAL", "127.0.0.1", 1080, true, -1});
+
     // High-uptime, fast verified live public proxy nodes
     m_autoPool.append({"Netherlands (Amsterdam)", "NL", "144.124.251.24", 10649, false, -1});
-    m_autoPool.append({"Netherlands (Amsterdam)", "NL", "144.124.251.24", 11205, false, -1});
-    m_autoPool.append({"United States (Azure)", "US", "4.144.146.21", 80, false, -1});
-    m_autoPool.append({"Germany (Frankfurt)", "DE", "194.150.110.134", 80, false, -1});
-    m_autoPool.append({"Netherlands (Amsterdam)", "NL", "144.124.251.24", 10023, false, -1});
     m_autoPool.append({"Germany (Frankfurt)", "DE", "159.65.120.144", 1080, true, -1});
     m_autoPool.append({"France (Paris)", "FR", "51.15.242.202", 1080, true, -1});
-    m_autoPool.append({"Netherlands (Rotterdam)", "NL", "145.220.227.154", 8080, false, -1});
     m_autoPool.append({"United States (New York)", "US", "192.241.178.115", 1080, true, -1});
     m_autoPool.append({"United Kingdom (London)", "GB", "51.89.255.67", 8080, false, -1});
 }
@@ -96,7 +100,7 @@ QString ProxyManager::proxyUrl() const {
         if (!m_password.isEmpty()) {
             return QString("%1://%2:%3@%4:%5").arg(scheme, m_username, m_password, m_host, QString::number(m_port));
         }
-        return QString("%1://%2@%3:%5").arg(scheme, m_username, m_host, QString::number(m_port));
+        return QString("%1://%2@%3:%4").arg(scheme, m_username, m_host, QString::number(m_port));
     }
     return QString("%1://%2:%3").arg(scheme, m_host, QString::number(m_port));
 }
@@ -194,8 +198,210 @@ void ProxyManager::applyProxy() {
     }
 }
 
+QString ProxyManager::findWarpExecutable() {
+    const QStringList candidates = {
+        QCoreApplication::applicationDirPath() + "/warp-plus.exe",
+        QCoreApplication::applicationDirPath() + "/build/warp-plus.exe",
+        QDir::currentPath() + "/build/warp-plus.exe",
+        QDir::currentPath() + "/warp-plus.exe"
+    };
+    for (const auto &p : candidates) {
+        if (QFileInfo::exists(p)) {
+            return QDir::toNativeSeparators(p);
+        }
+    }
+    return QString();
+}
+
+bool ProxyManager::isWarpAvailable() const {
+    return !findWarpExecutable().isEmpty();
+}
+
+void ProxyManager::toggleWarpTunnel() {
+    if (m_warpRunning) {
+        stopWarpTunnel();
+    } else {
+        startWarpTunnel();
+    }
+}
+
+void ProxyManager::startWarpTunnel() {
+    if (m_warpRunning) return;
+
+    QString exePath = findWarpExecutable();
+    if (exePath.isEmpty()) {
+        m_autoStatusMessage = "WARP motoru (warp-plus.exe) bulunamadı.";
+        emit autoStatusMessageChanged();
+        return;
+    }
+
+    if (m_warpProcess) {
+        m_warpProcess->kill();
+        m_warpProcess->deleteLater();
+        m_warpProcess = nullptr;
+    }
+
+    m_warpProcess = new QProcess(this);
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/warp_cache";
+    QDir().mkpath(cacheDir);
+
+    QStringList args;
+    args << "-4";
+    args << "-b" << "127.0.0.1:40000";
+    args << "--dns" << "1.1.1.1";
+    args << "-e" << "162.159.195.243:2408";
+    args << "--test-url" << "https://1.1.1.1";
+    args << "--cache-dir" << cacheDir;
+
+    m_autoConnecting = true;
+    m_autoStatusMessage = "Cloudflare WARP tüneli kuruluyor...";
+    emit autoConnectingChanged();
+    emit autoStatusMessageChanged();
+
+    connect(m_warpProcess, &QProcess::readyReadStandardOutput, this, [this]() {
+        if (!m_warpProcess) return;
+        QByteArray out = m_warpProcess->readAllStandardOutput();
+        QString str = QString::fromUtf8(out);
+        std::cout << "[WARP] " << out.toStdString() << std::endl;
+
+        if (str.contains("serving proxy") || str.contains("connection test successful")) {
+            if (!m_warpRunning) {
+                m_warpRunning = true;
+                m_autoConnecting = false;
+                m_autoConnected = true;
+                m_autoHost = "127.0.0.1";
+                m_autoPort = 40000;
+                m_autoIsSocks5 = true;
+                m_autoLocation = "Cloudflare WARP (Yerleşik Tünel)";
+                m_autoCountryCode = "CF";
+                m_autoLatency = 15;
+                m_autoStatusMessage = "Cloudflare WARP Aktif (Eduroam Engeli Aşıldı)";
+                m_enabled = true;
+                m_proxyMode = ModeAutoVPN;
+
+                applyProxy();
+
+                emit warpRunningChanged();
+                emit autoConnectingChanged();
+                emit autoConnectedChanged();
+                emit enabledChanged();
+                emit proxyModeChanged();
+                emit autoLocationChanged();
+                emit autoCountryCodeChanged();
+                emit autoLatencyChanged();
+                emit autoStatusMessageChanged();
+                emit proxyUrlChanged();
+            }
+        }
+    });
+
+    connect(m_warpProcess, &QProcess::readyReadStandardError, this, [this]() {
+        if (!m_warpProcess) return;
+        QByteArray err = m_warpProcess->readAllStandardError();
+        std::cout << "[WARP ERR] " << err.toStdString() << std::endl;
+    });
+
+    connect(m_warpProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, [this](int exitCode, QProcess::ExitStatus exitStatus) {
+        Q_UNUSED(exitCode);
+        Q_UNUSED(exitStatus);
+        m_warpRunning = false;
+        m_autoConnecting = false;
+        emit warpRunningChanged();
+        emit autoConnectingChanged();
+        if (m_enabled && m_proxyMode == ModeAutoVPN && m_autoPort == 40000) {
+            m_autoConnected = false;
+            m_enabled = false;
+            m_autoStatusMessage = "WARP tüneli kapandı.";
+            emit autoConnectedChanged();
+            emit enabledChanged();
+            emit autoStatusMessageChanged();
+            emit proxyUrlChanged();
+            applyProxy();
+        }
+    });
+
+    m_warpProcess->start(exePath, args);
+
+    // Fallback safety timer: after 6 seconds, if process is running and not yet flagged as running
+    QTimer::singleShot(6000, this, [this]() {
+        if (!m_warpProcess || m_warpProcess->state() != QProcess::Running) {
+            if (m_autoConnecting) {
+                m_autoConnecting = false;
+                m_autoStatusMessage = "WARP tüneli başlatılamadı.";
+                emit autoConnectingChanged();
+                emit autoStatusMessageChanged();
+            }
+            return;
+        }
+
+        if (!m_warpRunning) {
+            m_warpRunning = true;
+            m_autoConnecting = false;
+            m_autoConnected = true;
+            m_autoHost = "127.0.0.1";
+            m_autoPort = 40000;
+            m_autoIsSocks5 = true;
+            m_autoLocation = "Cloudflare WARP (Yerleşik Tünel)";
+            m_autoCountryCode = "CF";
+            m_autoLatency = 15;
+            m_autoStatusMessage = "Cloudflare WARP Aktif (Eduroam Engeli Aşıldı)";
+            m_enabled = true;
+            m_proxyMode = ModeAutoVPN;
+
+            applyProxy();
+
+            emit warpRunningChanged();
+            emit autoConnectingChanged();
+            emit autoConnectedChanged();
+            emit enabledChanged();
+            emit proxyModeChanged();
+            emit autoLocationChanged();
+            emit autoCountryCodeChanged();
+            emit autoLatencyChanged();
+            emit autoStatusMessageChanged();
+            emit proxyUrlChanged();
+        }
+    });
+}
+
+void ProxyManager::stopWarpTunnel() {
+    if (m_warpProcess) {
+        if (m_warpProcess->state() != QProcess::NotRunning) {
+            m_warpProcess->terminate();
+            if (!m_warpProcess->waitForFinished(500)) {
+                m_warpProcess->kill();
+            }
+        }
+        m_warpProcess->deleteLater();
+        m_warpProcess = nullptr;
+    }
+
+    m_warpRunning = false;
+    m_autoConnecting = false;
+    emit warpRunningChanged();
+    emit autoConnectingChanged();
+
+    if (m_autoPort == 40000) {
+        m_autoConnected = false;
+        m_enabled = false;
+        m_autoStatusMessage = "Bağlantı kapalı";
+        emit autoConnectedChanged();
+        emit enabledChanged();
+        emit autoStatusMessageChanged();
+        emit proxyUrlChanged();
+        applyProxy();
+    }
+}
+
 void ProxyManager::startAutoTunnel() {
     if (m_autoConnecting) return;
+
+    // Prioritize embedded in-app Cloudflare WARP engine
+    if (isWarpAvailable()) {
+        startWarpTunnel();
+        return;
+    }
+
     if (m_autoPool.isEmpty()) {
         initAutoPool();
     }
@@ -346,6 +552,9 @@ void ProxyManager::switchAutoTunnelNode() {
 }
 
 void ProxyManager::stopAutoTunnel() {
+    if (m_warpRunning) {
+        stopWarpTunnel();
+    }
     m_autoConnecting = false;
     m_autoConnected = false;
     m_autoExitIp = "";

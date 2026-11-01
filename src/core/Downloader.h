@@ -70,6 +70,8 @@ private:
     int m_speedLimitMBps = 0;
     qint64 m_tokenBucket = 0;
     QTimer *m_throttleTimer = nullptr;
+    QTimer *m_connectTimeoutTimer = nullptr;
+    QTimer *m_stallTimer = nullptr;
     QElapsedTimer m_rateTimer;
 
     QNetworkAccessManager m_netManager;

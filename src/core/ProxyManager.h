@@ -9,6 +9,7 @@
 #include <QElapsedTimer>
 #include <QSettings>
 #include <QTimer>
+#include <QProcess>
 
 struct AutoProxyNode {
     QString country;
@@ -41,6 +42,10 @@ class ProxyManager : public QObject {
     Q_PROPERTY(QString autoStatusMessage READ autoStatusMessage NOTIFY autoStatusMessageChanged)
     Q_PROPERTY(QString autoProtocol READ autoProtocol NOTIFY autoProtocolChanged)
     Q_PROPERTY(QString autoExitIp READ autoExitIp NOTIFY autoExitIpChanged)
+
+    // Embedded WARP Engine Properties
+    Q_PROPERTY(bool warpRunning READ isWarpRunning NOTIFY warpRunningChanged)
+    Q_PROPERTY(bool warpAvailable READ isWarpAvailable NOTIFY warpAvailableChanged)
 
 public:
     enum ProxyMode {
@@ -83,6 +88,15 @@ public:
     QString autoProtocol() const { return m_autoIsSocks5 ? "SOCKS5" : "HTTP"; }
     QString autoExitIp() const { return m_autoExitIp; }
 
+    // Embedded WARP Getters & Methods
+    bool isWarpRunning() const { return m_warpRunning; }
+    bool isWarpAvailable() const;
+    static QString findWarpExecutable();
+
+    Q_INVOKABLE void toggleWarpTunnel();
+    Q_INVOKABLE void startWarpTunnel();
+    Q_INVOKABLE void stopWarpTunnel();
+
 public slots:
     void setEnabled(bool enabled);
     void setProxyMode(int mode);
@@ -122,6 +136,10 @@ signals:
     void autoStatusMessageChanged();
     void autoProtocolChanged();
     void autoExitIpChanged();
+
+    // WARP Signals
+    void warpRunningChanged();
+    void warpAvailableChanged();
 
 private:
     static ProxyManager *s_instance;
@@ -163,4 +181,8 @@ private:
     QNetworkAccessManager *m_autoNam{nullptr};
     QNetworkAccessManager *m_fetchNam{nullptr};
     QElapsedTimer m_timer;
+
+    // Embedded WARP Process
+    QProcess *m_warpProcess{nullptr};
+    bool m_warpRunning{false};
 };
