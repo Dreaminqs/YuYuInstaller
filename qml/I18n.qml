@@ -11,7 +11,7 @@ QtObject {
         "en": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.1.9 Pro",
+            "appVersion": "v1.2.0 Pro",
             "appSubtitle": "Media Downloader & Converter",
             
             // Sidebar
@@ -122,7 +122,7 @@ QtObject {
             "missingStatus": "Missing",
             "aboutTitle": "About YuYuInstaller",
             "aboutDesc": "YuYuInstaller is a modern Windows media downloader and converter built with C++20, Qt 6 Quick / QML, FFmpeg, and yt-dlp for high-performance direct streaming and 320 kbps audio extraction.",
-            "aboutVersion": "Version 1.1.9 Pro • Hardware-Accelerated QML Interface",
+            "aboutVersion": "Version 1.2.0 Pro • Hardware-Accelerated QML Interface",
             "updateSection": "Application Updates",
             "updateSubtitle": "Keep YuYuInstaller updated with the latest improvements.",
             "currentVersionLabel": "Installed Version",
@@ -172,13 +172,10 @@ QtObject {
 
             "updateLogTitle": "Release Notes & Changelog",
             "updateLogSubtitle": "Detailed history of improvements and release notes",
-            "log121_1": "Crash Fix on Analyze: Resolved yt-dlp parameter conflict and infinite fallback recursion on video parsing",
-            "log121_2": "Robust Port Verification: Added live socket polling on 127.0.0.1:40000 preventing premature proxy activation",
-            "log121_3": "Independent Auto VPN: Decoupled Auto VPN proxy pool from WARP tunnel for seamless censorship bypass",
             "log120_1": "Embedded Cloudflare WARP Split-Tunnel: Direct in-app tunnel without external software, virtual adapters, or admin rights",
-            "log120_2": "Eduroam & Campus Firewall Bypass: High-speed optimized endpoint routing bypassing packet drops and ISP/campus blocks",
-            "log120_3": "Proxy & Privacy Control: Dedicated 1-click In-App Tunnel toggle switch with live status badge and port indicators",
-            "log120_4": "Anti-Drop Connect Protection: 15s smart connect timers and Cloudflare WAF bot-detection bypass for Animecix, Vidmoly, and YouTube",
+            "log120_2": "Eduroam & Campus Firewall Bypass: High-speed optimized endpoint routing bypassing packet drops and detecting network blocks",
+            "log120_3": "Crash Fix on Video Analyze: Resolved yt-dlp parameter conflicts and infinite fallback recursion on video parsing",
+            "log120_4": "Robust Port Verification & Proxy Management: Live socket polling on 127.0.0.1:40000 preventing premature proxy activation",
             "log119_1": "Setup Size Reduced by 51 MB: Cleaned redundant assets, shrinking the installer from 160 MB down to 109 MB",
             "log119_2": "Universal CPU Compatibility: Removed /arch:AVX2 crash risk so the app runs smoothly on all 64-bit Windows systems",
             "log119_3": "Smooth Queue Scrolling: Enabled item recycling (reuseItems) for zero-lag scrolling in the download queue",
@@ -246,7 +243,7 @@ QtObject {
         "tr": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.1.9 Pro",
+            "appVersion": "v1.2.0 Pro",
             "appSubtitle": "Medya İndirici & Dönüştürücü",
 
             // Sidebar
@@ -357,7 +354,7 @@ QtObject {
             "missingStatus": "Bulunamadı",
             "aboutTitle": "YuYuİnstaller Hakkında",
             "aboutDesc": "YuYuİnstaller; C++20, Qt 6 Quick / QML, FFmpeg ve yt-dlp ile güçlendirilmiş, yüksek performanslı yeni nesil medya indirme ve ses dönüştürme yazılımıdır.",
-            "aboutVersion": "Sürüm 1.1.9 Pro • Donanım Hızlandırmalı QML Arayüzü",
+            "aboutVersion": "Sürüm 1.2.0 Pro • Donanım Hızlandırmalı QML Arayüzü",
             "updateSection": "Uygulama Güncellemeleri",
             "updateSubtitle": "YuYuİnstaller'ı resmi depodan en son sürümle güncel tutun.",
             "currentVersionLabel": "Yüklü Sürüm",
@@ -407,13 +404,10 @@ QtObject {
 
             "updateLogTitle": "Güncelleme Notları & Sürüm Logları",
             "updateLogSubtitle": "Yayınlanan sürümler ve yapılan yeniliklerin detaylı listesi",
-            "log121_1": "Analiz Crash Düzeltmesi: Video analizinde yt-dlp parametre hatası ve sonsuz döngü çökmesi giderildi",
-            "log121_2": "Canlı Port Doğrulaması: 127.0.0.1:40000 portu gerçekten dinlemeden proxy aktif edilmesini önleyen kontrol eklendi",
-            "log121_3": "Bağımsız Akıllı VPN: Otomatik Proxy havuzu ile WARP tüneli ayrılarak ağ engeli aşımları güçlendirildi",
             "log120_1": "Yerleşik Cloudflare WARP Tüneli: Harici yazılım, sanal ağ kartı veya yönetici izni gerekmeden doğrudan uygulama içi tünelleme",
-            "log120_2": "Eduroam & Kampüs / Yurt Engel Aşıcı: Güvenlik duvarlarını ve paket engellemelerini aşan optimize edilmiş Cloudflare uç noktası",
-            "log120_3": "Proxy & Gizlilik Arayüzü: Canlı durum rozeti, tek tıkla Tüneli Aç / Kapat kontrolleri ve anlık gecikme takibi",
-            "log120_4": "Düşme Korumalı Akıllı İndirme: Animecix, Vidmoly ve YouTube için 15sn akıllı zamanlayıcılar ve Cloudflare WAF bot koruması",
+            "log120_2": "Eduroam & Kampüs / Yurt Engel Aşıcı: Güvenlik duvarlarını ve engelleri aşan optimize Cloudflare uç noktası ve ağ engeli algılama",
+            "log120_3": "Analiz Crash Düzeltmesi: Video analizinde yt-dlp parametre hatası ve sonsuz döngü çökmesi tamamen giderildi",
+            "log120_4": "Canlı Port Doğrulaması & Akıllı Proxy: 127.0.0.1:40000 portu dinlemeden proxy aktifleşmesini önleyen canlı socket testi ve bağlantı koruması",
             "log119_1": "Kurulum Boyutu 51 MB Küçültüldü: Eski artık dosyalar temizlendi, kurulum paketi 160 MB'tan 109 MB'a indirildi",
             "log119_2": "Evrensel İşlemci Uyumluluğu: /arch:AVX2 riski kaldırılarak tüm 64-bit Windows sistemlerinde çökmesiz çalışma sağlandı",
             "log119_3": "Akıcı Kuyruk Kaydırması: İndirme kuyruğunda kart geri dönüşümü (reuseItems) ile takılmasız akıcı kaydırma sağlandı",
@@ -481,7 +475,7 @@ QtObject {
         "uk": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.1.9 Pro",
+            "appVersion": "v1.2.0 Pro",
             "appSubtitle": "Завантажувач та конвертер медіа",
 
             // Sidebar
@@ -592,7 +586,7 @@ QtObject {
             "missingStatus": "Відсутній",
             "aboutTitle": "Про YuYuInstaller",
             "aboutDesc": "YuYuInstaller — це сучасний завантажувач та конвертер медіа для Windows, створений на C++20, Qt 6 Quick / QML, FFmpeg та yt-dlp для високопродуктивного прямого потокового завантаження та вилучення аудіо 320 kbps.",
-            "aboutVersion": "Версія 1.1.9 Pro • Апаратно-прискорений інтерфейс QML",
+            "aboutVersion": "Версія 1.2.0 Pro • Апаратно-прискорений інтерфейс QML",
             "updateSection": "Оновлення програми",
             "updateSubtitle": "Підтримуйте актуальність YuYuInstaller з офіційного репозиторію.",
             "currentVersionLabel": "Встановлена версія",
@@ -642,13 +636,10 @@ QtObject {
 
             "updateLogTitle": "Журнал оновлень та історія змін",
             "updateLogSubtitle": "Детальний список випусків та реалізованих покращень",
-            "log121_1": "Виправлення збою аналізу: Усунуто конфлікт параметрів yt-dlp та нескінченну рекурсію під час аналізу відео",
-            "log121_2": "Надійна перевірка порту: Додано перевірку порту 127.0.0.1:40000 перед активацією проксі",
-            "log121_3": "Незалежний Авто VPN: Пул проксі та тунель WARP розділено для стабільного обходу блокувань",
             "log120_1": "Вбудований Cloudflare WARP Split-Tunnel: Прямий тунель у програмі без стороннього ПЗ чи прав адміністратора",
-            "log120_2": "Обхід блокувань Eduroam і кампусів: Оптимізована маршрутизація для надійного подолання брандмауерів",
-            "log120_3": "Керування Проксі та Захистом: Перемикач тунелю в один клік з живими індикаторами статусу та порту",
-            "log120_4": "Захист від скидання підключення: Розумні таймери 15с та обхід захисту Cloudflare WAF для Animecix, Vidmoly та YouTube",
+            "log120_2": "Обхід блокувань Eduroam і кампусів: Оптимізована маршрутизація для надійного подолання брандмауерів та виявлення блокувань",
+            "log120_3": "Виправлення збою аналізу: Усунуто конфлікт параметрів yt-dlp та нескінченну рекурсію під час аналізу відео",
+            "log120_4": "Надійна перевірка порту & Проксі: Перевірка порту 127.0.0.1:40000 перед активацією проксі та інтелектуальний захист підключення",
             "log119_1": "Розмір інсталятора зменшено на 51 МБ: Очищено застарілі файли, розмір інсталятора зменшено зі 160 МБ до 109 МБ",
             "log119_2": "Універсальна сумісність з процесорами: Виправлено ризик аварійного завершення /arch:AVX2 для стабільної роботи на всіх 64-бітних системах",
             "log119_3": "Плавне прокручування черги: Увімкнено повторне використання карток (reuseItems) для усунення затримок",

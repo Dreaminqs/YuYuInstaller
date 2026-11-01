@@ -323,7 +323,13 @@ Item {
                                         return I18n.language === "tr" ? "Aktif: Yalnızca YuYuInstaller Cloudflare ağına tünellendi. Bilgisayarınızın geri kalanı veya oyunlar etkilenmez." : "Active: Only YuYuInstaller traffic is routed through Cloudflare. System is unaffected.";
                                     }
                                     if (typeof proxyManager !== "undefined" && !proxyManager.autoConnecting && proxyManager.autoStatusMessage.indexOf("engeli") !== -1) {
-                                        return proxyManager.autoStatusMessage + (I18n.language === "tr" ? " (Arka planda Proton VPN veya harici VPN açıksa doğrudan kullanabilirsiniz.)" : " (If Proton VPN or external VPN is active, you can use it directly.)");
+                                        if (I18n.language === "tr") {
+                                            return "WARP tüneli kurulamadı (Ağ / Eduroam engeli tespit edildi). (Arka planda Proton VPN veya harici VPN açıksa doğrudan kullanabilirsiniz.)";
+                                        } else if (I18n.language === "uk") {
+                                            return "Не вдалося встановити тунель WARP (виявлено блокування мережі / Eduroam). (Якщо увімкнено Proton VPN або інший VPN, ви можете завантажувати напряму.)";
+                                        } else {
+                                            return "WARP tunnel failed to connect (Network / Eduroam block detected). (If Proton VPN or external VPN is active, you can use it directly.)";
+                                        }
                                     }
                                     return I18n.language === "tr" ? "Eduroam, üniversite ve yurt engellerini aşar. Sadece uygulama içinde çalışır, sisteme harici VPN kurmaz." : "Bypasses campus firewalls. Works only inside app with zero system VPN install.";
                                 }

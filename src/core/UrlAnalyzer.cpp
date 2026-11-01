@@ -597,7 +597,7 @@ void UrlAnalyzer::startYouTubeOembedProbe(const QUrl &url) {
 
     QUrl oembedUrl(oembedUrlStr);
     QNetworkRequest request(oembedUrl);
-    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) YuYuInstaller/1.1.9");
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) YuYuInstaller/1.2.0");
 
     m_currentReply = m_netManager.get(request);
     connect(m_currentReply, &QNetworkReply::finished, this, &UrlAnalyzer::onOembedFinished);
