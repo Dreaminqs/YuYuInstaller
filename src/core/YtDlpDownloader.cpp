@@ -56,7 +56,6 @@ void YtDlpDownloader::start() {
     args << "--continue";
     args << "--socket-timeout" << "15";
     args << "--retries" << "3";
-    args << "--dns-servers" << "1.1.1.1,8.8.8.8";
     if (!m_impersonateRetried) {
         args << "--impersonate" << "Chrome";
     }

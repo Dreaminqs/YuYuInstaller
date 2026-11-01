@@ -6,6 +6,8 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QStandardPaths>
+#include <QTcpSocket>
+#include <QTimer>
 #include <iostream>
 
 ProxyManager *ProxyManager::s_instance = nullptr;
@@ -242,6 +244,7 @@ void ProxyManager::startWarpTunnel() {
     }
 
     m_warpProcess = new QProcess(this);
+    m_warpProcess->setProcessChannelMode(QProcess::MergedChannels);
     QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/warp_cache";
     QDir().mkpath(cacheDir);
 
@@ -250,90 +253,14 @@ void ProxyManager::startWarpTunnel() {
     args << "-b" << "127.0.0.1:40000";
     args << "--dns" << "1.1.1.1";
     args << "-e" << "162.159.195.243:2408";
-    args << "--test-url" << "https://1.1.1.1";
-    args << "--cache-dir" << cacheDir;
+    args << "--cache-dir" << QDir::toNativeSeparators(cacheDir);
 
     m_autoConnecting = true;
     m_autoStatusMessage = "Cloudflare WARP tüneli kuruluyor...";
     emit autoConnectingChanged();
     emit autoStatusMessageChanged();
 
-    connect(m_warpProcess, &QProcess::readyReadStandardOutput, this, [this]() {
-        if (!m_warpProcess) return;
-        QByteArray out = m_warpProcess->readAllStandardOutput();
-        QString str = QString::fromUtf8(out);
-        std::cout << "[WARP] " << out.toStdString() << std::endl;
-
-        if (str.contains("serving proxy") || str.contains("connection test successful")) {
-            if (!m_warpRunning) {
-                m_warpRunning = true;
-                m_autoConnecting = false;
-                m_autoConnected = true;
-                m_autoHost = "127.0.0.1";
-                m_autoPort = 40000;
-                m_autoIsSocks5 = true;
-                m_autoLocation = "Cloudflare WARP (Yerleşik Tünel)";
-                m_autoCountryCode = "CF";
-                m_autoLatency = 15;
-                m_autoStatusMessage = "Cloudflare WARP Aktif (Eduroam Engeli Aşıldı)";
-                m_enabled = true;
-                m_proxyMode = ModeAutoVPN;
-
-                applyProxy();
-
-                emit warpRunningChanged();
-                emit autoConnectingChanged();
-                emit autoConnectedChanged();
-                emit enabledChanged();
-                emit proxyModeChanged();
-                emit autoLocationChanged();
-                emit autoCountryCodeChanged();
-                emit autoLatencyChanged();
-                emit autoStatusMessageChanged();
-                emit proxyUrlChanged();
-            }
-        }
-    });
-
-    connect(m_warpProcess, &QProcess::readyReadStandardError, this, [this]() {
-        if (!m_warpProcess) return;
-        QByteArray err = m_warpProcess->readAllStandardError();
-        std::cout << "[WARP ERR] " << err.toStdString() << std::endl;
-    });
-
-    connect(m_warpProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, [this](int exitCode, QProcess::ExitStatus exitStatus) {
-        Q_UNUSED(exitCode);
-        Q_UNUSED(exitStatus);
-        m_warpRunning = false;
-        m_autoConnecting = false;
-        emit warpRunningChanged();
-        emit autoConnectingChanged();
-        if (m_enabled && m_proxyMode == ModeAutoVPN && m_autoPort == 40000) {
-            m_autoConnected = false;
-            m_enabled = false;
-            m_autoStatusMessage = "WARP tüneli kapandı.";
-            emit autoConnectedChanged();
-            emit enabledChanged();
-            emit autoStatusMessageChanged();
-            emit proxyUrlChanged();
-            applyProxy();
-        }
-    });
-
-    m_warpProcess->start(exePath, args);
-
-    // Fallback safety timer: after 6 seconds, if process is running and not yet flagged as running
-    QTimer::singleShot(6000, this, [this]() {
-        if (!m_warpProcess || m_warpProcess->state() != QProcess::Running) {
-            if (m_autoConnecting) {
-                m_autoConnecting = false;
-                m_autoStatusMessage = "WARP tüneli başlatılamadı.";
-                emit autoConnectingChanged();
-                emit autoStatusMessageChanged();
-            }
-            return;
-        }
-
+    auto markWarpActive = [this]() {
         if (!m_warpRunning) {
             m_warpRunning = true;
             m_autoConnecting = false;
@@ -361,7 +288,67 @@ void ProxyManager::startWarpTunnel() {
             emit autoStatusMessageChanged();
             emit proxyUrlChanged();
         }
+    };
+
+    connect(m_warpProcess, &QProcess::readyReadStandardOutput, this, [this, markWarpActive]() {
+        if (!m_warpProcess) return;
+        QByteArray out = m_warpProcess->readAllStandardOutput();
+        QString str = QString::fromUtf8(out);
+        std::cout << "[WARP] " << out.toStdString() << std::endl;
+
+        if (str.contains("serving proxy") || str.contains("connection test successful")) {
+            markWarpActive();
+        }
     });
+
+    connect(m_warpProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, [this](int exitCode, QProcess::ExitStatus exitStatus) {
+        Q_UNUSED(exitCode);
+        Q_UNUSED(exitStatus);
+        m_warpRunning = false;
+        m_autoConnecting = false;
+        emit warpRunningChanged();
+        emit autoConnectingChanged();
+        if (m_enabled && m_proxyMode == ModeAutoVPN && m_autoPort == 40000) {
+            m_autoConnected = false;
+            m_enabled = false;
+            m_autoStatusMessage = "WARP tüneli kapandı.";
+            emit autoConnectedChanged();
+            emit enabledChanged();
+            emit autoStatusMessageChanged();
+            emit proxyUrlChanged();
+            applyProxy();
+        }
+    });
+
+    m_warpProcess->start(exePath, args);
+
+    // Active port polling: check every 500ms up to 10 seconds to confirm 127.0.0.1:40000 is open
+    for (int delay = 500; delay <= 10000; delay += 500) {
+        QTimer::singleShot(delay, this, [this, markWarpActive, delay]() {
+            if (m_warpRunning || !m_autoConnecting) return;
+            if (!m_warpProcess || m_warpProcess->state() != QProcess::Running) {
+                m_autoConnecting = false;
+                m_autoStatusMessage = "WARP tüneli başlatılamadı.";
+                emit autoConnectingChanged();
+                emit autoStatusMessageChanged();
+                return;
+            }
+
+            QTcpSocket testSock;
+            testSock.connectToHost("127.0.0.1", 40000);
+            if (testSock.waitForConnected(200)) {
+                testSock.disconnectFromHost();
+                markWarpActive();
+            } else if (delay >= 10000) {
+                // Timeout after 10 seconds of no port response
+                m_autoConnecting = false;
+                m_autoStatusMessage = "WARP tüneli kurulamadı (Ağ / Eduroam engeli tespit edildi).";
+                emit autoConnectingChanged();
+                emit autoStatusMessageChanged();
+                stopWarpTunnel();
+            }
+        });
+    }
 }
 
 void ProxyManager::stopWarpTunnel() {
@@ -395,12 +382,6 @@ void ProxyManager::stopWarpTunnel() {
 
 void ProxyManager::startAutoTunnel() {
     if (m_autoConnecting) return;
-
-    // Prioritize embedded in-app Cloudflare WARP engine
-    if (isWarpAvailable()) {
-        startWarpTunnel();
-        return;
-    }
 
     if (m_autoPool.isEmpty()) {
         initAutoPool();

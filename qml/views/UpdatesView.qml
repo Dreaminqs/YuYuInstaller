@@ -357,6 +357,116 @@ Item {
                         width: parent.width
                         spacing: 10
 
+                        // v1.2.1 Pro
+                        Rectangle {
+                            width: parent.width
+                            implicitHeight: log121Col.implicitHeight + 20
+                            radius: Theme.radiusMd
+                            color: Theme.bgInput
+                            border.color: Theme.borderDim
+                            border.width: 1
+
+                            Column {
+                                id: log121Col
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 8
+
+                                Row {
+                                    spacing: 8
+                                    Rectangle {
+                                        width: 58; height: 20; radius: 4
+                                        color: Theme.accent
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "v1.2.1"
+                                            color: "#07090e"
+                                            font.pixelSize: 11
+                                            font.weight: Font.Bold
+                                        }
+                                    }
+                                    Rectangle {
+                                        width: 54; height: 18; radius: 9
+                                        color: "#162338"
+                                        border.color: Theme.accent
+                                        border.width: 1
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "CURRENT"
+                                            color: Theme.accent
+                                            font.pixelSize: 9
+                                            font.weight: Font.Bold
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    text: "• " + I18n.t("log121_1") + "\n• " + I18n.t("log121_2") + "\n• " + I18n.t("log121_3")
+                                    color: Theme.textSecondary
+                                    font.pixelSize: 11
+                                    font.family: Theme.fontFamily
+                                    lineHeight: 1.45
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+
+                        // v1.2.1 Pro
+                        Rectangle {
+                            width: parent.width
+                            implicitHeight: log121Col.implicitHeight + 20
+                            radius: Theme.radiusMd
+                            color: Theme.bgInput
+                            border.color: Theme.borderDim
+                            border.width: 1
+
+                            Column {
+                                id: log121Col
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 8
+
+                                Row {
+                                    spacing: 8
+                                    Rectangle {
+                                        width: 58; height: 20; radius: 4
+                                        color: Theme.accent
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "v1.2.1"
+                                            color: "#07090e"
+                                            font.pixelSize: 11
+                                            font.weight: Font.Bold
+                                        }
+                                    }
+                                    Rectangle {
+                                        width: 54; height: 18; radius: 9
+                                        color: "#162338"
+                                        border.color: Theme.accent
+                                        border.width: 1
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "CURRENT"
+                                            color: Theme.accent
+                                            font.pixelSize: 9
+                                            font.weight: Font.Bold
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    text: "• " + I18n.t("log121_1") + "\n• " + I18n.t("log121_2") + "\n• " + I18n.t("log121_3")
+                                    color: Theme.textSecondary
+                                    font.pixelSize: 11
+                                    font.family: Theme.fontFamily
+                                    lineHeight: 1.45
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+
                         // v1.2.0 Pro
                         Rectangle {
                             width: parent.width
@@ -376,25 +486,12 @@ Item {
                                     spacing: 8
                                     Rectangle {
                                         width: 58; height: 20; radius: 4
-                                        color: Theme.accent
+                                        color: "#222c3c"
                                         Text {
                                             anchors.centerIn: parent
                                             text: "v1.2.0"
-                                            color: "#07090e"
+                                            color: Theme.textSecondary
                                             font.pixelSize: 11
-                                            font.weight: Font.Bold
-                                        }
-                                    }
-                                    Rectangle {
-                                        width: 54; height: 18; radius: 9
-                                        color: "#162338"
-                                        border.color: Theme.accent
-                                        border.width: 1
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "CURRENT"
-                                            color: Theme.accent
-                                            font.pixelSize: 9
                                             font.weight: Font.Bold
                                         }
                                     }

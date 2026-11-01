@@ -99,6 +99,7 @@ void UrlAnalyzer::clear() {
         emit mediaInfoChanged();
     }
     m_ytDlpRetried = false;
+    m_oembedRetried = false;
     m_analyzingUrl.clear();
     m_pageReferer.clear();
     if (m_isAnalyzing) {
@@ -135,6 +136,7 @@ void UrlAnalyzer::analyzeUrl(const QString &rawUrl) {
     m_analyzingUrl = trimmed;
     m_pageReferer.clear();
     m_ytDlpRetried = false;
+    m_oembedRetried = false;
     m_isAnalyzing = true;
     emit analyzingChanged();
 
@@ -641,8 +643,10 @@ void UrlAnalyzer::onOembedFinished() {
         }
     }
 
-    // Fallback to yt-dlp probe if oEmbed fails
-    startYtDlpProbe(m_analyzingUrl);
+    // If oEmbed probe fails, do NOT loop back to yt-dlp (prevents infinite recursion)
+    m_isAnalyzing = false;
+    emit analyzingChanged();
+    emit analysisError("YouTube video bilgisi alınamadı. (Okul/yurt ağı engeli varsa WARP açmayı deneyin.)");
 }
 
 void UrlAnalyzer::startWebPageScrape(const QUrl &url) {
@@ -1302,7 +1306,6 @@ void UrlAnalyzer::startYtDlpProbe(const QString &rawUrl) {
     args << "--no-check-certificates";
     args << "--socket-timeout" << "15";
     args << "--retries" << "3";
-    args << "--dns-servers" << "1.1.1.1,8.8.8.8";
     if (ProxyManager::instance() && !ProxyManager::instance()->proxyUrl().isEmpty()) {
         args << "--proxy" << ProxyManager::instance()->proxyUrl();
         args << "--geo-bypass";
@@ -1403,8 +1406,11 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
         return;
     }
 
-    // Fallback to oEmbed probe if yt-dlp failed on YouTube
-    if (m_analyzingUrl.contains("youtube.com") || m_analyzingUrl.contains("youtu.be")) {
+    // Fallback to oEmbed probe if yt-dlp failed on YouTube (guarded against recursion)
+    if (!m_oembedRetried && (m_analyzingUrl.contains("youtube.com") || m_analyzingUrl.contains("youtu.be"))) {
+        m_oembedRetried = true;
+        m_isAnalyzing = true;
+        emit analyzingChanged();
         startYouTubeOembedProbe(QUrl(m_analyzingUrl));
         return;
     }

@@ -318,10 +318,16 @@ Item {
 
                             Text {
                                 width: parent.width
-                                text: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
-                                      ? (I18n.language === "tr" ? "Aktif: Yalnızca YuYuInstaller Cloudflare ağına tünellendi. Bilgisayarınızın geri kalanı veya oyunlar etkilenmez." : "Active: Only YuYuInstaller traffic is routed through Cloudflare. System is unaffected.")
-                                      : (I18n.language === "tr" ? "Eduroam, üniversite ve yurt engellerini aşar. Sadece uygulama içinde çalışır, sisteme harici VPN kurmaz." : "Bypasses campus firewalls. Works only inside app with zero system VPN install.")
-                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : Theme.textSecondary
+                                text: {
+                                    if (typeof proxyManager !== "undefined" && proxyManager.warpRunning) {
+                                        return I18n.language === "tr" ? "Aktif: Yalnızca YuYuInstaller Cloudflare ağına tünellendi. Bilgisayarınızın geri kalanı veya oyunlar etkilenmez." : "Active: Only YuYuInstaller traffic is routed through Cloudflare. System is unaffected.";
+                                    }
+                                    if (typeof proxyManager !== "undefined" && !proxyManager.autoConnecting && proxyManager.autoStatusMessage.indexOf("engeli") !== -1) {
+                                        return proxyManager.autoStatusMessage + (I18n.language === "tr" ? " (Arka planda Proton VPN veya harici VPN açıksa doğrudan kullanabilirsiniz.)" : " (If Proton VPN or external VPN is active, you can use it directly.)");
+                                    }
+                                    return I18n.language === "tr" ? "Eduroam, üniversite ve yurt engellerini aşar. Sadece uygulama içinde çalışır, sisteme harici VPN kurmaz." : "Bypasses campus firewalls. Works only inside app with zero system VPN install.";
+                                }
+                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : ((typeof proxyManager !== "undefined" && proxyManager.autoStatusMessage.indexOf("engeli") !== -1) ? "#f87171" : Theme.textSecondary)
                                 font.pixelSize: 11
                                 font.family: Theme.fontFamily
                                 wrapMode: Text.WordWrap

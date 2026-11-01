@@ -172,6 +172,9 @@ QtObject {
 
             "updateLogTitle": "Release Notes & Changelog",
             "updateLogSubtitle": "Detailed history of improvements and release notes",
+            "log121_1": "Crash Fix on Analyze: Resolved yt-dlp parameter conflict and infinite fallback recursion on video parsing",
+            "log121_2": "Robust Port Verification: Added live socket polling on 127.0.0.1:40000 preventing premature proxy activation",
+            "log121_3": "Independent Auto VPN: Decoupled Auto VPN proxy pool from WARP tunnel for seamless censorship bypass",
             "log120_1": "Embedded Cloudflare WARP Split-Tunnel: Direct in-app tunnel without external software, virtual adapters, or admin rights",
             "log120_2": "Eduroam & Campus Firewall Bypass: High-speed optimized endpoint routing bypassing packet drops and ISP/campus blocks",
             "log120_3": "Proxy & Privacy Control: Dedicated 1-click In-App Tunnel toggle switch with live status badge and port indicators",
@@ -404,6 +407,9 @@ QtObject {
 
             "updateLogTitle": "Güncelleme Notları & Sürüm Logları",
             "updateLogSubtitle": "Yayınlanan sürümler ve yapılan yeniliklerin detaylı listesi",
+            "log121_1": "Analiz Crash Düzeltmesi: Video analizinde yt-dlp parametre hatası ve sonsuz döngü çökmesi giderildi",
+            "log121_2": "Canlı Port Doğrulaması: 127.0.0.1:40000 portu gerçekten dinlemeden proxy aktif edilmesini önleyen kontrol eklendi",
+            "log121_3": "Bağımsız Akıllı VPN: Otomatik Proxy havuzu ile WARP tüneli ayrılarak ağ engeli aşımları güçlendirildi",
             "log120_1": "Yerleşik Cloudflare WARP Tüneli: Harici yazılım, sanal ağ kartı veya yönetici izni gerekmeden doğrudan uygulama içi tünelleme",
             "log120_2": "Eduroam & Kampüs / Yurt Engel Aşıcı: Güvenlik duvarlarını ve paket engellemelerini aşan optimize edilmiş Cloudflare uç noktası",
             "log120_3": "Proxy & Gizlilik Arayüzü: Canlı durum rozeti, tek tıkla Tüneli Aç / Kapat kontrolleri ve anlık gecikme takibi",
@@ -636,6 +642,9 @@ QtObject {
 
             "updateLogTitle": "Журнал оновлень та історія змін",
             "updateLogSubtitle": "Детальний список випусків та реалізованих покращень",
+            "log121_1": "Виправлення збою аналізу: Усунуто конфлікт параметрів yt-dlp та нескінченну рекурсію під час аналізу відео",
+            "log121_2": "Надійна перевірка порту: Додано перевірку порту 127.0.0.1:40000 перед активацією проксі",
+            "log121_3": "Незалежний Авто VPN: Пул проксі та тунель WARP розділено для стабільного обходу блокувань",
             "log120_1": "Вбудований Cloudflare WARP Split-Tunnel: Прямий тунель у програмі без стороннього ПЗ чи прав адміністратора",
             "log120_2": "Обхід блокувань Eduroam і кампусів: Оптимізована маршрутизація для надійного подолання брандмауерів",
             "log120_3": "Керування Проксі та Захистом: Перемикач тунелю в один клік з живими індикаторами статусу та порту",

@@ -61,6 +61,7 @@ private:
 
     bool m_isAnalyzing = false;
     bool m_ytDlpRetried = false;
+    bool m_oembedRetried = false;
     MediaInfo *m_currentInfo = nullptr;
     QNetworkAccessManager m_netManager;
     QNetworkReply *m_currentReply = nullptr;
