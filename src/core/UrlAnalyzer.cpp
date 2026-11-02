@@ -1,4 +1,8 @@
 #include "UrlAnalyzer.h"
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <bcrypt.h>
+#endif
 #include "ProxyManager.h"
 #include "FFmpegProcessor.h"
 #include <QNetworkRequest>
@@ -178,6 +182,18 @@ void UrlAnalyzer::analyzeUrl(const QString &rawUrl) {
 
     QString lower = trimmed.toLower();
 
+    // 0. Diziwatch series / anime / movies automated resolver
+    if (lower.contains("diziwatch.app") || lower.contains("diziwatch.net") || lower.contains("diziwatch.com")) {
+        startDiziwatchResolve(url);
+        return;
+    }
+
+    // 0.01 Pichive stream player iframe
+    if (lower.contains("pichive.online/")) {
+        startPichiveResolve(url, "Diziwatch Stream", "");
+        return;
+    }
+
     // 0. Animecix automated URL resolver
     if (lower.contains("animecix.tv") || lower.contains("animecix.com") || lower.contains("animecix.net")) {
         startAnimecixResolve(url);
@@ -252,6 +268,334 @@ void UrlAnalyzer::analyzeUrl(const QString &rawUrl) {
     // First, scrape the webpage HTML with intelligent video sniffer
     startWebPageScrape(url);
 }
+
+QString UrlAnalyzer::decryptDiziwatch(const QString &k, const QString &saltHex, const QString &ivHex, const QString &cipherBase64) {
+#ifdef Q_OS_WIN
+    if (k.isEmpty() || saltHex.isEmpty() || ivHex.isEmpty() || cipherBase64.isEmpty()) {
+        return QString();
+    }
+
+    QByteArray salt = QByteArray::fromHex(saltHex.toUtf8());
+    QByteArray iv = QByteArray::fromHex(ivHex.toUtf8());
+    if (salt.isEmpty() || iv.size() < 16) {
+        return QString();
+    }
+
+    QString cleanCipher = cipherBase64;
+    cleanCipher.replace(QStringLiteral("\\/"), QStringLiteral("/"));
+    QByteArray cipherBytes = QByteArray::fromBase64(cleanCipher.toUtf8());
+    if (cipherBytes.isEmpty()) {
+        return QString();
+    }
+
+    BCRYPT_ALG_HANDLE hPrf = NULL;
+    NTSTATUS status = BCryptOpenAlgorithmProvider(&hPrf, BCRYPT_SHA512_ALGORITHM, NULL, BCRYPT_ALG_HANDLE_HMAC_FLAG);
+    if (status != 0) return QString();
+
+    BYTE derivedKey[32];
+    QByteArray keyBytes = k.toUtf8();
+    status = BCryptDeriveKeyPBKDF2(
+        hPrf,
+        (PUCHAR)keyBytes.data(),
+        (ULONG)keyBytes.size(),
+        (PUCHAR)salt.data(),
+        (ULONG)salt.size(),
+        999,
+        derivedKey,
+        sizeof(derivedKey),
+        0
+    );
+    BCryptCloseAlgorithmProvider(hPrf, 0);
+    if (status != 0) return QString();
+
+    BCRYPT_ALG_HANDLE hAes = NULL;
+    status = BCryptOpenAlgorithmProvider(&hAes, BCRYPT_AES_ALGORITHM, NULL, 0);
+    if (status != 0) return QString();
+
+    BCryptSetProperty(hAes, BCRYPT_CHAINING_MODE, (PUCHAR)BCRYPT_CHAIN_MODE_CBC, sizeof(BCRYPT_CHAIN_MODE_CBC), 0);
+
+    BCRYPT_KEY_HANDLE hKey = NULL;
+    status = BCryptGenerateSymmetricKey(hAes, &hKey, NULL, 0, derivedKey, sizeof(derivedKey), 0);
+    if (status != 0) {
+        BCryptCloseAlgorithmProvider(hAes, 0);
+        return QString();
+    }
+
+    DWORD plainLen = (DWORD)cipherBytes.size() + 32;
+    QByteArray plainBytes(plainLen, 0);
+    DWORD cbResult = 0;
+
+    QByteArray ivCopy = iv;
+    status = BCryptDecrypt(
+        hKey,
+        (PUCHAR)cipherBytes.data(),
+        (ULONG)cipherBytes.size(),
+        NULL,
+        (PUCHAR)ivCopy.data(),
+        (ULONG)ivCopy.size(),
+        (PUCHAR)plainBytes.data(),
+        plainLen,
+        &cbResult,
+        BCRYPT_BLOCK_PADDING
+    );
+
+    BCryptDestroyKey(hKey);
+    BCryptCloseAlgorithmProvider(hAes, 0);
+
+    if (status != 0) return QString();
+
+    plainBytes.resize(cbResult);
+    return QString::fromUtf8(plainBytes).trimmed();
+#else
+    return QString();
+#endif
+}
+
+void UrlAnalyzer::startDiziwatchResolve(const QUrl &url) {
+    m_pageReferer = "https://diziwatch.app/";
+
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
+    request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    request.setRawHeader("Accept-Language", "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7");
+    request.setRawHeader("Referer", "https://diziwatch.app/");
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+
+    QNetworkReply *reply = m_netManager.get(request);
+    reply->ignoreSslErrors();
+    m_currentReply = reply;
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply, url]() {
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+        }
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        QByteArray data = reply->readAll();
+        reply->deleteLater();
+
+        if (statusCode != 200 || data.isEmpty()) {
+            emit analysisError(QString("Diziwatch sayfasi acilamadi (HTTP %1).").arg(statusCode));
+            m_isAnalyzing = false;
+            emit analyzingChanged();
+            return;
+        }
+
+        QString html = QString::fromUtf8(data);
+
+        QString title;
+        QRegularExpression playerTitleRe(R"((?:\\\"|")player(?:\\\"|")\s*:\s*\{[^}]*?(?:\\\"|")title(?:\\\"|")\s*:\s*(?:\\\"|")(.*?)(?:\\\"|"))");
+        auto mPt = playerTitleRe.match(html);
+        if (mPt.hasMatch()) {
+            title = mPt.captured(1);
+        } else {
+            QRegularExpression pageTitleRe(R"(<title>(.*?)(?: - | – | \| )?diziwatch</title>)", QRegularExpression::CaseInsensitiveOption);
+            auto mTitle = pageTitleRe.match(html);
+            if (mTitle.hasMatch()) {
+                title = mTitle.captured(1).trimmed();
+            } else {
+                title = "Diziwatch Video";
+            }
+        }
+        title.replace(QStringLiteral("\\\""), QStringLiteral("\""));
+        if (title.contains(QStringLiteral("\\u"))) {
+            QJsonDocument doc = QJsonDocument::fromJson(QByteArray("[\"") + title.toUtf8() + QByteArray("\"]"));
+            if (doc.isArray() && !doc.array().isEmpty()) {
+                title = doc.array().first().toString();
+            }
+        }
+
+        QString poster;
+        QRegularExpression posterRe(R"((?:\\\"|")(?:poster|prerollImage)(?:\\\"|")\s*:\s*(?:\\\"|")(.*?)(?:\\\"|"))");
+        auto mPoster = posterRe.match(html);
+        if (mPoster.hasMatch()) {
+            poster = mPoster.captured(1);
+            poster.replace(QStringLiteral("\\/"), QStringLiteral("/"));
+            poster.replace(QStringLiteral("\\\""), QStringLiteral("\""));
+        }
+
+        QString k;
+        QRegularExpression kRe(R"((?:\\\"|")k(?:\\\"|")\s*:\s*(?:\\\"|")([a-zA-Z0-9]{20,})(?:\\\"|"))");
+        auto mK = kRe.match(html);
+        if (mK.hasMatch()) {
+            k = mK.captured(1);
+        }
+
+        QString ciphertext, ivHex, saltHex;
+        QRegularExpression cipherRe(R"((?:\\\"|")ciphertext(?:\\\"|")\s*:\s*(?:\\\"|")(.*?)(?:\\\"|"))");
+        QRegularExpression ivRe(R"((?:\\\"|")iv(?:\\\"|")\s*:\s*(?:\\\"|")([a-f0-9]{32})(?:\\\"|"))");
+        QRegularExpression saltRe(R"((?:\\\"|")salt(?:\\\"|")\s*:\s*(?:\\\"|")([a-f0-9]{64,})(?:\\\"|"))");
+        auto mC = cipherRe.match(html);
+        auto mI = ivRe.match(html);
+        auto mS = saltRe.match(html);
+        if (mC.hasMatch()) ciphertext = mC.captured(1);
+        if (mI.hasMatch()) ivHex = mI.captured(1);
+        if (mS.hasMatch()) saltHex = mS.captured(1);
+
+        if (k.isEmpty() || ciphertext.isEmpty() || ivHex.isEmpty() || saltHex.isEmpty()) {
+            emit analysisError("Diziwatch video parametreleri okunamadi.");
+            m_isAnalyzing = false;
+            emit analyzingChanged();
+            return;
+        }
+
+        QString decryptedUrl = decryptDiziwatch(k, saltHex, ivHex, ciphertext);
+        if (decryptedUrl.isEmpty()) {
+            emit analysisError("Diziwatch video akisi cozulemedi.");
+            m_isAnalyzing = false;
+            emit analyzingChanged();
+            return;
+        }
+
+        if (decryptedUrl.startsWith("//")) {
+            decryptedUrl = "https:" + decryptedUrl;
+        }
+
+        startPichiveResolve(QUrl(decryptedUrl), title, poster);
+    });
+}
+
+void UrlAnalyzer::startPichiveResolve(const QUrl &iframeUrl, const QString &title, const QString &thumb) {
+    m_pageReferer = iframeUrl.toString();
+
+    QNetworkRequest request(iframeUrl);
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
+    request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    request.setRawHeader("Referer", "https://diziwatch.app/");
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+
+    QNetworkReply *reply = m_netManager.get(request);
+    reply->ignoreSslErrors();
+    m_currentReply = reply;
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply, iframeUrl, title, thumb]() {
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+        }
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        QByteArray data = reply->readAll();
+        reply->deleteLater();
+
+        if (statusCode != 200 || data.isEmpty()) {
+            emit analysisError(QString("Video oynatici yuklenemedi (HTTP %1).").arg(statusCode));
+            m_isAnalyzing = false;
+            emit analyzingChanged();
+            return;
+        }
+
+        QString html = QString::fromUtf8(data);
+
+        QRegularExpression opRe(R"(openPlayer\s*\(\s*['"]([^'"]+)['"])");
+        auto mOp = opRe.match(html);
+        if (!mOp.hasMatch()) {
+            parseHtmlForMedia(html, iframeUrl);
+            return;
+        }
+
+        QString playlistToken = mOp.captured(1);
+        QString sourceApiUrl = QString("https://%1/source2.php?v=%2")
+            .arg(iframeUrl.host(), QString::fromUtf8(QUrl::toPercentEncoding(playlistToken)));
+
+        fetchPichiveSource(sourceApiUrl, iframeUrl.toString(), title, thumb);
+    });
+}
+
+void UrlAnalyzer::fetchPichiveSource(const QString &sourceUrl, const QString &iframeUrl, const QString &title, const QString &thumb) {
+    QNetworkRequest request((QUrl(sourceUrl)));
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
+    request.setRawHeader("Accept", "application/json, text/javascript, */*; q=0.01");
+    request.setRawHeader("Referer", iframeUrl.toUtf8());
+    request.setRawHeader("X-Requested-With", "XMLHttpRequest");
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+
+    QNetworkReply *reply = m_netManager.get(request);
+    reply->ignoreSslErrors();
+    m_currentReply = reply;
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply, iframeUrl, title, thumb]() {
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+        }
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        QByteArray data = reply->readAll();
+        reply->deleteLater();
+
+        if (statusCode != 200 || data.isEmpty()) {
+            emit analysisError(QString("Video akis listesi alinamadi (HTTP %1).").arg(statusCode));
+            m_isAnalyzing = false;
+            emit analyzingChanged();
+            return;
+        }
+
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        if (!doc.isObject()) {
+            emit analysisError("Gecersiz video kaynagi.");
+            m_isAnalyzing = false;
+            emit analyzingChanged();
+            return;
+        }
+
+        QJsonObject root = doc.object();
+        QJsonArray playlist = root.value("playlist").toArray();
+        if (playlist.isEmpty()) {
+            emit analysisError("Bu video icin oynatma kaynagi bulunamadi.");
+            m_isAnalyzing = false;
+            emit analyzingChanged();
+            return;
+        }
+
+        QJsonObject firstItem = playlist.first().toObject();
+        QJsonArray sources = firstItem.value("sources").toArray();
+        if (sources.isEmpty()) {
+            emit analysisError("Video akisi bulunamadi.");
+            m_isAnalyzing = false;
+            emit analyzingChanged();
+            return;
+        }
+
+        QJsonObject firstSource = sources.first().toObject();
+        QString streamFile = firstSource.value("file").toString();
+        if (streamFile.isEmpty()) {
+            emit analysisError("Video dosyasi gecersiz.");
+            m_isAnalyzing = false;
+            emit analyzingChanged();
+            return;
+        }
+
+        streamFile.replace("m.php", "master.m3u8");
+
+        QString posterUrl = thumb;
+        QString itemImage = firstItem.value("image").toString();
+        if (posterUrl.isEmpty() && !itemImage.isEmpty()) {
+            posterUrl = itemImage;
+        }
+
+        QString sourceTitle = firstSource.value("title").toString();
+        QString cleanTitle = title;
+        cleanTitle.replace(QStringLiteral("\\\""), QStringLiteral("\""));
+        if (cleanTitle.contains(QStringLiteral("\\u"))) {
+            QJsonDocument tDoc = QJsonDocument::fromJson(QByteArray("[\"") + cleanTitle.toUtf8() + QByteArray("\"]"));
+            if (tDoc.isArray() && !tDoc.array().isEmpty()) {
+                cleanTitle = tDoc.array().first().toString();
+            }
+        }
+
+        QString finalReferer = QUrl(iframeUrl).adjusted(QUrl::RemovePath | QUrl::RemoveQuery).toString();
+        if (!finalReferer.endsWith("/")) finalReferer += "/";
+
+        setupStreamMediaInfo(streamFile, cleanTitle, "Diziwatch", posterUrl, finalReferer);
+
+        if (m_currentInfo) {
+            m_currentInfo->setAvailableHeights({1080, 480});
+            m_currentInfo->setMaxHeight(1080);
+            populateWebStreamOptions(m_currentInfo);
+
+            if (sourceTitle.contains("altyaz", Qt::CaseInsensitive) || cleanTitle.contains("altyaz", Qt::CaseInsensitive)) {
+                m_currentInfo->setAvailableSubtitles(QVariantList{"tr"});
+            }
+        }
+    });
+}
+
 
 void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
     QString urlStr = url.toString();

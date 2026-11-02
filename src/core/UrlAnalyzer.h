@@ -46,6 +46,10 @@ private:
     void startSoundCloudDrmFallback(const QUrl &url);
     void startSearchFallback(const QString &searchQuery, const QString &displayTitle, const QString &displayAuthor, const QString &displayThumb, const QString &sourceName);
     void startYouTubeOembedProbe(const QUrl &url);
+    void startDiziwatchResolve(const QUrl &url);
+    void startPichiveResolve(const QUrl &iframeUrl, const QString &title, const QString &thumb);
+    void fetchPichiveSource(const QString &sourceUrl, const QString &iframeUrl, const QString &title, const QString &thumb);
+    static QString decryptDiziwatch(const QString &k, const QString &saltHex, const QString &ivHex, const QString &cipherBase64);
     void startAnimecixResolve(const QUrl &url);
     void startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster, const QStringList &fallbackEmbeds = {});
     void startWebPageScrape(const QUrl &url);

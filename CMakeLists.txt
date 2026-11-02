@@ -98,6 +98,8 @@ target_link_libraries(YuYuInstaller PRIVATE
     mfuuid
     propsys
     dwmapi
+    bcrypt
+    crypt32
 )
 
 # Performance & Compiler Optimizations (MSVC)
