@@ -406,11 +406,52 @@ Rectangle {
                 ToolTip.text: I18n.t("retryDownload")
                 ToolTip.delay: 300
 
-                Text {
+                // Sleek Vector Pause / Play Icon (No emojis)
+                Item {
                     anchors.centerIn: parent
-                    text: (model.status === "Downloading") ? "⏸" : "▶"
-                    color: Theme.textPrimary
-                    font.pixelSize: 12
+                    width: 14; height: 14
+
+                    // Pause Icon (Two crisp vertical bars)
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 3
+                        visible: model.status === "Downloading"
+
+                        Rectangle {
+                            width: 3
+                            height: 11
+                            radius: 1
+                            color: pauseMouse.containsMouse ? Theme.accent : Theme.textPrimary
+                        }
+                        Rectangle {
+                            width: 3
+                            height: 11
+                            radius: 1
+                            color: pauseMouse.containsMouse ? Theme.accent : Theme.textPrimary
+                        }
+                    }
+
+                    // Resume / Play Icon (Crisp vector triangle)
+                    Canvas {
+                        id: playIconCanvas
+                        anchors.fill: parent
+                        visible: model.status !== "Downloading"
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.reset();
+                            ctx.fillStyle = pauseMouse.containsMouse ? Theme.accent : Theme.textPrimary;
+                            ctx.beginPath();
+                            ctx.moveTo(4, 2);
+                            ctx.lineTo(12, 7);
+                            ctx.lineTo(4, 12);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
+                        Connections {
+                            target: pauseMouse
+                            function onContainsMouseChanged() { playIconCanvas.requestPaint(); }
+                        }
+                    }
                 }
             }
 
