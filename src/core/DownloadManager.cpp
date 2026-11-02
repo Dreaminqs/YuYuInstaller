@@ -241,6 +241,10 @@ void DownloadManager::startTask(const QueuedTask &task) {
         if (!task.referer.isEmpty()) {
             ytDownloader->setReferer(task.referer);
         }
+        if (!task.subtitleLang.isEmpty()) {
+            ytDownloader->setSubtitleLang(task.subtitleLang);
+            ytDownloader->setEmbedSubtitles(task.embedSubtitles);
+        }
         m_activeYtDlpDownloads[task.id] = ytDownloader;
 
         connect(ytDownloader, &YtDlpDownloader::progressUpdated, this, [this, id = task.id](double pct, const QString &speed, const QString &eta, qint64 down, qint64 tot) {
@@ -385,7 +389,7 @@ QString DownloadManager::sanitizeFileName(const QString &name) const {
     return safe;
 }
 
-void DownloadManager::addDownload(const QString &url, const QString &title, const QString &formatId, const QString &customFolder) {
+void DownloadManager::addDownload(const QString &url, const QString &title, const QString &formatId, const QString &customFolder, const QString &subtitleLang, bool embedSubs) {
     QString targetDir = customFolder.trimmed().isEmpty() ? m_defaultDownloadPath : customFolder;
     QDir().mkpath(targetDir);
 
@@ -445,6 +449,8 @@ void DownloadManager::addDownload(const QString &url, const QString &title, cons
     task.customFolder = customFolder;
     task.finalFilePath = finalFilePath;
     task.referer = referer;
+    task.subtitleLang = subtitleLang;
+    task.embedSubtitles = embedSubs;
     task.isAudioOnly = isAudioOnly;
     task.useYtDlp = useYtDlp;
 

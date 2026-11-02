@@ -14,6 +14,31 @@
 #include <QDebug>
 #include <iostream>
 
+static QString getLanguageDisplayName(const QString &code, const QString &suggestedName = QString()) {
+    if (!suggestedName.isEmpty() && suggestedName != code && suggestedName.toLower() != "unknown") {
+        return suggestedName;
+    }
+    QString lower = code.toLower();
+    if (lower == "tr" || lower.startsWith("tr-") || lower.startsWith("tr_")) return "Türkçe";
+    if (lower == "en" || lower.startsWith("en-") || lower.startsWith("en_")) return "English";
+    if (lower == "de" || lower.startsWith("de-") || lower.startsWith("de_")) return "Deutsch";
+    if (lower == "es" || lower.startsWith("es-") || lower.startsWith("es_")) return "Español";
+    if (lower == "fr" || lower.startsWith("fr-") || lower.startsWith("fr_")) return "Français";
+    if (lower == "ja" || lower.startsWith("ja-") || lower.startsWith("ja_")) return "日本語 (Japanese)";
+    if (lower == "ko" || lower.startsWith("ko-") || lower.startsWith("ko_")) return "한국어 (Korean)";
+    if (lower == "zh" || lower.startsWith("zh-") || lower.startsWith("zh_")) return "中文 (Chinese)";
+    if (lower == "ru" || lower.startsWith("ru-") || lower.startsWith("ru_")) return "Русский";
+    if (lower == "ar" || lower.startsWith("ar-") || lower.startsWith("ar_")) return "العربية";
+    if (lower == "pt" || lower.startsWith("pt-") || lower.startsWith("pt_")) return "Português";
+    if (lower == "it" || lower.startsWith("it-") || lower.startsWith("it_")) return "Italiano";
+    if (lower == "az" || lower.startsWith("az-") || lower.startsWith("az_")) return "Azərbaycan";
+    if (lower == "uk" || lower.startsWith("uk-") || lower.startsWith("uk_")) return "Українська";
+    if (lower == "pl" || lower.startsWith("pl-") || lower.startsWith("pl_")) return "Polski";
+    if (lower == "nl" || lower.startsWith("nl-") || lower.startsWith("nl_")) return "Nederlands";
+    if (lower == "hi" || lower.startsWith("hi-") || lower.startsWith("hi_")) return "हिन्दी (Hindi)";
+    return code.toUpper();
+}
+
 UrlAnalyzer::UrlAnalyzer(QObject *parent)
     : QObject(parent)
 {
@@ -1301,7 +1326,7 @@ void UrlAnalyzer::startYtDlpProbe(const QString &rawUrl) {
     m_ytDlpProcess->setProcessEnvironment(env);
 
     QStringList args;
-    args << "--print" << "%(title)s|||%(uploader)s|||%(duration_string)s|||%(thumbnail)s|||%(height)s|||%(formats.:.height)#j";
+    args << "--print" << "%(title)s|||%(uploader)s|||%(duration_string)s|||%(thumbnail)s|||%(height)s|||%(formats.:.height)#j|||%(subtitles)j";
     args << "--no-warnings";
     args << "--no-playlist";
     args << "--no-check-certificates";
@@ -1356,7 +1381,7 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
 
         QList<int> detectedHeights;
         if (parts.size() > 5) {
-            QString jsonStr = parts.mid(5).join("|||").trimmed();
+            QString jsonStr = parts.value(5).trimmed();
             QJsonDocument doc = QJsonDocument::fromJson(jsonStr.toUtf8());
             if (doc.isArray()) {
                 QSet<int> uniqueHeights;
@@ -1375,6 +1400,56 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
             }
         }
 
+        QVariantList detectedSubtitles;
+        if (parts.size() > 6) {
+            QString subJsonStr = parts.mid(6).join("|||").trimmed();
+            if (subJsonStr != "NA" && subJsonStr.startsWith("{")) {
+                QJsonDocument subDoc = QJsonDocument::fromJson(subJsonStr.toUtf8());
+                if (subDoc.isObject()) {
+                    QJsonObject subObj = subDoc.object();
+                    struct SubLangEntry {
+                        QString code;
+                        QString name;
+                    };
+                    QList<SubLangEntry> entries;
+
+                    for (auto it = subObj.begin(); it != subObj.end(); ++it) {
+                        QString code = it.key().trimmed();
+                        if (code.isEmpty()) continue;
+                        QString label;
+                        if (it.value().isArray()) {
+                            QJsonArray arr = it.value().toArray();
+                            if (!arr.isEmpty() && arr.first().isObject()) {
+                                label = arr.first().toObject().value("name").toString().trimmed();
+                            }
+                        }
+                        QString displayName = getLanguageDisplayName(code, label);
+                        entries.append({code, displayName});
+                    }
+
+                    // Sort: Turkish (tr) first, English (en) second, others alphabetically
+                    std::sort(entries.begin(), entries.end(), [](const SubLangEntry &a, const SubLangEntry &b) {
+                        auto getRank = [](const QString &c) {
+                            if (c == "tr" || c.startsWith("tr-") || c.startsWith("tr_")) return 0;
+                            if (c == "en" || c.startsWith("en-") || c.startsWith("en_")) return 1;
+                            return 2;
+                        };
+                        int rankA = getRank(a.code);
+                        int rankB = getRank(b.code);
+                        if (rankA != rankB) return rankA < rankB;
+                        return a.name.localeAwareCompare(b.name) < 0;
+                    });
+
+                    for (const auto &e : entries) {
+                        QVariantMap map;
+                        map["code"] = e.code;
+                        map["name"] = e.name;
+                        detectedSubtitles.append(map);
+                    }
+                }
+            }
+        }
+
         if (!title.isEmpty()) {
             if (m_currentInfo) {
                 m_currentInfo->deleteLater();
@@ -1388,6 +1463,7 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
             m_currentInfo->setIsDirectFile(false);
             m_currentInfo->setMaxHeight(maxHeight);
             m_currentInfo->setAvailableHeights(detectedHeights);
+            m_currentInfo->setAvailableSubtitles(detectedSubtitles);
             m_currentInfo->setReferer(!m_pageReferer.isEmpty() ? m_pageReferer : m_analyzingUrl);
 
             populateWebStreamOptions(m_currentInfo);

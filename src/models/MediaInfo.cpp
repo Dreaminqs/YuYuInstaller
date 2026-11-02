@@ -105,3 +105,11 @@ QVariantList MediaInfo::streamOptionsVariant() const {
     return list;
 }
 
+void MediaInfo::setAvailableSubtitles(const QVariantList &subs) {
+    if (m_availableSubtitles != subs) {
+        m_availableSubtitles = subs;
+        emit subtitlesChanged();
+    }
+}
+
+

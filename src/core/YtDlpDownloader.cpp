@@ -117,6 +117,16 @@ void YtDlpDownloader::start() {
         args << "--merge-output-format" << "mp4";
     }
 
+    // Subtitles handling (if requested for video)
+    if (!m_subtitleLang.isEmpty() && m_subtitleLang != "none" && !m_formatId.startsWith("audio_")) {
+        args << "--write-subs" << "--write-auto-subs" << "--sub-langs" << m_subtitleLang;
+        if (m_embedSubtitles) {
+            args << "--embed-subs";
+        } else {
+            args << "--convert-subs" << "srt";
+        }
+    }
+
     // Output template: use %(ext)s so yt-dlp correctly writes the target extension without duplication
     QFileInfo fi(m_targetPath);
     QString templatePath = fi.dir().filePath(fi.completeBaseName() + ".%(ext)s");

@@ -28,8 +28,14 @@ public:
     void setReferer(const QString &ref) { m_referer = ref; }
     QString referer() const { return m_referer; }
 
-    void setSpeedLimitMBps(int mbps) { m_speedLimitMBps = mbps; }
+void setSpeedLimitMBps(int mbps) { m_speedLimitMBps = mbps; }
     int speedLimitMBps() const { return m_speedLimitMBps; }
+
+    void setSubtitleLang(const QString &lang) { m_subtitleLang = lang; }
+    QString subtitleLang() const { return m_subtitleLang; }
+
+    void setEmbedSubtitles(bool embed) { m_embedSubtitles = embed; }
+    bool embedSubtitles() const { return m_embedSubtitles; }
 
     void start();
     void pause();
@@ -58,6 +64,8 @@ private:
     QString m_targetPath;
     QString m_formatId;
     QString m_referer;
+    QString m_subtitleLang;
+    bool m_embedSubtitles = true;
     int m_speedLimitMBps = 0;
     bool m_isRunning = false;
     bool m_isPaused = false;

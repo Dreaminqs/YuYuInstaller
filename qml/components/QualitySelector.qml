@@ -17,6 +17,8 @@ Rectangle {
     property string selectedVideoQuality: "best_video"
     property string selectedAudioQuality: "audio_mp3_320"
     property string selectedOptionId: "best_video"
+    property string selectedSubtitleLang: "none"
+    property bool selectedSubtitleEmbed: true
     property string customFolder: downloadManager.defaultDownloadPath
     property string customTitle: ""
     property bool isEditingTitle: false
@@ -36,6 +38,8 @@ Rectangle {
         customTitle = mediaInfo ? mediaInfo.title : ""
         isEditingTitle = false
         selectedVideoQuality = "best_video"
+        selectedSubtitleLang = "none"
+        selectedSubtitleEmbed = true
         if (mediaInfo && mediaInfo.isAudioOnly) {
             selectedFormatType = "audio"
             selectedOptionId = selectedAudioQuality
@@ -92,7 +96,7 @@ Rectangle {
         return list;
     }
 
-    signal downloadTriggered(string url, string title, string formatId, string folder)
+    signal downloadTriggered(string url, string title, string formatId, string folder, string subtitleLang, bool embedSubs)
 
     Column {
         id: contentColumn
@@ -594,6 +598,220 @@ Rectangle {
             }
         }
 
+        // Section: Subtitles (Only visible for video when mediaInfo.hasSubtitles is true)
+        Column {
+            id: subtitleSection
+            width: parent.width
+            spacing: 10
+            visible: root.selectedFormatType === "video" && root.mediaInfo && root.mediaInfo.hasSubtitles
+
+            Row {
+                spacing: 8
+                Rectangle {
+                    width: 4; height: 14; radius: 2
+                    color: Theme.accent
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    text: I18n.t("selectSubtitles")
+                    color: Theme.textSecondary
+                    font.pixelSize: 12
+                    font.family: Theme.fontFamily
+                    font.weight: Font.DemiBold
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Rectangle {
+                    height: 18
+                    width: ccText.implicitWidth + 12
+                    radius: 4
+                    color: Theme.accent + "22"
+                    border.color: Theme.accent
+                    border.width: 1
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Text {
+                        id: ccText
+                        anchors.centerIn: parent
+                        text: "CC"
+                        color: Theme.accent
+                        font.pixelSize: 10
+                        font.family: Theme.fontFamily
+                        font.weight: Font.Bold
+                    }
+                }
+            }
+
+            Flow {
+                width: parent.width
+                spacing: 8
+
+                // "Yok" (None)
+                Rectangle {
+                    width: Math.max(76, noSubText.implicitWidth + 24)
+                    height: 32
+                    radius: Theme.radiusSm
+                    color: root.selectedSubtitleLang === "none" ? Theme.activeTabBg : (noSubHover.hovered ? Theme.bgCardHover : Theme.bgElevated)
+                    border.color: root.selectedSubtitleLang === "none" ? Theme.accent : Theme.borderDim
+                    border.width: root.selectedSubtitleLang === "none" ? 1.5 : 1
+
+                    HoverHandler { id: noSubHover }
+                    TapHandler {
+                        onTapped: root.selectedSubtitleLang = "none"
+                    }
+
+                    Text {
+                        id: noSubText
+                        anchors.centerIn: parent
+                        text: I18n.t("subtitleNone")
+                        color: root.selectedSubtitleLang === "none" ? Theme.accent : Theme.textPrimary
+                        font.pixelSize: 11
+                        font.family: Theme.fontFamily
+                        font.weight: root.selectedSubtitleLang === "none" ? Font.Bold : Font.Normal
+                    }
+                }
+
+                // Subtitle items from mediaInfo
+                Repeater {
+                    model: (root.mediaInfo && root.mediaInfo.availableSubtitles) ? root.mediaInfo.availableSubtitles : []
+
+                    delegate: Rectangle {
+                        required property var modelData
+                        width: Math.max(76, subPillText.implicitWidth + 24)
+                        height: 32
+                        radius: Theme.radiusSm
+                        color: root.selectedSubtitleLang === modelData.code ? Theme.activeTabBg : (sPillHover.hovered ? Theme.bgCardHover : Theme.bgElevated)
+                        border.color: root.selectedSubtitleLang === modelData.code ? Theme.accent : Theme.borderDim
+                        border.width: root.selectedSubtitleLang === modelData.code ? 1.5 : 1
+
+                        HoverHandler { id: sPillHover }
+                        TapHandler {
+                            onTapped: root.selectedSubtitleLang = modelData.code
+                        }
+
+                        Text {
+                            id: subPillText
+                            anchors.centerIn: parent
+                            text: modelData.name ? (modelData.name + (modelData.code ? (" (" + modelData.code + ")") : "")) : (modelData.code || "")
+                            color: root.selectedSubtitleLang === modelData.code ? Theme.accent : Theme.textPrimary
+                            font.pixelSize: 11
+                            font.family: Theme.fontFamily
+                            font.weight: root.selectedSubtitleLang === modelData.code ? Font.Bold : Font.Normal
+                        }
+                    }
+                }
+
+                // "All Languages"
+                Rectangle {
+                    visible: root.mediaInfo && root.mediaInfo.availableSubtitles && root.mediaInfo.availableSubtitles.length > 1
+                    width: Math.max(86, allSubsText.implicitWidth + 24)
+                    height: 32
+                    radius: Theme.radiusSm
+                    color: root.selectedSubtitleLang === "all" ? Theme.activeTabBg : (allSubsHover.hovered ? Theme.bgCardHover : Theme.bgElevated)
+                    border.color: root.selectedSubtitleLang === "all" ? Theme.accent : Theme.borderDim
+                    border.width: root.selectedSubtitleLang === "all" ? 1.5 : 1
+
+                    HoverHandler { id: allSubsHover }
+                    TapHandler {
+                        onTapped: root.selectedSubtitleLang = "all"
+                    }
+
+                    Text {
+                        id: allSubsText
+                        anchors.centerIn: parent
+                        text: I18n.t("subtitleAll")
+                        color: root.selectedSubtitleLang === "all" ? Theme.accent : Theme.textPrimary
+                        font.pixelSize: 11
+                        font.family: Theme.fontFamily
+                        font.weight: root.selectedSubtitleLang === "all" ? Font.Bold : Font.Normal
+                    }
+                }
+            }
+
+            // Subtitle Format / Delivery Toggle (Soft-sub vs External .srt)
+            Row {
+                visible: root.selectedSubtitleLang !== "none"
+                spacing: 10
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: I18n.t("subtitleFormat") + ":"
+                    color: Theme.textMuted
+                    font.pixelSize: 11
+                    font.family: Theme.fontFamily
+                }
+
+                // Soft-sub (Embedded)
+                Rectangle {
+                    width: embedTxt.implicitWidth + 20
+                    height: 28
+                    radius: Theme.radiusSm
+                    color: root.selectedSubtitleEmbed ? (Theme.accent + "26") : (embedHover.hovered ? Theme.bgCardHover : Theme.bgElevated)
+                    border.color: root.selectedSubtitleEmbed ? Theme.accent : Theme.borderDim
+                    border.width: root.selectedSubtitleEmbed ? 1.5 : 1
+
+                    HoverHandler { id: embedHover }
+                    TapHandler {
+                        onTapped: root.selectedSubtitleEmbed = true
+                    }
+
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 5
+                        Text {
+                            text: root.selectedSubtitleEmbed ? "●" : "○"
+                            color: root.selectedSubtitleEmbed ? Theme.accent : Theme.textMuted
+                            font.pixelSize: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Text {
+                            id: embedTxt
+                            text: I18n.t("subtitleEmbedSoft")
+                            color: root.selectedSubtitleEmbed ? Theme.accent : Theme.textSecondary
+                            font.pixelSize: 11
+                            font.family: Theme.fontFamily
+                            font.weight: root.selectedSubtitleEmbed ? Font.DemiBold : Font.Normal
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+
+                // External .srt
+                Rectangle {
+                    width: srtTxt.implicitWidth + 20
+                    height: 28
+                    radius: Theme.radiusSm
+                    color: !root.selectedSubtitleEmbed ? (Theme.accent + "26") : (srtHover.hovered ? Theme.bgCardHover : Theme.bgElevated)
+                    border.color: !root.selectedSubtitleEmbed ? Theme.accent : Theme.borderDim
+                    border.width: !root.selectedSubtitleEmbed ? 1.5 : 1
+
+                    HoverHandler { id: srtHover }
+                    TapHandler {
+                        onTapped: root.selectedSubtitleEmbed = false
+                    }
+
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 5
+                        Text {
+                            text: !root.selectedSubtitleEmbed ? "●" : "○"
+                            color: !root.selectedSubtitleEmbed ? Theme.accent : Theme.textMuted
+                            font.pixelSize: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Text {
+                            id: srtTxt
+                            text: I18n.t("subtitleExternalSrt")
+                            color: !root.selectedSubtitleEmbed ? Theme.accent : Theme.textSecondary
+                            font.pixelSize: 11
+                            font.family: Theme.fontFamily
+                            font.weight: !root.selectedSubtitleEmbed ? Font.DemiBold : Font.Normal
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+            }
+        }
+
         // Section: Save Folder & Start Download
         Row {
             width: parent.width
@@ -731,7 +949,9 @@ Rectangle {
                                     root.mediaInfo.url,
                                     titleToUse,
                                     root.selectedOptionId,
-                                    root.customFolder
+                                    root.customFolder,
+                                    (root.selectedFormatType === "video" ? root.selectedSubtitleLang : "none"),
+                                    root.selectedSubtitleEmbed
                                 )
                             }
                         }

@@ -18,6 +18,8 @@ struct QueuedTask {
     QString customFolder;
     QString finalFilePath;
     QString referer;
+    QString subtitleLang;
+    bool embedSubtitles = true;
     bool isAudioOnly = false;
     bool useYtDlp = false;
 };
@@ -48,7 +50,7 @@ public:
     bool videoBackgroundEnabled() const { return m_videoBackgroundEnabled; }
     QString language() const { return m_language; }
 
-    Q_INVOKABLE void addDownload(const QString &url, const QString &title, const QString &formatId, const QString &customFolder = QString());
+    Q_INVOKABLE void addDownload(const QString &url, const QString &title, const QString &formatId, const QString &customFolder = QString(), const QString &subtitleLang = QString(), bool embedSubs = true);
     Q_INVOKABLE QString getDefaultDownloadDirectory() const;
     Q_INVOKABLE void setDefaultDownloadPath(const QString &path);
     Q_INVOKABLE void setSequentialMode(bool seq);

@@ -37,6 +37,8 @@ class MediaInfo : public QObject {
     Q_PROPERTY(int maxHeight READ maxHeight WRITE setMaxHeight NOTIFY maxHeightChanged)
     Q_PROPERTY(QVariantList availableHeights READ availableHeightsVariant WRITE setAvailableHeightsVariant NOTIFY availableHeightsChanged)
     Q_PROPERTY(QVariantList streamOptions READ streamOptionsVariant NOTIFY streamOptionsChanged)
+    Q_PROPERTY(bool hasSubtitles READ hasSubtitles NOTIFY subtitlesChanged)
+    Q_PROPERTY(QVariantList availableSubtitles READ availableSubtitles NOTIFY subtitlesChanged)
 
 public:
     explicit MediaInfo(QObject *parent = nullptr);
@@ -79,6 +81,10 @@ public:
 
     QVariantList streamOptionsVariant() const;
 
+    bool hasSubtitles() const { return !m_availableSubtitles.isEmpty(); }
+    QVariantList availableSubtitles() const { return m_availableSubtitles; }
+    void setAvailableSubtitles(const QVariantList &subs);
+
 signals:
     void refererChanged();
     void urlChanged();
@@ -91,6 +97,7 @@ signals:
     void maxHeightChanged();
     void availableHeightsChanged();
     void streamOptionsChanged();
+    void subtitlesChanged();
 
 private:
     QString m_referer;
@@ -104,4 +111,5 @@ private:
     int m_maxHeight = 1080;
     QList<int> m_availableHeights;
     QList<MediaStreamOption> m_streamOptions;
+    QVariantList m_availableSubtitles;
 };
