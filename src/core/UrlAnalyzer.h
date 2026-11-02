@@ -38,9 +38,13 @@ private slots:
     void onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void onSpotifyOembedFinished();
     void onSpotifySearchFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    void onSoundCloudDrmFinished();
+    void onSearchFallbackFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
 private:
     void startSpotifyResolve(const QUrl &url);
+    void startSoundCloudDrmFallback(const QUrl &url);
+    void startSearchFallback(const QString &searchQuery, const QString &displayTitle, const QString &displayAuthor, const QString &displayThumb, const QString &sourceName);
     void startYouTubeOembedProbe(const QUrl &url);
     void startAnimecixResolve(const QUrl &url);
     void startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster, const QStringList &fallbackEmbeds = {});
@@ -70,6 +74,10 @@ private:
     QString m_pageReferer;
     QString m_spotifyTitle;
     QString m_spotifyThumb;
+    QString m_searchTitle;
+    QString m_searchAuthor;
+    QString m_searchThumb;
+    QString m_searchSource;
     QUrl m_pendingIframeUrl;
     QString m_pendingTitle;
     QString m_pendingThumb;

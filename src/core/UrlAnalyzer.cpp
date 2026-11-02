@@ -61,13 +61,14 @@ QString UrlAnalyzer::cleanUrl(const QString &rawUrl) {
             "igsh", "obrf", "si", "fbclid", "subid", "subid1", "subid2", "campaign",
             "ref", "source", "feature", "context", "gclid", "dclid", "msclkid"
         };
+        bool isSoundCloud = url.host().contains("soundcloud.com", Qt::CaseInsensitive);
 
         QList<QPair<QString, QString>> keptItems;
         for (const auto &item : query.queryItems()) {
             QString keyLower = item.first.toLower();
-            if (!trackingKeys.contains(keyLower)) {
-                keptItems.append(item);
-            }
+            if (trackingKeys.contains(keyLower)) continue;
+            if (isSoundCloud && keyLower == "in") continue;
+            keptItems.append(item);
         }
 
         if (keptItems.isEmpty()) {
@@ -1430,6 +1431,12 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
         cleanErr.contains("Sign in to confirm", Qt::CaseInsensitive) ||
         cleanErr.contains("403: Forbidden", Qt::CaseInsensitive)) {
         cleanErr += " (Okul/yurt ağı (Eduroam) engeli tespit edildi. Cloudflare WARP açmayı deneyin.)";
+    } else if (cleanErr.contains("DRM protected", Qt::CaseInsensitive)) {
+        if (m_analyzingUrl.contains("soundcloud.com", Qt::CaseInsensitive)) {
+            startSoundCloudDrmFallback(QUrl(m_analyzingUrl));
+            return;
+        }
+        cleanErr = "Bu medya (DRM) dijital telif koruması ile şifrelenmiştir ve doğrudan indirilemez. (Aynı parçayı YouTube veya serbest kaynaklardan aratıp indirebilirsiniz.)";
     }
     emit analysisError(cleanErr);
 }
@@ -1793,9 +1800,22 @@ void UrlAnalyzer::onSpotifyOembedFinished() {
     QString displayTitle = artist.isEmpty() ? m_spotifyTitle : QString("%1 - %2").arg(artist, m_spotifyTitle);
     m_spotifyTitle = displayTitle;
 
+    startSearchFallback(searchQuery, displayTitle, artist, m_spotifyThumb, "Spotify");
+}
+
+void UrlAnalyzer::onSpotifySearchFinished(int exitCode, QProcess::ExitStatus exitStatus) {
+    onSearchFallbackFinished(exitCode, exitStatus);
+}
+
+void UrlAnalyzer::startSearchFallback(const QString &searchQuery, const QString &displayTitle, const QString &displayAuthor, const QString &displayThumb, const QString &sourceName) {
+    m_searchTitle = displayTitle;
+    m_searchAuthor = displayAuthor;
+    m_searchThumb = displayThumb;
+    m_searchSource = sourceName;
+
     QString ytDlpExe = FFmpegProcessor::findYtDlpExecutable();
     if (ytDlpExe.isEmpty()) {
-        emit analysisError("yt-dlp video engine was not found.");
+        emit analysisError("yt-dlp video motoru bulunamadı.");
         m_isAnalyzing = false;
         emit analyzingChanged();
         return;
@@ -1813,11 +1833,11 @@ void UrlAnalyzer::onSpotifyOembedFinished() {
     }
     args << QString("ytsearch1:%1").arg(searchQuery);
 
-    connect(m_ytDlpProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &UrlAnalyzer::onSpotifySearchFinished);
+    connect(m_ytDlpProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &UrlAnalyzer::onSearchFallbackFinished);
     m_ytDlpProcess->start(ytDlpExe, args);
 }
 
-void UrlAnalyzer::onSpotifySearchFinished(int exitCode, QProcess::ExitStatus exitStatus) {
+void UrlAnalyzer::onSearchFallbackFinished(int exitCode, QProcess::ExitStatus exitStatus) {
     m_isAnalyzing = false;
     emit analyzingChanged();
 
@@ -1840,10 +1860,10 @@ void UrlAnalyzer::onSpotifySearchFinished(int exitCode, QProcess::ExitStatus exi
         }
         m_currentInfo = new MediaInfo(this);
         m_currentInfo->setUrl(webpageUrl.isEmpty() ? m_analyzingUrl : webpageUrl);
-        m_currentInfo->setTitle(m_spotifyTitle.isEmpty() ? title : m_spotifyTitle);
-        m_currentInfo->setAuthor(author.isEmpty() ? "Spotify" : QString("Spotify • %1").arg(author));
+        m_currentInfo->setTitle(m_searchTitle.isEmpty() ? title : m_searchTitle);
+        m_currentInfo->setAuthor(m_searchAuthor.isEmpty() ? QString("%1 • %2").arg(m_searchSource, author) : QString("%1 • %2").arg(m_searchSource, m_searchAuthor));
         m_currentInfo->setDuration(duration);
-        m_currentInfo->setThumbnailUrl(m_spotifyThumb.isEmpty() ? ytThumb : m_spotifyThumb);
+        m_currentInfo->setThumbnailUrl(m_searchThumb.isEmpty() ? ytThumb : m_searchThumb);
         m_currentInfo->setIsDirectFile(false);
         m_currentInfo->setIsAudioOnly(true);
 
@@ -1854,5 +1874,92 @@ void UrlAnalyzer::onSpotifySearchFinished(int exitCode, QProcess::ExitStatus exi
         return;
     }
 
-    emit analysisError(QString("Spotify track found (%1), but audio stream could not be retrieved.").arg(m_spotifyTitle));
+    emit analysisError(QString("%1 parçası (%2) DRM ile şifrelenmiş ve alternatif serbest akış bulunamadı.").arg(m_searchSource, m_searchTitle));
+}
+
+void UrlAnalyzer::startSoundCloudDrmFallback(const QUrl &url) {
+    if (m_currentReply) {
+        m_currentReply->abort();
+        m_currentReply->deleteLater();
+        m_currentReply = nullptr;
+    }
+    m_isAnalyzing = true;
+    emit analyzingChanged();
+
+    QNetworkRequest request(url);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    request.setAttribute(QNetworkRequest::Http2AllowedAttribute, true);
+    request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
+    request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    request.setRawHeader("Accept-Language", "en-US,en;q=0.9");
+
+    m_currentReply = m_netManager.get(request);
+    connect(m_currentReply, &QNetworkReply::finished, this, &UrlAnalyzer::onSoundCloudDrmFinished);
+}
+
+void UrlAnalyzer::onSoundCloudDrmFinished() {
+    if (!m_currentReply) return;
+
+    QNetworkReply *reply = m_currentReply;
+    m_currentReply = nullptr;
+    reply->deleteLater();
+
+    if (reply->error() != QNetworkReply::NoError) {
+        m_isAnalyzing = false;
+        emit analyzingChanged();
+        emit analysisError("SoundCloud DRM koruması: Parça yayıncı tarafından şifrelenmiştir ve doğrudan indirilemiyor.");
+        return;
+    }
+
+    QString html = QString::fromUtf8(reply->readAll());
+    QString title, artist, thumb;
+
+    // 1. og:title
+    QRegularExpression titleRe(R"(property=["']og:title["']\s+content=["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+    auto mTitle = titleRe.match(html);
+    if (mTitle.hasMatch()) {
+        title = mTitle.captured(1).trimmed();
+    }
+
+    // 2. og:image
+    QRegularExpression imgRe(R"(property=["']og:image["']\s+content=["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+    auto mImg = imgRe.match(html);
+    if (mImg.hasMatch()) {
+        thumb = mImg.captured(1).trimmed();
+    }
+
+    // 3. Artist from soundcloud:user, og:description, or URL path
+    QRegularExpression userRe(R"(property=["']soundcloud:user["']\s+content=["']https?://[^"']*/([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+    auto mUser = userRe.match(html);
+    if (mUser.hasMatch()) {
+        artist = mUser.captured(1).trimmed();
+    }
+
+    if (artist.isEmpty()) {
+        QRegularExpression descRe("by\\s+([^#\\r\\n]+?)\\s+#np", QRegularExpression::CaseInsensitiveOption);
+        auto mDesc = descRe.match(html);
+        if (mDesc.hasMatch()) {
+            artist = mDesc.captured(1).trimmed();
+        }
+    }
+
+    if (artist.isEmpty() || title.isEmpty()) {
+        QUrl u(m_analyzingUrl);
+        QString path = u.path();
+        QStringList segments = path.split('/', Qt::SkipEmptyParts);
+        if (segments.size() >= 2) {
+            if (artist.isEmpty()) artist = segments.value(0);
+            if (title.isEmpty()) title = segments.value(1).replace('-', ' ');
+        }
+    }
+
+    if (title.isEmpty()) {
+        m_isAnalyzing = false;
+        emit analyzingChanged();
+        emit analysisError("SoundCloud DRM koruması: Parça şifreli olduğu için doğrudan indirilemez.");
+        return;
+    }
+
+    QString searchQuery = artist.isEmpty() ? title : QString("%1 %2").arg(artist, title);
+    startSearchFallback(searchQuery, title, artist, thumb, "SoundCloud (DRM)");
 }
