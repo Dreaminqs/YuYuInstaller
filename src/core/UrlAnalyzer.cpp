@@ -1386,6 +1386,7 @@ void UrlAnalyzer::startYtDlpProbe(const QString &rawUrl) {
     }
     if (!m_ytDlpRetried) {
         args << "--impersonate" << "Chrome";
+        args << "--extractor-args" << "generic:impersonate";
     }
 
     QString lower = encodedUrl.toLower();
@@ -1595,6 +1596,8 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
         cleanErr.contains("Sign in to confirm", Qt::CaseInsensitive) ||
         cleanErr.contains("403: Forbidden", Qt::CaseInsensitive)) {
         cleanErr += " (Okul/yurt ağı (Eduroam) engeli tespit edildi. Cloudflare WARP açmayı deneyin.)";
+    } else if (cleanErr.contains("444") || cleanErr.contains("Cloudflare anti-bot", Qt::CaseInsensitive) || cleanErr.contains("Turnstile", Qt::CaseInsensitive)) {
+        cleanErr = "Bu film sitesi Cloudflare bot koruması (JS Challenge) kullanıyor. Tarayıcınızda (F12) ağ sekmesinden videonun doğrudan .m3u8 akış linkini veya alternatif oynatıcı (Vidmoly vb.) linkini kopyalayarak indirebilirsiniz.";
     } else if (cleanErr.contains("DRM protected", Qt::CaseInsensitive)) {
         if (m_analyzingUrl.contains("soundcloud.com", Qt::CaseInsensitive)) {
             startSoundCloudDrmFallback(QUrl(m_analyzingUrl));

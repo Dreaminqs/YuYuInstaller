@@ -59,6 +59,7 @@ void YtDlpDownloader::start() {
     args << "--retries" << "3";
     if (!m_impersonateRetried) {
         args << "--impersonate" << "Chrome";
+        args << "--extractor-args" << "generic:impersonate";
     }
 
     if (m_speedLimitMBps > 0) {
