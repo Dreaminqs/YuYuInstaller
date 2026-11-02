@@ -484,18 +484,99 @@ void UrlAnalyzer::startPichiveResolve(const QUrl &iframeUrl, const QString &titl
 
         QString html = QString::fromUtf8(data);
 
+        // Case 1: New NP Player (window.NP_CONFIG = { ... })
+        QRegularExpression npRe(R"(window\.NP_CONFIG\s*=\s*(\{.*?\});\s*(?:window|var|<))", QRegularExpression::DotMatchesEverythingOption);
+        auto mNp = npRe.match(html);
+        if (mNp.hasMatch()) {
+            QByteArray npJsonBytes = mNp.captured(1).trimmed().toUtf8();
+            QJsonDocument npDoc = QJsonDocument::fromJson(npJsonBytes);
+            if (npDoc.isObject()) {
+                QJsonObject npObj = npDoc.object();
+                QJsonArray sources = npObj.value("sources").toArray();
+                QString masterUrl;
+                if (!sources.isEmpty()) {
+                    masterUrl = sources.first().toObject().value("master").toString();
+                }
+
+                if (!masterUrl.isEmpty()) {
+                    QString npTitle = npObj.value("title").toString();
+                    QString npSubtitle = npObj.value("subtitle").toString();
+                    QString fullTitle = title;
+                    if (!npTitle.isEmpty()) {
+                        fullTitle = npTitle;
+                        if (!npSubtitle.isEmpty()) {
+                            fullTitle += " " + npSubtitle;
+                        }
+                    }
+
+                    QString posterUrl = thumb;
+                    QString npPoster = npObj.value("poster").toString();
+                    if (!npPoster.isEmpty()) {
+                        posterUrl = npPoster;
+                    }
+
+                    QVariantList subLangs;
+                    QJsonArray subs = npObj.value("subtitles").toArray();
+                    for (const QJsonValue &sVal : subs) {
+                        QJsonObject sObj = sVal.toObject();
+                        QString lang = sObj.value("lang").toString();
+                        if (!lang.isEmpty() && !subLangs.contains(lang)) {
+                            subLangs.append(lang);
+                        }
+                    }
+
+                    QString finalReferer = QUrl(iframeUrl).adjusted(QUrl::RemovePath | QUrl::RemoveQuery).toString();
+                    if (!finalReferer.endsWith("/")) finalReferer += "/";
+
+                    setupStreamMediaInfo(masterUrl, fullTitle, "Diziwatch", posterUrl, finalReferer);
+
+                    if (m_currentInfo) {
+                        m_currentInfo->setAvailableHeights({1080, 720, 480});
+                        m_currentInfo->setMaxHeight(1080);
+                        populateWebStreamOptions(m_currentInfo);
+
+                        if (!subLangs.isEmpty()) {
+                            m_currentInfo->setAvailableSubtitles(subLangs);
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+
+        // Case 2: Classic Player (openPlayer('...', ...))
         QRegularExpression opRe(R"(openPlayer\s*\(\s*['"]([^'"]+)['"])");
         auto mOp = opRe.match(html);
-        if (!mOp.hasMatch()) {
-            parseHtmlForMedia(html, iframeUrl);
+        if (mOp.hasMatch()) {
+            QString playlistToken = mOp.captured(1);
+            QString sourceApiUrl = QString("https://%1/source2.php?v=%2")
+                .arg(iframeUrl.host(), QString::fromUtf8(QUrl::toPercentEncoding(playlistToken)));
+
+            fetchPichiveSource(sourceApiUrl, iframeUrl.toString(), title, thumb);
             return;
         }
 
-        QString playlistToken = mOp.captured(1);
-        QString sourceApiUrl = QString("https://%1/source2.php?v=%2")
-            .arg(iframeUrl.host(), QString::fromUtf8(QUrl::toPercentEncoding(playlistToken)));
+        // Case 3: Direct master m3u8 in HTML script
+        QRegularExpression directMasterRe(R"raw("(https?://[^"]+/nm\.php\?v=[^"]+)")raw");
+        auto mDm = directMasterRe.match(html);
+        if (mDm.hasMatch()) {
+            QString masterUrl = mDm.captured(1);
+            QString finalReferer = QUrl(iframeUrl).adjusted(QUrl::RemovePath | QUrl::RemoveQuery).toString();
+            if (!finalReferer.endsWith("/")) finalReferer += "/";
 
-        fetchPichiveSource(sourceApiUrl, iframeUrl.toString(), title, thumb);
+            setupStreamMediaInfo(masterUrl, title, "Diziwatch", thumb, finalReferer);
+            if (m_currentInfo) {
+                m_currentInfo->setAvailableHeights({1080, 720, 480});
+                m_currentInfo->setMaxHeight(1080);
+                populateWebStreamOptions(m_currentInfo);
+            }
+            return;
+        }
+
+        // If none matched, report error specifically without falling back to yt-dlp probe
+        emit analysisError("Video akisi (Pichive oynatici) cozulemedi.");
+        m_isAnalyzing = false;
+        emit analyzingChanged();
     });
 }
 
