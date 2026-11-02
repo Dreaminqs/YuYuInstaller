@@ -10,9 +10,19 @@
 #include <QJsonArray>
 #include <QDateTime>
 #include <QSet>
+#include <QStringDecoder>
 #include <algorithm>
 #include <QDebug>
 #include <iostream>
+
+static QString decodeProcessOutput(const QByteArray &data) {
+    QStringDecoder utf8Decoder(QStringDecoder::Utf8);
+    QString text = utf8Decoder(data);
+    if (!utf8Decoder.hasError()) {
+        return text;
+    }
+    return QString::fromLocal8Bit(data);
+}
 
 static QString getLanguageDisplayName(const QString &code, const QString &suggestedName = QString()) {
     if (!suggestedName.isEmpty() && suggestedName != code && suggestedName.toLower() != "unknown") {
@@ -749,6 +759,43 @@ void UrlAnalyzer::parseHtmlForMedia(const QString &html, const QUrl &baseUrl) {
         }
     }
 
+    // 2.2. Check for FullHDFilmizle / videoPlayerData JSON
+    if (unescapedHtml.contains("videoPlayerData")) {
+        QRegularExpression vpdRe(R"(videoPlayerData\s*\(\s*JSON\.parse\(\s*['"](.*?)['"]\s*\))", QRegularExpression::CaseInsensitiveOption);
+        auto vpdMatch = vpdRe.match(unescapedHtml);
+        if (vpdMatch.hasMatch()) {
+            QString rawJsonStr = vpdMatch.captured(1);
+            rawJsonStr.replace("\\\"", "\"").replace("\\/", "/");
+            QJsonDocument vpdDoc = QJsonDocument::fromJson(rawJsonStr.toUtf8());
+            if (vpdDoc.isObject()) {
+                QJsonObject vpdObj = vpdDoc.object();
+                for (auto itKey = vpdObj.begin(); itKey != vpdObj.end(); ++itKey) {
+                    if (itKey.value().isArray()) {
+                        for (const auto &itemVal : itKey.value().toArray()) {
+                            if (itemVal.isObject()) {
+                                QJsonObject itemObj = itemVal.toObject();
+                                QString link = itemObj.value("link").toString();
+                                QString b64Tpl = itemObj.value("template").toString();
+                                if (!b64Tpl.isEmpty() && !link.isEmpty()) {
+                                    QByteArray decodedTpl = QByteArray::fromBase64(b64Tpl.toUtf8());
+                                    QString tplStr = QString::fromUtf8(decodedTpl);
+                                    tplStr.replace("{url}", link);
+                                    QRegularExpression srcRe(R"((?:src|data-src)=["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+                                    auto sm = srcRe.match(tplStr);
+                                    if (sm.hasMatch()) {
+                                        QString playerUrl = sm.captured(1);
+                                        fetchIframeContent(QUrl(playerUrl), title, thumb, "FullHDFilmizle Player");
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // 2.3. Check for embedded web stream player (play.php / ajax_sources.php)
     if (unescapedHtml.contains("ajax_sources.php") || baseUrl.path().contains("play.php") || baseUrl.host().contains("canlitv")) {
         QUrlQuery q(baseUrl);
@@ -865,7 +912,7 @@ void UrlAnalyzer::parseHtmlForMedia(const QString &html, const QUrl &baseUrl) {
     }
 
     // 9. Scan for embedded iframe players (Vidmoly, Sibnet, Streamtape, Doodstream, Filemoon, Voe, Dailymotion, generic iframes)
-    QRegularExpression iframeRe(R"(<iframe[^>]+src=["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+    QRegularExpression iframeRe(R"(<iframe[^>]+(?:src|data-src)=["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
     auto it = iframeRe.globalMatch(unescapedHtml);
     QString foundIframe;
     QString providerName = "Online Video Player";
@@ -1326,7 +1373,8 @@ void UrlAnalyzer::startYtDlpProbe(const QString &rawUrl) {
     m_ytDlpProcess->setProcessEnvironment(env);
 
     QStringList args;
-    args << "--print" << "%(title)s|||%(uploader)s|||%(duration_string)s|||%(thumbnail)s|||%(height)s|||%(formats.:.height)#j|||%(subtitles)j";
+    args << "--encoding" << "utf-8";
+    args << "--print" << "%(title)s|||%(uploader)s|||%(duration_string)s|||%(thumbnail)s|||%(height)s|||%(formats.:.height)#j|||%(subtitles)j|||%(automatic_captions)j";
     args << "--no-warnings";
     args << "--no-playlist";
     args << "--no-check-certificates";
@@ -1365,8 +1413,8 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
 
     if (!m_ytDlpProcess) return;
 
-    QString output = QString::fromUtf8(m_ytDlpProcess->readAllStandardOutput()).trimmed();
-    QString errOutput = QString::fromUtf8(m_ytDlpProcess->readAllStandardError()).trimmed();
+    QString output = decodeProcessOutput(m_ytDlpProcess->readAllStandardOutput()).trimmed();
+    QString errOutput = decodeProcessOutput(m_ytDlpProcess->readAllStandardError()).trimmed();
     m_ytDlpProcess->deleteLater();
     m_ytDlpProcess = nullptr;
 
@@ -1401,8 +1449,9 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
         }
 
         QVariantList detectedSubtitles;
+        // 1. Try manual (creator-uploaded) subtitles
         if (parts.size() > 6) {
-            QString subJsonStr = parts.mid(6).join("|||").trimmed();
+            QString subJsonStr = parts.value(6).trimmed();
             if (subJsonStr != "NA" && subJsonStr.startsWith("{")) {
                 QJsonDocument subDoc = QJsonDocument::fromJson(subJsonStr.toUtf8());
                 if (subDoc.isObject()) {
@@ -1444,6 +1493,45 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
                         QVariantMap map;
                         map["code"] = e.code;
                         map["name"] = e.name;
+                        detectedSubtitles.append(map);
+                    }
+                }
+            }
+        }
+
+        // 2. If no manual subtitles exist, check automatic captions (e.g. YouTube auto ASR)
+        if (detectedSubtitles.isEmpty() && parts.size() > 7) {
+            QString autoJsonStr = parts.mid(7).join("|||").trimmed();
+            if (autoJsonStr != "NA" && autoJsonStr.startsWith("{")) {
+                QJsonDocument autoDoc = QJsonDocument::fromJson(autoJsonStr.toUtf8());
+                if (autoDoc.isObject()) {
+                    QJsonObject autoObj = autoDoc.object();
+                    struct AutoSubEntry {
+                        QString code;
+                        QString name;
+                        int priority;
+                    };
+                    QList<AutoSubEntry> autoEntries;
+
+                    // Prioritized candidate codes for auto-captions
+                    QStringList priorityCodes = {"tr", "en", "de", "es", "fr", "ja", "ko", "ru", "az", "ar"};
+                    for (const QString &pCode : priorityCodes) {
+                        if (autoObj.contains(pCode)) {
+                            QString disp = getLanguageDisplayName(pCode) + " (Otomatik)";
+                            int prio = (pCode == "tr") ? 0 : ((pCode == "en") ? 1 : 2);
+                            autoEntries.append({pCode, disp, prio});
+                        }
+                    }
+
+                    std::sort(autoEntries.begin(), autoEntries.end(), [](const AutoSubEntry &a, const AutoSubEntry &b) {
+                        if (a.priority != b.priority) return a.priority < b.priority;
+                        return a.name.localeAwareCompare(b.name) < 0;
+                    });
+
+                    for (const auto &ae : autoEntries) {
+                        QVariantMap map;
+                        map["code"] = ae.code;
+                        map["name"] = ae.name;
                         detectedSubtitles.append(map);
                     }
                 }

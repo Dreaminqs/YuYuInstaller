@@ -49,6 +49,7 @@ void YtDlpDownloader::start() {
     emit runningChanged();
 
     QStringList args;
+    args << "--encoding" << "utf-8";
     args << "--newline";
     args << "--no-warnings";
     args << "--no-playlist";
