@@ -432,7 +432,9 @@ void DownloadManager::addDownload(const QString &url, const QString &title, cons
     bool isDirectFile = !isWebPlatform && (pathLower.endsWith(".mp4") || pathLower.endsWith(".mp3") ||
                         pathLower.endsWith(".m4a") || pathLower.endsWith(".wav") ||
                         pathLower.endsWith(".webm") || pathLower.endsWith(".mkv") ||
-                        lowerUrl.contains("tau-video"));
+                        lowerUrl.contains("tau-video") ||
+                        lowerUrl.contains("konununuzmani.com") ||
+                        (m_urlAnalyzer.currentMediaInfo() && m_urlAnalyzer.currentMediaInfo()->isDirectFile()));
 
     bool useYtDlp = isWebPlatform || (!isDirectFile && !FFmpegProcessor::findYtDlpExecutable().isEmpty());
 

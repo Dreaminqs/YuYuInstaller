@@ -194,6 +194,12 @@ void UrlAnalyzer::analyzeUrl(const QString &rawUrl) {
         return;
     }
 
+    // 0.02 SonAnime automated URL resolver
+    if (lower.contains("sonanime.com/anime/") || lower.contains("sonanime.com/")) {
+        startSonanimeResolve(url);
+        return;
+    }
+
     // 0. Animecix automated URL resolver
     if (lower.contains("animecix.tv") || lower.contains("animecix.com") || lower.contains("animecix.net")) {
         startAnimecixResolve(url);
@@ -677,6 +683,191 @@ void UrlAnalyzer::fetchPichiveSource(const QString &sourceUrl, const QString &if
     });
 }
 
+void UrlAnalyzer::startSonanimeResolve(const QUrl &url) {
+    m_pageReferer = "https://sonanime.com/";
+    QString urlStr = url.toString().trimmed();
+
+    QRegularExpression sonanimeUrlRe(R"(sonanime\.com/anime/([a-zA-Z0-9_\-]+)(?:/season/(\d+))?(?:/episode/(\d+))?)", QRegularExpression::CaseInsensitiveOption);
+    auto match = sonanimeUrlRe.match(urlStr);
+
+    QString animeSlug;
+    int seasonNum = 1;
+    int episodeNum = 1;
+
+    if (match.hasMatch()) {
+        animeSlug = match.captured(1).trimmed();
+        if (!match.captured(2).trimmed().isEmpty()) {
+            seasonNum = match.captured(2).toInt();
+        }
+        if (!match.captured(3).trimmed().isEmpty()) {
+            episodeNum = match.captured(3).toInt();
+        }
+    }
+
+    if (animeSlug.isEmpty()) {
+        startWebPageScrape(url);
+        return;
+    }
+
+    int targetSeason = (seasonNum > 0) ? seasonNum : 1;
+    int targetEp = (episodeNum > 0) ? episodeNum : 1;
+
+    QString apiUrl = QString("https://api.sonanime.com/api/anime/link/%1").arg(animeSlug);
+    QNetworkRequest request((QUrl(apiUrl)));
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
+    request.setRawHeader("Accept", "application/json, text/plain, */*");
+    request.setRawHeader("Referer", "https://sonanime.com/");
+    request.setRawHeader("Origin", "https://sonanime.com");
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+
+    QNetworkReply *reply = m_netManager.get(request);
+    reply->ignoreSslErrors();
+    m_currentReply = reply;
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply, animeSlug, targetSeason, targetEp]() {
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+        }
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        QByteArray data = reply->readAll();
+        reply->deleteLater();
+
+        if (statusCode == 200 && !data.isEmpty()) {
+            QJsonDocument doc = QJsonDocument::fromJson(data);
+            if (doc.isObject()) {
+                QJsonObject rootObj = doc.object();
+                QString animeName = rootObj.value("anime_name").toString().trimmed();
+                if (animeName.isEmpty()) {
+                    animeName = rootObj.value("anime_name_en").toString().trimmed();
+                }
+                if (animeName.isEmpty()) {
+                    animeName = animeSlug;
+                }
+
+                QString poster = rootObj.value("anime_photo").toString().trimmed();
+
+                QJsonArray episodes = rootObj.value("episodes").toArray();
+                if (!episodes.isEmpty()) {
+                    QJsonObject matchedEp;
+                    // First try exact match on season and episode
+                    for (const QJsonValue &eVal : episodes) {
+                        QJsonObject ep = eVal.toObject();
+                        int s = ep.value("anime_season").toInt();
+                        int epNum = ep.value("episode_number").toInt();
+                        if (s == targetSeason && epNum == targetEp) {
+                            matchedEp = ep;
+                            break;
+                        }
+                    }
+
+                    // If not found, try matching just episode number
+                    if (matchedEp.isEmpty()) {
+                        for (const QJsonValue &eVal : episodes) {
+                            QJsonObject ep = eVal.toObject();
+                            int epNum = ep.value("episode_number").toInt();
+                            if (epNum == targetEp) {
+                                matchedEp = ep;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Fallback to first episode if still not found
+                    if (matchedEp.isEmpty()) {
+                        matchedEp = episodes.first().toObject();
+                    }
+
+                    int foundSeason = matchedEp.value("anime_season").toInt();
+                    int foundEp = matchedEp.value("episode_number").toInt();
+                    if (foundSeason <= 0) foundSeason = targetSeason;
+                    if (foundEp <= 0) foundEp = targetEp;
+
+                    QString bestUrl;
+                    int maxHeight = 0;
+                    QList<int> availableHeights;
+
+                    static const struct {
+                        const char *key;
+                        int height;
+                    } resMap[] = {
+                        {"episode_link_1080", 1080},
+                        {"episode_link_720", 720},
+                        {"episode_link_480", 480},
+                        {"episode_link_360", 360}
+                    };
+
+                    for (const auto &item : resMap) {
+                        QString link = matchedEp.value(item.key).toString().trimmed();
+                        if (!link.isEmpty()) {
+                            availableHeights.append(item.height);
+                            if (bestUrl.isEmpty()) {
+                                bestUrl = link;
+                                maxHeight = item.height;
+                            }
+                        }
+                    }
+
+                    if (!bestUrl.isEmpty()) {
+                        m_isAnalyzing = false;
+                        emit analyzingChanged();
+
+                        if (m_currentInfo) {
+                            m_currentInfo->deleteLater();
+                        }
+                        m_currentInfo = new MediaInfo(this);
+                        m_currentInfo->setUrl(bestUrl);
+
+                        QString formattedTitle = animeName;
+                        if (foundSeason > 0 && foundEp > 0) {
+                            formattedTitle += QString(" - %1. Sezon %2. Bölüm").arg(foundSeason).arg(foundEp);
+                        } else if (foundEp > 0) {
+                            formattedTitle += QString(" - %1. Bölüm").arg(foundEp);
+                        }
+
+                        m_currentInfo->setTitle(formattedTitle);
+                        m_currentInfo->setAuthor("SonAnime");
+                        m_currentInfo->setThumbnailUrl(poster);
+                        m_currentInfo->setIsDirectFile(true);
+                        m_currentInfo->setReferer("https://sonanime.com/");
+                        m_currentInfo->setMaxHeight(maxHeight);
+                        m_currentInfo->setAvailableHeights(availableHeights);
+
+                        // Subtitles
+                        QJsonArray subsArr = matchedEp.value("subtitles").toArray();
+                        if (!subsArr.isEmpty()) {
+                            QVariantList subList;
+                            for (const QJsonValue &sVal : subsArr) {
+                                QJsonObject sObj = sVal.toObject();
+                                QString lang = sObj.value("language").toString().trimmed();
+                                QString sUrl = sObj.value("url").toString().trimmed();
+                                if (!lang.isEmpty() && !sUrl.isEmpty()) {
+                                    QVariantMap sMap;
+                                    sMap["code"] = lang;
+                                    sMap["name"] = (lang.toLower() == "tr" || lang.toLower().contains("türk")) ? "Türkçe" : lang;
+                                    sMap["url"] = sUrl;
+                                    subList.append(sMap);
+                                }
+                            }
+                            if (!subList.isEmpty()) {
+                                m_currentInfo->setAvailableSubtitles(subList);
+                            }
+                        }
+
+                        populateDirectFileOptions(m_currentInfo, 0, "video/mp4", formattedTitle + ".mp4");
+
+                        emit mediaInfoChanged();
+                        emit analysisSuccess(m_currentInfo);
+                        return;
+                    }
+                }
+            }
+        }
+
+        m_isAnalyzing = false;
+        emit analyzingChanged();
+        emit analysisError(QString("SonAnime: %1 için video akışı bulunamadı.").arg(animeSlug));
+    });
+}
 
 void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
     QString urlStr = url.toString();

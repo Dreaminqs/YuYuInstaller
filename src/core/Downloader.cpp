@@ -355,7 +355,6 @@ void Downloader::onFinished() {
 }
 
 void Downloader::onErrorOccurred(QNetworkReply::NetworkError code) {
-    Q_UNUSED(code);
     if (!m_reply) return;
 
     if (m_throttleTimer) {
@@ -367,6 +366,9 @@ void Downloader::onErrorOccurred(QNetworkReply::NetworkError code) {
     }
 
     QString err = m_reply->errorString();
+    if (code == QNetworkReply::HostNotFoundError) {
+        err += " (DNS çözümleme hatası. Okul/yurt ağı veya ISS engeli tespit edildi. Lütfen 'Proxy & Gizlilik' menüsünden Cloudflare WARP açmayı deneyin.)";
+    }
     int httpCode = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     QString details = QString("HTTP Status: %1\nURL: %2\nNetwork Error: %3").arg(httpCode).arg(m_url, err);
     m_isRunning = false;

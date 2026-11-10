@@ -50,6 +50,7 @@ private:
     void startPichiveResolve(const QUrl &iframeUrl, const QString &title, const QString &thumb);
     void fetchPichiveSource(const QString &sourceUrl, const QString &iframeUrl, const QString &title, const QString &thumb);
     static QString decryptDiziwatch(const QString &k, const QString &saltHex, const QString &ivHex, const QString &cipherBase64);
+    void startSonanimeResolve(const QUrl &url);
     void startAnimecixResolve(const QUrl &url);
     void startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster, const QStringList &fallbackEmbeds = {});
     void startWebPageScrape(const QUrl &url);
