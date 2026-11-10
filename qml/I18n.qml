@@ -11,7 +11,7 @@ QtObject {
         "en": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.2.1 Pro",
+            "appVersion": "v1.2.2 Pro",
             "appSubtitle": "Media Downloader & Converter",
             
             // Sidebar
@@ -249,7 +249,7 @@ QtObject {
         "tr": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.2.1 Pro",
+            "appVersion": "v1.2.2 Pro",
             "appSubtitle": "Medya İndirici & Dönüştürücü",
 
             // Sidebar
@@ -487,7 +487,7 @@ QtObject {
         "uk": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.2.1 Pro",
+            "appVersion": "v1.2.2 Pro",
             "appSubtitle": "Завантажувач та конвертер медіа",
 
             // Sidebar
