@@ -36,6 +36,8 @@ qt_add_executable(YuYuInstaller
     src/core/UpdateManager.cpp
     src/core/ProxyManager.h
     src/core/ProxyManager.cpp
+    src/core/TrayManager.h
+    src/core/TrayManager.cpp
     src/media/FFmpegProcessor.h
     src/media/FFmpegProcessor.cpp
     src/media/VideoBackgroundItem.h

@@ -23,6 +23,7 @@
 #include "VideoBackgroundItem.h"
 #include "UpdateManager.h"
 #include "ProxyManager.h"
+#include "TrayManager.h"
 
 void consoleHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
     Q_UNUSED(type);
@@ -96,6 +97,21 @@ int main(int argc, char *argv[]) {
     rootCtx->setContextProperty("updateManager", &updateManager);
     ProxyManager proxyManager;
     rootCtx->setContextProperty("proxyManager", &proxyManager);
+    TrayManager trayManager;
+    rootCtx->setContextProperty("trayManager", &trayManager);
+    trayManager.showTrayIcon();
+
+    auto updateTrayTip = [&trayManager, &downloadManager]() {
+        int count = downloadManager.countActiveDownloads();
+        if (count > 0) {
+            trayManager.updateToolTip(QString("YuYuInstaller - %1 aktif indirme").arg(count));
+        } else {
+            trayManager.updateToolTip("YuYuInstaller - Hazır");
+        }
+    };
+    QObject::connect(&downloadManager, &DownloadManager::activeDownloadsChanged, &app, updateTrayTip);
+    QObject::connect(&trayManager, &TrayManager::requestQuit, &downloadManager, &DownloadManager::pauseAllAndQuit);
+    updateTrayTip();
 
     // Silent update check 3 seconds after application launch
     QTimer::singleShot(3000, &updateManager, [&updateManager]() {

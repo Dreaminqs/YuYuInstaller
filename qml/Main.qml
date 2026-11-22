@@ -25,6 +25,22 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: (typeof trayManager !== "undefined") ? trayManager : null
+        function onRequestRestoreWindow() {
+            window.show();
+            window.raise();
+            window.requestActivate();
+        }
+        function onRequestQuit() {
+            if (typeof downloadManager !== "undefined" && downloadManager) {
+                downloadManager.pauseAllAndQuit();
+            } else {
+                Qt.quit();
+            }
+        }
+    }
+
     // Base dark fallback
     Rectangle {
         anchors.fill: parent
@@ -585,7 +601,13 @@ ApplicationWindow {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
                                 exitConfirmDialog.visible = false;
-                                window.showMinimized();
+                                window.hide();
+                                if (typeof trayManager !== "undefined" && trayManager) {
+                                    trayManager.showNotification(
+                                        I18n.t("appName"),
+                                        I18n.t("trayNotificationBackground")
+                                    );
+                                }
                             }
                         }
                     }

@@ -99,9 +99,10 @@ QtObject {
             "exitConfirmTitle": "Active Downloads in Progress",
             "exitConfirmSubtitle": "Protection against accidental termination",
             "exitConfirmMessage": "Closing the application will interrupt %1 running download(s). What would you like to do?",
-            "exitConfirmMinimize": "Download in Background (Minimize)",
+            "exitConfirmMinimize": "Download in Background (System Tray)",
             "exitConfirmQuit": "Pause Downloads and Exit",
             "exitConfirmCancel": "Cancel",
+            "trayNotificationBackground": "YuYuInstaller is continuing downloads in the system tray. Click the tray icon to restore.",
 
             // Settings
             "settingsTitle": "Settings & Preferences",
@@ -349,9 +350,10 @@ QtObject {
             "exitConfirmTitle": "Aktif İndirmeler Devam Ediyor",
             "exitConfirmSubtitle": "Yanlışlıkla kapanmaya karşı koruma",
             "exitConfirmMessage": "Uygulamayı kapatmak devam eden %1 indirmeyi durduracaktır. Ne yapmak istersiniz?",
-            "exitConfirmMinimize": "Arka Planda İndir (Simge Durumu)",
+            "exitConfirmMinimize": "Arka Planda İndir (Sistem Tepsisi)",
             "exitConfirmQuit": "İndirmeleri Duraklat ve Çık",
             "exitConfirmCancel": "Vazgeç",
+            "trayNotificationBackground": "YuYuInstaller sistem tepsisinde indirmeye devam ediyor. Açmak için simgeye tıklayın.",
 
             // Settings
             "settingsTitle": "Ayarlar ve Tercihler",
@@ -599,9 +601,10 @@ QtObject {
             "exitConfirmTitle": "Триває активне завантаження",
             "exitConfirmSubtitle": "Захист від випадкового закриття",
             "exitConfirmMessage": "Закриття програми перерве %1 активне(-их) завантаження(-нь). Що ви хочете зробити?",
-            "exitConfirmMinimize": "Завантажувати у фоні (Згорнути)",
+            "exitConfirmMinimize": "Завантажувати у фоні (Системний трей)",
             "exitConfirmQuit": "Призупинити завантаження та вийти",
             "exitConfirmCancel": "Скасувати",
+            "trayNotificationBackground": "YuYuInstaller продовжує завантаження в системному треї. Натисніть піктограму, щоб відкрити.",
 
             // Settings
             "settingsTitle": "Налаштування та параметри",
