@@ -13,6 +13,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDateTime>
+#include <QRandomGenerator>
 #include <QSet>
 #include <QStringDecoder>
 #include <algorithm>
@@ -197,6 +198,18 @@ void UrlAnalyzer::analyzeUrl(const QString &rawUrl) {
     // 0.02 SonAnime automated URL resolver
     if (lower.contains("sonanime.com/anime/") || lower.contains("sonanime.com/")) {
         startSonanimeResolve(url);
+        return;
+    }
+
+    // 0.03 OpenAnime automated URL resolver
+    if (lower.contains("openani.me/")) {
+        startOpenaniResolve(url);
+        return;
+    }
+
+    // 0.04 PlayMogo / Doodstream automated player resolver
+    if (lower.contains("playmogo.com/") || lower.contains("doodstream.") || lower.contains("dood.") || lower.contains("ds2play.")) {
+        startPlaymogoResolve(url);
         return;
     }
 
@@ -869,6 +882,308 @@ void UrlAnalyzer::startSonanimeResolve(const QUrl &url) {
     });
 }
 
+void UrlAnalyzer::startOpenaniResolve(const QUrl &url) {
+    m_pageReferer = "https://openani.me/";
+    QString urlStr = url.toString().trimmed();
+
+    QRegularExpression openaniRe(R"(openani\.me/anime/([^/?#]+)(?:/(\d+))?(?:/(\d+))?)", QRegularExpression::CaseInsensitiveOption);
+    auto m = openaniRe.match(urlStr);
+
+    QString slug;
+    int seasonNum = 1;
+    int episodeNum = 1;
+
+    if (m.hasMatch()) {
+        slug = m.captured(1).trimmed();
+        if (!m.captured(2).trimmed().isEmpty()) {
+            seasonNum = m.captured(2).toInt();
+        }
+        if (!m.captured(3).trimmed().isEmpty()) {
+            episodeNum = m.captured(3).toInt();
+        }
+    }
+
+    if (slug.isEmpty()) {
+        startWebPageScrape(url);
+        return;
+    }
+
+    int targetSeason = (seasonNum > 0) ? seasonNum : 1;
+    int targetEp = (episodeNum > 0) ? episodeNum : 1;
+
+    QString pageUrl = QString("https://openani.me/anime/%1/%2/%3").arg(slug).arg(targetSeason).arg(targetEp);
+    QNetworkRequest request((QUrl(pageUrl)));
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
+    request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    request.setRawHeader("Referer", "https://openani.me/");
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+
+    QNetworkReply *reply = m_netManager.get(request);
+    reply->ignoreSslErrors();
+    m_currentReply = reply;
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply, slug, targetSeason, targetEp, pageUrl]() {
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+        }
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        QByteArray data = reply->readAll();
+        reply->deleteLater();
+
+        if (statusCode >= 200 && statusCode < 400 && !data.isEmpty()) {
+            QString html = QString::fromUtf8(data);
+
+            // 1. Anime Title
+            QString animeName;
+            QRegularExpression nameRe(R"(animeMeta\s*:\s*\{[^}]*?(?:turkish|english|romaji)\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+            auto nm = nameRe.match(html);
+            if (nm.hasMatch()) {
+                animeName = nm.captured(1).trimmed();
+            }
+            if (animeName.isEmpty()) {
+                animeName = slug;
+                animeName.replace('-', ' ');
+            }
+
+            // 2. Poster / Banner
+            QString poster;
+            QRegularExpression posterRe(R"(animeMeta\s*:\s*\{[^}]*?pictures\s*:\s*\{[^}]*?(?:banner|avatar)\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+            auto pm = posterRe.match(html);
+            if (pm.hasMatch()) {
+                poster = pm.captured(1).trimmed();
+            }
+
+            // 3. Episode name
+            QString epName;
+            QRegularExpression epNameRe(R"(episodeData\s*:\s*\{[^}]*?name\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+            auto epm = epNameRe.match(html);
+            if (epm.hasMatch()) {
+                epName = epm.captured(1).trimmed();
+            }
+
+            // 4. CDN link
+            QString cdnLink;
+            QRegularExpression cdnRe(R"((?:CDN_LINK|DOWNLOAD_LINK)\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+            auto cdnM = cdnRe.match(html);
+            if (cdnM.hasMatch()) {
+                cdnLink = cdnM.captured(1).trimmed();
+            } else {
+                QRegularExpression rndCdnRe(R"(random_cdn_host\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+                auto rndM = rndCdnRe.match(html);
+                if (rndM.hasMatch()) {
+                    cdnLink = rndM.captured(1).trimmed() + "/animes/";
+                }
+            }
+
+            // 5. Files: [{ resolution: 720, size: 120914455, file: "..." }, ...]
+            int idxFiles = html.indexOf("files:[");
+            QString bestFile;
+            int maxHeight = 0;
+            qint64 bestSize = 0;
+            QList<int> availableHeights;
+
+            if (idxFiles != -1 && !cdnLink.isEmpty()) {
+                int endFiles = html.indexOf(']', idxFiles);
+                QString filesStr = (endFiles != -1) ? html.mid(idxFiles, endFiles - idxFiles + 1) : html.mid(idxFiles, 1000);
+
+                QRegularExpression fileRe(R"(resolution\s*:\s*(\d+).*?size\s*:\s*(\d+).*?file\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+                auto it = fileRe.globalMatch(filesStr);
+                while (it.hasNext()) {
+                    auto fmatch = it.next();
+                    int res = fmatch.captured(1).toInt();
+                    qint64 sz = fmatch.captured(2).toLongLong();
+                    QString fpath = fmatch.captured(3).trimmed();
+                    // Strip ?big=1 or query params
+                    fpath = fpath.section('?', 0, 0);
+
+                    availableHeights.append(res);
+                    if (res > maxHeight || bestFile.isEmpty()) {
+                        maxHeight = res;
+                        bestFile = fpath;
+                        bestSize = sz;
+                    }
+                }
+            }
+
+            if (!bestFile.isEmpty()) {
+                QString cleanCdn = cdnLink.trimmed();
+                while (cleanCdn.endsWith('/')) cleanCdn.chop(1);
+                QString videoUrl = QString("%1/%2/%3/%4").arg(cleanCdn, slug, QString::number(targetSeason), bestFile);
+
+                m_isAnalyzing = false;
+                emit analyzingChanged();
+
+                if (m_currentInfo) {
+                    m_currentInfo->deleteLater();
+                }
+                m_currentInfo = new MediaInfo(this);
+                m_currentInfo->setUrl(videoUrl);
+
+                QString formattedTitle = animeName;
+                formattedTitle += QString(" - %1. Sezon %2. Bölüm").arg(targetSeason).arg(targetEp);
+                if (!epName.isEmpty() && epName != QString::number(targetEp)) {
+                    formattedTitle += QString(" (%1)").arg(epName);
+                }
+
+                m_currentInfo->setTitle(formattedTitle);
+                m_currentInfo->setAuthor("OpenAnime");
+                m_currentInfo->setThumbnailUrl(poster);
+                m_currentInfo->setIsDirectFile(true);
+                m_currentInfo->setReferer("https://openani.me/");
+                m_currentInfo->setMaxHeight(maxHeight);
+                m_currentInfo->setAvailableHeights(availableHeights);
+
+                populateDirectFileOptions(m_currentInfo, bestSize, "video/mp4", formattedTitle + ".mp4");
+
+                emit mediaInfoChanged();
+                emit analysisSuccess(m_currentInfo);
+                return;
+            }
+        }
+
+        // Fallback to webpage scrape
+        startWebPageScrape(QUrl(pageUrl));
+    });
+}
+
+void UrlAnalyzer::resolveDoodstreamPass(const QUrl &embedUrl, const QString &passPath, const QString &token, const QString &title, const QString &thumb, const QString &authorName) {
+    QUrl passUrl = embedUrl.resolved(QUrl(passPath));
+    QNetworkRequest request(passUrl);
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
+    request.setRawHeader("Referer", embedUrl.toString().toUtf8());
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+
+    QNetworkReply *reply = m_netManager.get(request);
+    reply->ignoreSslErrors();
+    m_currentReply = reply;
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply, embedUrl, token, title, thumb, authorName]() {
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+        }
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        QString data = QString::fromUtf8(reply->readAll()).trimmed();
+        reply->deleteLater();
+
+        if (statusCode >= 200 && statusCode < 400 && data.startsWith("http")) {
+            static const char chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            QString randStr;
+            for (int i = 0; i < 10; ++i) {
+                randStr += chars[QRandomGenerator::global()->bounded((int)sizeof(chars) - 1)];
+            }
+            qint64 expiry = QDateTime::currentMSecsSinceEpoch();
+            QString finalVideoUrl = data + randStr + "?token=" + token + "&expiry=" + QString::number(expiry);
+
+            m_isAnalyzing = false;
+            emit analyzingChanged();
+
+            if (m_currentInfo) {
+                m_currentInfo->deleteLater();
+            }
+            m_currentInfo = new MediaInfo(this);
+            m_currentInfo->setUrl(finalVideoUrl);
+            m_currentInfo->setTitle(title.isEmpty() ? "PlayMogo Video" : title);
+            m_currentInfo->setAuthor(authorName);
+            m_currentInfo->setThumbnailUrl(thumb);
+            m_currentInfo->setIsDirectFile(true);
+            m_currentInfo->setReferer(embedUrl.toString());
+
+            populateDirectFileOptions(m_currentInfo, 0, "video/mp4", (title.isEmpty() ? "video" : title) + ".mp4");
+
+            emit mediaInfoChanged();
+            emit analysisSuccess(m_currentInfo);
+        } else {
+            // Fallback to yt-dlp probe
+            startYtDlpProbe(embedUrl.toString());
+        }
+    });
+}
+
+void UrlAnalyzer::startPlaymogoResolve(const QUrl &url) {
+    m_pageReferer = "https://playmogo.com/";
+    QString urlStr = url.toString().trimmed();
+
+    QRegularExpression idRe(R"(playmogo\.com/(?:[evd]/|embed/)?([a-zA-Z0-9]+))", QRegularExpression::CaseInsensitiveOption);
+    auto m = idRe.match(urlStr);
+    QString embedId;
+    if (m.hasMatch()) {
+        embedId = m.captured(1).trimmed();
+    }
+
+    QUrl targetUrl = url;
+    if (!embedId.isEmpty() && !urlStr.contains("/e/" + embedId)) {
+        targetUrl = QUrl(QString("https://playmogo.com/e/%1").arg(embedId));
+    }
+
+    QNetworkRequest request(targetUrl);
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
+    request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    request.setRawHeader("Referer", "https://playmogo.com/");
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+
+    QNetworkReply *reply = m_netManager.get(request);
+    reply->ignoreSslErrors();
+    m_currentReply = reply;
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply, targetUrl]() {
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+        }
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        QByteArray data = reply->readAll();
+        reply->deleteLater();
+
+        if (statusCode >= 200 && statusCode < 400 && !data.isEmpty()) {
+            QString html = QString::fromUtf8(data);
+
+            // Extract title
+            QString title;
+            QRegularExpression titleRe(R"(<title[^>]*>(.*?)</title>)", QRegularExpression::CaseInsensitiveOption);
+            auto tm = titleRe.match(html);
+            if (tm.hasMatch()) {
+                title = tm.captured(1).trimmed();
+                title.remove(QRegularExpression(R"(\s*[-|]\s*(?:DoodStream|PlayMogo).*$)", QRegularExpression::CaseInsensitiveOption));
+                title = title.trimmed();
+            }
+
+            // Extract thumbnail
+            QString thumb;
+            QRegularExpression thumbRe(R"(splash/([a-zA-Z0-9_.]+\.(?:jpg|png|webp)))", QRegularExpression::CaseInsensitiveOption);
+            auto thm = thumbRe.match(html);
+            if (thm.hasMatch()) {
+                thumb = "https://imgds.net/splash/" + thm.captured(1);
+            }
+
+            // Extract pass_md5 path
+            QRegularExpression passRe(R"((?:/pass_md5/|/pass/)[a-zA-Z0-9\-_/]+)", QRegularExpression::CaseInsensitiveOption);
+            auto pm = passRe.match(html);
+
+            // Extract token
+            QString token;
+            QRegularExpression tokenRe(R"((?:token\s*=\s*['"]|makePlay\(\)[^}]+token=)([a-zA-Z0-9]+))", QRegularExpression::CaseInsensitiveOption);
+            auto tkm = tokenRe.match(html);
+            if (tkm.hasMatch()) {
+                token = tkm.captured(1);
+            }
+
+            if (pm.hasMatch()) {
+                QString passPath = pm.captured(0);
+                if (token.isEmpty()) {
+                    QStringList parts = passPath.split('/', Qt::SkipEmptyParts);
+                    if (parts.size() >= 3) {
+                        token = parts.last();
+                    }
+                }
+                resolveDoodstreamPass(targetUrl, passPath, token, title, thumb, "PlayMogo");
+                return;
+            }
+        }
+
+        // Fallback to yt-dlp probe
+        startYtDlpProbe(targetUrl.toString());
+    });
+}
+
 void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
     QString urlStr = url.toString();
 
@@ -1412,6 +1727,26 @@ void UrlAnalyzer::parseHtmlForMedia(const QString &html, const QUrl &baseUrl) {
         }
     }
 
+    // 2.25. Check for DoodStream / PlayMogo pass_md5 in HTML
+    if (unescapedHtml.contains("/pass_md5/") || unescapedHtml.contains("/pass/")) {
+        QRegularExpression passMd5Re(R"((?:/pass_md5/|/pass/)[a-zA-Z0-9\-_/]+)", QRegularExpression::CaseInsensitiveOption);
+        auto passMatch = passMd5Re.match(unescapedHtml);
+        if (passMatch.hasMatch()) {
+            QString passStr = passMatch.captured(0);
+            QString tokenStr;
+            QRegularExpression tokenRe(R"((?:token\s*=\s*['"]|makePlay\(\)[^}]+token=)([a-zA-Z0-9]+))", QRegularExpression::CaseInsensitiveOption);
+            auto tkm = tokenRe.match(unescapedHtml);
+            if (tkm.hasMatch()) {
+                tokenStr = tkm.captured(1);
+            } else {
+                QStringList parts = passStr.split('/', Qt::SkipEmptyParts);
+                if (parts.size() >= 3) tokenStr = parts.last();
+            }
+            resolveDoodstreamPass(baseUrl, passStr, tokenStr, title, thumb, "PlayMogo");
+            return;
+        }
+    }
+
     // 2.3. Check for embedded web stream player (play.php / ajax_sources.php)
     if (unescapedHtml.contains("ajax_sources.php") || baseUrl.path().contains("play.php") || baseUrl.host().contains("canlitv")) {
         QUrlQuery q(baseUrl);
@@ -1553,10 +1888,10 @@ void UrlAnalyzer::parseHtmlForMedia(const QString &html, const QUrl &baseUrl) {
             providerName = "CanliTV Player";
             break;
         } else if (lowerSrc.contains("streamtape") || lowerSrc.contains("dood") ||
-                   lowerSrc.contains("filemoon") || lowerSrc.contains("voe") ||
-                   lowerSrc.contains("dailymotion")) {
+                   lowerSrc.contains("playmogo") || lowerSrc.contains("filemoon") ||
+                   lowerSrc.contains("voe") || lowerSrc.contains("dailymotion")) {
             foundIframe = src;
-            providerName = "Embedded Player";
+            providerName = lowerSrc.contains("playmogo") ? "PlayMogo Player" : "Embedded Player";
             break;
         } else if (foundIframe.isEmpty() && (lowerSrc.contains("embed") || lowerSrc.contains("player") || lowerSrc.contains("video"))) {
             foundIframe = src;
@@ -1615,6 +1950,26 @@ void UrlAnalyzer::onIframeFetchFinished() {
             }
             if (!vid.isEmpty()) {
                 resolveCanliTvAjax(finalUrl, vid, m_pendingTitle, m_pendingThumb);
+                return;
+            }
+        }
+
+        // 0.5. Check for DoodStream / PlayMogo pass_md5 in iframe HTML
+        if (unescaped.contains("/pass_md5/") || unescaped.contains("/pass/")) {
+            QRegularExpression passMd5Re(R"((?:/pass_md5/|/pass/)[a-zA-Z0-9\-_/]+)", QRegularExpression::CaseInsensitiveOption);
+            auto passMatch = passMd5Re.match(unescaped);
+            if (passMatch.hasMatch()) {
+                QString passStr = passMatch.captured(0);
+                QString tokenStr;
+                QRegularExpression tokenRe(R"((?:token\s*=\s*['"]|makePlay\(\)[^}]+token=)([a-zA-Z0-9]+))", QRegularExpression::CaseInsensitiveOption);
+                auto tkm = tokenRe.match(unescaped);
+                if (tkm.hasMatch()) {
+                    tokenStr = tkm.captured(1);
+                } else {
+                    QStringList parts = passStr.split('/', Qt::SkipEmptyParts);
+                    if (parts.size() >= 3) tokenStr = parts.last();
+                }
+                resolveDoodstreamPass(finalUrl, passStr, tokenStr, m_pendingTitle, m_pendingThumb, m_pendingProvider);
                 return;
             }
         }

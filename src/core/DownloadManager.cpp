@@ -434,6 +434,10 @@ void DownloadManager::addDownload(const QString &url, const QString &title, cons
                         pathLower.endsWith(".webm") || pathLower.endsWith(".mkv") ||
                         lowerUrl.contains("tau-video") ||
                         lowerUrl.contains("konununuzmani.com") ||
+                        lowerUrl.contains("zyapbot.eu.org") ||
+                        lowerUrl.contains("cloudatacdn.com") ||
+                        lowerUrl.contains("doodcdn") ||
+                        lowerUrl.contains("openani.me") ||
                         (m_urlAnalyzer.currentMediaInfo() && m_urlAnalyzer.currentMediaInfo()->isDirectFile()));
 
     bool useYtDlp = isWebPlatform || (!isDirectFile && !FFmpegProcessor::findYtDlpExecutable().isEmpty());

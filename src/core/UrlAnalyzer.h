@@ -51,6 +51,9 @@ private:
     void fetchPichiveSource(const QString &sourceUrl, const QString &iframeUrl, const QString &title, const QString &thumb);
     static QString decryptDiziwatch(const QString &k, const QString &saltHex, const QString &ivHex, const QString &cipherBase64);
     void startSonanimeResolve(const QUrl &url);
+    void startOpenaniResolve(const QUrl &url);
+    void startPlaymogoResolve(const QUrl &url);
+    void resolveDoodstreamPass(const QUrl &embedUrl, const QString &passPath, const QString &token, const QString &title, const QString &thumb, const QString &authorName = "PlayMogo");
     void startAnimecixResolve(const QUrl &url);
     void startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster, const QStringList &fallbackEmbeds = {});
     void startWebPageScrape(const QUrl &url);
