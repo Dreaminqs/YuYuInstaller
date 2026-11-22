@@ -35,6 +35,8 @@ class DownloadManager : public QObject {
     Q_PROPERTY(int speedLimitMBps READ speedLimitMBps WRITE setSpeedLimitMBps NOTIFY speedLimitMBpsChanged)
     Q_PROPERTY(bool videoBackgroundEnabled READ videoBackgroundEnabled WRITE setVideoBackgroundEnabled NOTIFY videoBackgroundEnabledChanged)
     Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY languageChanged)
+    Q_PROPERTY(bool hasActiveDownloads READ hasActiveDownloads NOTIFY activeDownloadsChanged)
+    Q_PROPERTY(int activeDownloadsCount READ countActiveDownloads NOTIFY activeDownloadsChanged)
 
 public:
     explicit DownloadManager(QObject *parent = nullptr);
@@ -62,6 +64,13 @@ public:
     Q_INVOKABLE QString getLogFilePath() const;
     Q_INVOKABLE void clearLogFile();
     Q_INVOKABLE void retryDownload(const QString &id);
+    Q_INVOKABLE void pauseAllAndQuit();
+    Q_INVOKABLE void saveQueueState();
+    void loadQueueState();
+    static QString queueStateFilePath();
+
+    bool hasActiveDownloads() const;
+    int countActiveDownloads() const;
 
     static QString logFilePath();
     static void logDownloadFailure(const QString &title, const QString &url, const QString &errorMessage, const QString &details = QString());
@@ -73,6 +82,7 @@ signals:
     void speedLimitMBpsChanged();
     void videoBackgroundEnabledChanged();
     void languageChanged();
+    void activeDownloadsChanged();
     void downloadStarted(const QString &id, const QString &title);
     void downloadFinished(const QString &id, const QString &title);
 
@@ -92,8 +102,6 @@ private slots:
 private:
     QString generateUniqueId() const;
     QString sanitizeFileName(const QString &name) const;
-    bool hasActiveDownload() const;
-    int countActiveDownloads() const;
     int effectiveConcurrentLimit() const;
     void startTask(const QueuedTask &task);
     void startAllQueuedTasks();

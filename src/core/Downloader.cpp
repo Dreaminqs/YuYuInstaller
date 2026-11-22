@@ -85,7 +85,7 @@ void Downloader::start() {
         existingBytes = QFileInfo(m_targetPath).size();
     }
 
-    if (existingBytes > 0 && m_isPaused) {
+    if (existingBytes > 0) {
         if (!m_outputFile.open(QIODevice::WriteOnly | QIODevice::Append)) {
             emit downloadFailed(m_id, QString("Cannot open file: ") + m_outputFile.errorString());
             return;
@@ -210,6 +210,16 @@ void Downloader::onReadyRead() {
     }
 
     if (!m_reply || !m_outputFile.isOpen()) return;
+
+    if (m_downloadedBytes > 0) {
+        int sc = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (sc == 200) {
+            // Server ignored Range header and sent from beginning: reset file
+            m_outputFile.resize(0);
+            m_outputFile.seek(0);
+            m_downloadedBytes = 0;
+        }
+    }
 
     if (m_speedLimitMBps <= 0) {
         QByteArray chunk = m_reply->readAll();

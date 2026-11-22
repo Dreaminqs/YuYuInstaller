@@ -11,7 +11,7 @@ QtObject {
         "en": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.2.2 Pro",
+            "appVersion": "v1.2.3 Pro",
             "appSubtitle": "Media Downloader & Converter",
             
             // Sidebar
@@ -94,6 +94,14 @@ QtObject {
             "viewLogHint": "Open error diagnostics log in Notepad",
             "retryDownload": "Retry",
             "remainingPrefix": "Remaining: ",
+
+            // Exit Confirmation Dialog
+            "exitConfirmTitle": "Active Downloads in Progress",
+            "exitConfirmSubtitle": "Protection against accidental termination",
+            "exitConfirmMessage": "Closing the application will interrupt %1 running download(s). What would you like to do?",
+            "exitConfirmMinimize": "Download in Background (Minimize)",
+            "exitConfirmQuit": "Pause Downloads and Exit",
+            "exitConfirmCancel": "Cancel",
 
             // Settings
             "settingsTitle": "Settings & Preferences",
@@ -178,6 +186,10 @@ QtObject {
 
             "updateLogTitle": "Release Notes & Changelog",
             "updateLogSubtitle": "Detailed history of improvements and release notes",
+            "log123_1": "Exit Protection Dialog: Prevents accidental application closing during active downloads with options to minimize or pause",
+            "log123_2": "Queue State Persistence: Automatically saves and restores download queue across app restarts in queue_state.json",
+            "log123_3": "Seamless HTTP Resume: Smart partial download resuming using HTTP Range headers for uninterrupted downloads",
+            "log123_4": "OpenAnime & Direct Stream Fix: Fixed 13KB SVG download bug and enhanced PlayMogo/Bleach stream resolving",
             "log120_1": "Embedded Cloudflare WARP Split-Tunnel: Direct in-app tunnel without external software, virtual adapters, or admin rights",
             "log120_2": "Eduroam & Campus Firewall Bypass: High-speed optimized endpoint routing bypassing packet drops and detecting network blocks",
             "log120_3": "Crash Fix on Video Analyze: Resolved yt-dlp parameter conflicts and infinite fallback recursion on video parsing",
@@ -249,7 +261,7 @@ QtObject {
         "tr": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.2.2 Pro",
+            "appVersion": "v1.2.3 Pro",
             "appSubtitle": "Medya İndirici & Dönüştürücü",
 
             // Sidebar
@@ -332,6 +344,14 @@ QtObject {
             "viewLogHint": "Hata günlüğünü Not Defteri'nde aç",
             "retryDownload": "Tekrar Dene",
             "remainingPrefix": "Kalan: ",
+
+            // Kapanma Onay Diyalogu
+            "exitConfirmTitle": "Aktif İndirmeler Devam Ediyor",
+            "exitConfirmSubtitle": "Yanlışlıkla kapanmaya karşı koruma",
+            "exitConfirmMessage": "Uygulamayı kapatmak devam eden %1 indirmeyi durduracaktır. Ne yapmak istersiniz?",
+            "exitConfirmMinimize": "Arka Planda İndir (Simge Durumu)",
+            "exitConfirmQuit": "İndirmeleri Duraklat ve Çık",
+            "exitConfirmCancel": "Vazgeç",
 
             // Settings
             "settingsTitle": "Ayarlar ve Tercihler",
@@ -416,6 +436,10 @@ QtObject {
 
             "updateLogTitle": "Güncelleme Notları & Sürüm Logları",
             "updateLogSubtitle": "Yayınlanan sürümler ve yapılan yeniliklerin detaylı listesi",
+            "log123_1": "Kapanma Koruması: İndirme esnasında yanlışlıkla kapanmayı önleyen arka planda devam etme ve duraklatma diyaloğu",
+            "log123_2": "Kalıcı İndirme Kuyruğu: Uygulama kapandığında indirmeler diske kaydedilir ve açılışta kaldığı yerden devam edilebilir",
+            "log123_3": "Akıllı HTTP Parçalı İndirme: Kesilen indirmeler baştan indirmek yerine kaldığı bayttan indirmeye devam eder",
+            "log123_4": "OpenAnime & Akış Düzeltmesi: 13KB SVG indirme hatası düzeltildi, Bleach ve PlayMogo akış çözücüleri güçlendirildi",
             "log120_1": "Yerleşik Cloudflare WARP Tüneli: Harici yazılım, sanal ağ kartı veya yönetici izni gerekmeden doğrudan uygulama içi tünelleme",
             "log120_2": "Eduroam & Kampüs / Yurt Engel Aşıcı: Güvenlik duvarlarını ve engelleri aşan optimize Cloudflare uç noktası ve ağ engeli algılama",
             "log120_3": "Analiz Crash Düzeltmesi: Video analizinde yt-dlp parametre hatası ve sonsuz döngü çökmesi tamamen giderildi",
@@ -487,7 +511,7 @@ QtObject {
         "uk": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.2.2 Pro",
+            "appVersion": "v1.2.3 Pro",
             "appSubtitle": "Завантажувач та конвертер медіа",
 
             // Sidebar
@@ -570,6 +594,14 @@ QtObject {
             "viewLogHint": "Відкрити журнал діагностики помилок у блокноті",
             "retryDownload": "Повторити",
             "remainingPrefix": "Залишилось: ",
+
+            // Діалог підтвердження виходу
+            "exitConfirmTitle": "Триває активне завантаження",
+            "exitConfirmSubtitle": "Захист від випадкового закриття",
+            "exitConfirmMessage": "Закриття програми перерве %1 активне(-их) завантаження(-нь). Що ви хочете зробити?",
+            "exitConfirmMinimize": "Завантажувати у фоні (Згорнути)",
+            "exitConfirmQuit": "Призупинити завантаження та вийти",
+            "exitConfirmCancel": "Скасувати",
 
             // Settings
             "settingsTitle": "Налаштування та параметри",
@@ -654,6 +686,10 @@ QtObject {
 
             "updateLogTitle": "Журнал оновлень та історія змін",
             "updateLogSubtitle": "Детальний список випусків та реалізованих покращень",
+            "log123_1": "Захист від випадкового закриття: Діалог вибору мінімізації або призупинення під час завантажень",
+            "log123_2": "Збереження черги завантажень: Черга зберігається на диск та автоматично відновлюється при запуску",
+            "log123_3": "Розумне відновлення HTTP: Завантаження поновлюється з поточного місця за допомогою заголовків Range",
+            "log123_4": "Виправлення OpenAnime: Усунено помилку завантаження 13KB SVG та покращено вилучення потоків PlayMogo/Bleach",
             "log120_1": "Вбудований Cloudflare WARP Split-Tunnel: Прямий тунель у програмі без стороннього ПЗ чи прав адміністратора",
             "log120_2": "Обхід блокувань Eduroam і кампусів: Оптимізована маршрутизація для надійного подолання брандмауерів та виявлення блокувань",
             "log120_3": "Виправлення збою аналізу: Усунуто конфлікт параметрів yt-dlp та нескінченну рекурсію під час аналізу відео",

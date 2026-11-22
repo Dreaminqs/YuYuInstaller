@@ -14,6 +14,17 @@ ApplicationWindow {
     flags: Qt.Window | Qt.FramelessWindowHint
     color: "#0a0d13"
 
+    onClosing: function(close) {
+        if (typeof downloadManager !== "undefined" && downloadManager && downloadManager.hasActiveDownloads) {
+            close.accepted = false;
+            exitConfirmDialog.visible = true;
+        } else {
+            if (typeof downloadManager !== "undefined" && downloadManager) {
+                downloadManager.saveQueueState();
+            }
+        }
+    }
+
     // Base dark fallback
     Rectangle {
         anchors.fill: parent
@@ -176,7 +187,13 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: window.close()
+                    onClicked: {
+                        if (typeof downloadManager !== "undefined" && downloadManager && downloadManager.hasActiveDownloads) {
+                            exitConfirmDialog.visible = true;
+                        } else {
+                            window.close();
+                        }
+                    }
                 }
             }
         }
@@ -451,6 +468,186 @@ ApplicationWindow {
                         font.pixelSize: 11
                         font.family: Theme.fontFamily
                         font.weight: Font.Bold
+                    }
+                }
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Exit Confirmation Dialog for Active Downloads
+    // ═══════════════════════════════════════════════════════════════
+    Rectangle {
+        id: exitConfirmDialog
+        anchors.fill: parent
+        color: "#b3000000"
+        z: 15000
+        visible: false
+
+        // Block clicks underneath modal
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            preventStealing: true
+            onClicked: {}
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 40, 450)
+            height: modalCol.implicitHeight + 48
+            radius: Theme.radiusLg
+            color: "#121722"
+            border.color: Theme.accent
+            border.width: 1
+
+            Column {
+                id: modalCol
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: 24
+                spacing: 16
+
+                // Header with alert badge
+                Row {
+                    spacing: 14
+                    Rectangle {
+                        width: 40; height: 40; radius: 20
+                        color: "#28f59e0b"
+                        border.color: "#f59e0b"
+                        border.width: 1
+                        anchors.verticalCenter: parent.verticalCenter
+                        Text {
+                            anchors.centerIn: parent
+                            text: "!"
+                            color: "#f59e0b"
+                            font.pixelSize: 20
+                            font.family: Theme.fontFamily
+                            font.weight: Font.Bold
+                        }
+                    }
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
+                        Text {
+                            text: I18n.t("exitConfirmTitle")
+                            color: Theme.textPrimary
+                            font.pixelSize: 15
+                            font.family: Theme.fontFamily
+                            font.weight: Font.Bold
+                        }
+                        Text {
+                            text: I18n.t("exitConfirmSubtitle")
+                            color: Theme.textMuted
+                            font.pixelSize: 11
+                            font.family: Theme.fontFamily
+                        }
+                    }
+                }
+
+                Text {
+                    width: parent.width
+                    text: I18n.t("exitConfirmMessage").arg((typeof downloadManager !== "undefined" && downloadManager) ? downloadManager.activeDownloadsCount : 1)
+                    color: Theme.textSecondary
+                    font.pixelSize: 12
+                    font.family: Theme.fontFamily
+                    lineHeight: 1.4
+                    wrapMode: Text.WordWrap
+                }
+
+                // Action Buttons
+                Column {
+                    width: parent.width
+                    spacing: 10
+
+                    // 1. Download in Background (Minimize)
+                    Rectangle {
+                        width: parent.width
+                        height: 38
+                        radius: Theme.radiusMd
+                        color: minBtnMa.containsMouse ? Theme.accentHover : Theme.accent
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: I18n.t("exitConfirmMinimize")
+                            color: "#07090e"
+                            font.pixelSize: 12
+                            font.family: Theme.fontFamily
+                            font.weight: Font.Bold
+                        }
+
+                        MouseArea {
+                            id: minBtnMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                exitConfirmDialog.visible = false;
+                                window.showMinimized();
+                            }
+                        }
+                    }
+
+                    // 2. Pause All and Exit
+                    Rectangle {
+                        width: parent.width
+                        height: 38
+                        radius: Theme.radiusMd
+                        color: pauseExitMa.containsMouse ? "#2d3748" : Theme.bgElevated
+                        border.color: Theme.borderDim
+                        border.width: 1
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: I18n.t("exitConfirmQuit")
+                            color: Theme.textPrimary
+                            font.pixelSize: 12
+                            font.family: Theme.fontFamily
+                            font.weight: Font.DemiBold
+                        }
+
+                        MouseArea {
+                            id: pauseExitMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                exitConfirmDialog.visible = false;
+                                if (typeof downloadManager !== "undefined" && downloadManager) {
+                                    downloadManager.pauseAllAndQuit();
+                                } else {
+                                    Qt.quit();
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. Cancel
+                    Rectangle {
+                        width: parent.width
+                        height: 34
+                        radius: Theme.radiusMd
+                        color: cancelMa.containsMouse ? "#1f2937" : "transparent"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: I18n.t("exitConfirmCancel")
+                            color: Theme.textMuted
+                            font.pixelSize: 12
+                            font.family: Theme.fontFamily
+                        }
+
+                        MouseArea {
+                            id: cancelMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                exitConfirmDialog.visible = false;
+                            }
+                        }
                     }
                 }
             }

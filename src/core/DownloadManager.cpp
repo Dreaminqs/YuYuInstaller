@@ -10,6 +10,10 @@
 #include <QUrl>
 #include <QFile>
 #include <QTextStream>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QCoreApplication>
 
 DownloadManager::DownloadManager(QObject *parent)
     : QObject(parent)
@@ -36,9 +40,13 @@ DownloadManager::DownloadManager(QObject *parent)
     connect(&m_queueModel, &DownloadQueueModel::requestResume, this, &DownloadManager::onQueueResume);
     connect(&m_queueModel, &DownloadQueueModel::requestCancel, this, &DownloadManager::onQueueCancel);
     connect(&m_queueModel, &DownloadQueueModel::queueOrderChanged, this, &DownloadManager::checkNextQueueItem);
+    connect(&m_queueModel, &DownloadQueueModel::activeCountChanged, this, &DownloadManager::activeDownloadsChanged);
+    connect(&m_queueModel, &DownloadQueueModel::countChanged, this, &DownloadManager::activeDownloadsChanged);
     connect(&m_urlAnalyzer, &UrlAnalyzer::analysisError, this, [this](const QString &msg) {
         logDownloadFailure("URL Analysis Error", "", msg);
     });
+
+    loadQueueState();
 }
 
 QString DownloadManager::logFilePath() {
@@ -107,12 +115,142 @@ void DownloadManager::retryDownload(const QString &id) {
 }
 
 DownloadManager::~DownloadManager() {
+    saveQueueState();
     for (auto d : m_activeHttpDownloads) {
         if (d) d->cancel();
     }
     for (auto d : m_activeYtDlpDownloads) {
         if (d) d->cancel();
     }
+}
+
+QString DownloadManager::queueStateFilePath() {
+    QString stateDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(stateDir);
+    return stateDir + "/queue_state.json";
+}
+
+void DownloadManager::saveQueueState() {
+    QJsonArray array;
+    for (int i = 0; i < m_queueModel.rowCount(); ++i) {
+        DownloadItem item = m_queueModel.getItemAt(i);
+        QJsonObject obj;
+        obj["id"] = item.id;
+        obj["title"] = item.title;
+        obj["url"] = item.url;
+        obj["destinationPath"] = item.destinationPath;
+
+        QString st = item.status;
+        if (st == "Downloading" || st == "Converting" || st == "Queued") {
+            st = "Paused";
+        }
+        obj["status"] = st;
+        obj["progress"] = item.progress;
+        obj["bytesDownloaded"] = item.bytesDownloaded;
+        obj["totalBytes"] = item.totalBytes;
+        obj["isAudioOnly"] = item.isAudioOnly;
+        obj["createdTime"] = item.createdTime.isValid() ? item.createdTime.toString(Qt::ISODate) : QDateTime::currentDateTime().toString(Qt::ISODate);
+
+        if (m_taskRegistry.contains(item.id)) {
+            QueuedTask task = m_taskRegistry.value(item.id);
+            obj["formatId"] = task.formatId;
+            obj["customFolder"] = task.customFolder;
+            obj["referer"] = task.referer;
+            obj["subtitleLang"] = task.subtitleLang;
+            obj["embedSubtitles"] = task.embedSubtitles;
+            obj["useYtDlp"] = task.useYtDlp;
+        }
+
+        array.append(obj);
+    }
+
+    QJsonDocument doc(array);
+    QFile file(queueStateFilePath());
+    if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        file.write(doc.toJson(QJsonDocument::Indented));
+        file.close();
+    }
+}
+
+void DownloadManager::loadQueueState() {
+    QFile file(queueStateFilePath());
+    if (!file.exists() || !file.open(QIODevice::ReadOnly)) {
+        return;
+    }
+
+    QByteArray data = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+    if (!doc.isArray()) return;
+
+    QJsonArray array = doc.array();
+    for (const QJsonValue &val : array) {
+        if (!val.isObject()) continue;
+        QJsonObject obj = val.toObject();
+
+        QString id = obj["id"].toString();
+        if (id.isEmpty()) continue;
+
+        QueuedTask task;
+        task.id = id;
+        task.url = obj["url"].toString();
+        task.title = obj["title"].toString();
+        task.formatId = obj["formatId"].toString();
+        task.customFolder = obj["customFolder"].toString();
+        task.finalFilePath = obj["destinationPath"].toString();
+        task.referer = obj["referer"].toString();
+        task.subtitleLang = obj["subtitleLang"].toString();
+        task.embedSubtitles = obj["embedSubtitles"].toBool(true);
+        task.isAudioOnly = obj["isAudioOnly"].toBool(false);
+        task.useYtDlp = obj["useYtDlp"].toBool(false);
+        m_taskRegistry[id] = task;
+
+        DownloadItem item;
+        item.id = id;
+        item.title = task.title;
+        item.url = task.url;
+        item.destinationPath = task.finalFilePath;
+        item.status = obj["status"].toString("Paused");
+        if (item.status == "Downloading" || item.status == "Converting") {
+            item.status = "Paused";
+        }
+        item.progress = obj["progress"].toDouble(0.0);
+        item.bytesDownloaded = obj["bytesDownloaded"].toInteger(0);
+        item.totalBytes = obj["totalBytes"].toInteger(0);
+        item.isAudioOnly = task.isAudioOnly;
+        item.createdTime = QDateTime::fromString(obj["createdTime"].toString(), Qt::ISODate);
+
+        // Check if file partially exists on disk to ensure accurate byte count
+        if (item.status == "Paused" && QFile::exists(item.destinationPath)) {
+            qint64 actualSize = QFileInfo(item.destinationPath).size();
+            if (actualSize > 0) {
+                item.bytesDownloaded = actualSize;
+                if (item.totalBytes > 0) {
+                    item.progress = qMin(100.0, (double(actualSize) / double(item.totalBytes)) * 100.0);
+                }
+            }
+        }
+
+        m_queueModel.addItem(item);
+    }
+}
+
+void DownloadManager::pauseAllAndQuit() {
+    for (auto it = m_activeHttpDownloads.begin(); it != m_activeHttpDownloads.end(); ++it) {
+        if (it.value() && it.value()->isRunning()) {
+            it.value()->pause();
+            m_queueModel.updateStatus(it.key(), "Paused");
+        }
+    }
+    for (auto it = m_activeYtDlpDownloads.begin(); it != m_activeYtDlpDownloads.end(); ++it) {
+        if (it.value() && it.value()->isRunning()) {
+            it.value()->pause();
+            m_queueModel.updateStatus(it.key(), "Paused");
+        }
+    }
+    saveQueueState();
+    QCoreApplication::quit();
 }
 
 QString DownloadManager::getDefaultDownloadDirectory() const {
@@ -200,7 +338,7 @@ void DownloadManager::setLanguage(const QString &lang) {
     }
 }
 
-bool DownloadManager::hasActiveDownload() const {
+bool DownloadManager::hasActiveDownloads() const {
     if (!m_pendingAudioConversion.isEmpty()) return true;
 
     for (const auto &d : m_activeHttpDownloads) {
@@ -209,7 +347,11 @@ bool DownloadManager::hasActiveDownload() const {
     for (const auto &d : m_activeYtDlpDownloads) {
         if (d && d->isRunning()) return true;
     }
-    return false;
+    return m_queueModel.activeDownloadCount() > 0;
+}
+
+bool DownloadManager::hasActiveDownload() const {
+    return hasActiveDownloads();
 }
 
 void DownloadManager::pauseActiveDownloadsExcept(const QString &keepId) {
@@ -642,6 +784,8 @@ void DownloadManager::onQueueResume(const QString &id) {
         m_queueModel.updateStatus(id, "Downloading");
         m_queueModel.updateProgress(id, -1, "Resuming...", "--:--", -1, -1);
         m_activeYtDlpDownloads[id]->resume();
+    } else if (m_taskRegistry.contains(id)) {
+        startTask(m_taskRegistry.value(id));
     }
 }
 
