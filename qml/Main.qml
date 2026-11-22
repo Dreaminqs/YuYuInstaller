@@ -567,7 +567,7 @@ ApplicationWindow {
                         width: parent.width
                         height: 38
                         radius: Theme.radiusMd
-                        color: minBtnMa.containsMouse ? Theme.accentHover : Theme.accent
+                        color: dialogMinBtnMa.containsMouse ? Theme.accentHover : Theme.accent
 
                         Text {
                             anchors.centerIn: parent
@@ -579,7 +579,7 @@ ApplicationWindow {
                         }
 
                         MouseArea {
-                            id: minBtnMa
+                            id: dialogMinBtnMa
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
@@ -595,7 +595,7 @@ ApplicationWindow {
                         width: parent.width
                         height: 38
                         radius: Theme.radiusMd
-                        color: pauseExitMa.containsMouse ? "#2d3748" : Theme.bgElevated
+                        color: dialogPauseExitMa.containsMouse ? "#2d3748" : Theme.bgElevated
                         border.color: Theme.borderDim
                         border.width: 1
 
@@ -609,7 +609,7 @@ ApplicationWindow {
                         }
 
                         MouseArea {
-                            id: pauseExitMa
+                            id: dialogPauseExitMa
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
@@ -629,7 +629,7 @@ ApplicationWindow {
                         width: parent.width
                         height: 34
                         radius: Theme.radiusMd
-                        color: cancelMa.containsMouse ? "#1f2937" : "transparent"
+                        color: dialogCancelMa.containsMouse ? "#1f2937" : "transparent"
 
                         Text {
                             anchors.centerIn: parent
@@ -640,7 +640,7 @@ ApplicationWindow {
                         }
 
                         MouseArea {
-                            id: cancelMa
+                            id: dialogCancelMa
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor

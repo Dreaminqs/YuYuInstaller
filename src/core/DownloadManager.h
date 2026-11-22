@@ -70,6 +70,7 @@ public:
     static QString queueStateFilePath();
 
     bool hasActiveDownloads() const;
+    bool hasActiveDownload() const;
     int countActiveDownloads() const;
 
     static QString logFilePath();
