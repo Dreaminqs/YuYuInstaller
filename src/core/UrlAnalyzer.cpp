@@ -904,7 +904,9 @@ void UrlAnalyzer::startOpenaniResolve(const QUrl &url) {
     }
 
     if (slug.isEmpty()) {
-        startWebPageScrape(url);
+        m_isAnalyzing = false;
+        emit analyzingChanged();
+        emit analysisError("Geçersiz OpenAnime bağlantısı.");
         return;
     }
 
@@ -922,7 +924,7 @@ void UrlAnalyzer::startOpenaniResolve(const QUrl &url) {
     reply->ignoreSslErrors();
     m_currentReply = reply;
 
-    connect(reply, &QNetworkReply::finished, this, [this, reply, slug, targetSeason, targetEp, pageUrl]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, slug, targetSeason, targetEp]() {
         if (m_currentReply == reply) {
             m_currentReply = nullptr;
         }
@@ -933,24 +935,44 @@ void UrlAnalyzer::startOpenaniResolve(const QUrl &url) {
         if (statusCode >= 200 && statusCode < 400 && !data.isEmpty()) {
             QString html = QString::fromUtf8(data);
 
-            // 1. Anime Title
+            // 1. Anime Title (Search in animeMeta snippet)
             QString animeName;
-            QRegularExpression nameRe(R"(animeMeta\s*:\s*\{[^}]*?(?:turkish|english|romaji)\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
-            auto nm = nameRe.match(html);
-            if (nm.hasMatch()) {
-                animeName = nm.captured(1).trimmed();
+            int idxMeta = html.indexOf("animeMeta:{");
+            if (idxMeta != -1) {
+                QString metaSnippet = html.mid(idxMeta, 3000);
+                static const QStringList nameKeys = {"turkish", "english", "romaji", "originalName", "japanese"};
+                for (const QString &k : nameKeys) {
+                    QRegularExpression kRe(QString(R"(%1\s*:\s*["']([^"']+)["'])").arg(k), QRegularExpression::CaseInsensitiveOption);
+                    auto km = kRe.match(metaSnippet);
+                    if (km.hasMatch() && !km.captured(1).trimmed().isEmpty()) {
+                        animeName = km.captured(1).trimmed();
+                        break;
+                    }
+                }
+            }
+            if (animeName.isEmpty()) {
+                QRegularExpression nameRe(R"((?:turkish|english|romaji|originalName)\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+                auto nm = nameRe.match(html);
+                if (nm.hasMatch()) {
+                    animeName = nm.captured(1).trimmed();
+                }
             }
             if (animeName.isEmpty()) {
                 animeName = slug;
                 animeName.replace('-', ' ');
+                if (!animeName.isEmpty()) animeName[0] = animeName[0].toUpper();
             }
 
             // 2. Poster / Banner
             QString poster;
-            QRegularExpression posterRe(R"(animeMeta\s*:\s*\{[^}]*?pictures\s*:\s*\{[^}]*?(?:banner|avatar)\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
-            auto pm = posterRe.match(html);
-            if (pm.hasMatch()) {
-                poster = pm.captured(1).trimmed();
+            QRegularExpression bannerRe(R"(banner\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+            auto bnm = bannerRe.match(html);
+            if (bnm.hasMatch()) {
+                poster = bnm.captured(1).trimmed();
+            } else {
+                QRegularExpression avatarRe(R"(avatar\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+                auto avm = avatarRe.match(html);
+                if (avm.hasMatch()) poster = avm.captured(1).trimmed();
             }
 
             // 3. Episode name
@@ -975,7 +997,7 @@ void UrlAnalyzer::startOpenaniResolve(const QUrl &url) {
                 }
             }
 
-            // 5. Files: [{ resolution: 720, size: 120914455, file: "..." }, ...]
+            // 5. Files: files:[{...}, {...}, ...]
             int idxFiles = html.indexOf("files:[");
             QString bestFile;
             int maxHeight = 0;
@@ -984,23 +1006,34 @@ void UrlAnalyzer::startOpenaniResolve(const QUrl &url) {
 
             if (idxFiles != -1 && !cdnLink.isEmpty()) {
                 int endFiles = html.indexOf(']', idxFiles);
-                QString filesStr = (endFiles != -1) ? html.mid(idxFiles, endFiles - idxFiles + 1) : html.mid(idxFiles, 1000);
+                QString filesStr = (endFiles != -1) ? html.mid(idxFiles, endFiles - idxFiles + 1) : html.mid(idxFiles, 1500);
 
-                QRegularExpression fileRe(R"(resolution\s*:\s*(\d+).*?size\s*:\s*(\d+).*?file\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
-                auto it = fileRe.globalMatch(filesStr);
+                // Match each object { ... } inside files array
+                QRegularExpression objRe(R"(\{([^{}]+)\})");
+                auto it = objRe.globalMatch(filesStr);
                 while (it.hasNext()) {
-                    auto fmatch = it.next();
-                    int res = fmatch.captured(1).toInt();
-                    qint64 sz = fmatch.captured(2).toLongLong();
-                    QString fpath = fmatch.captured(3).trimmed();
-                    // Strip ?big=1 or query params
-                    fpath = fpath.section('?', 0, 0);
+                    QString objStr = it.next().captured(1);
 
-                    availableHeights.append(res);
-                    if (res > maxHeight || bestFile.isEmpty()) {
-                        maxHeight = res;
-                        bestFile = fpath;
-                        bestSize = sz;
+                    QRegularExpression resRe(R"(resolution\s*:\s*(\d+))", QRegularExpression::CaseInsensitiveOption);
+                    QRegularExpression fileRe(R"(file\s*:\s*["']([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+                    QRegularExpression sizeRe(R"(size\s*:\s*(\d+))", QRegularExpression::CaseInsensitiveOption);
+
+                    auto rm = resRe.match(objStr);
+                    auto fm = fileRe.match(objStr);
+                    auto sm = sizeRe.match(objStr);
+
+                    if (rm.hasMatch() && fm.hasMatch()) {
+                        int res = rm.captured(1).toInt();
+                        QString fpath = fm.captured(1).trimmed();
+                        fpath = fpath.section('?', 0, 0); // Strip ?big=1 or query params
+                        qint64 sz = sm.hasMatch() ? sm.captured(1).toLongLong() : 0;
+
+                        availableHeights.append(res);
+                        if (res > maxHeight || bestFile.isEmpty()) {
+                            maxHeight = res;
+                            bestFile = fpath;
+                            bestSize = sz;
+                        }
                     }
                 }
             }
@@ -1041,8 +1074,9 @@ void UrlAnalyzer::startOpenaniResolve(const QUrl &url) {
             }
         }
 
-        // Fallback to webpage scrape
-        startWebPageScrape(QUrl(pageUrl));
+        m_isAnalyzing = false;
+        emit analyzingChanged();
+        emit analysisError(QString("OpenAnime: %1 (Sezon %2, Bölüm %3) için video akışı bulunamadı.").arg(slug).arg(targetSeason).arg(targetEp));
     });
 }
 
