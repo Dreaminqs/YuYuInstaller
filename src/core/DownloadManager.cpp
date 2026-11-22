@@ -15,6 +15,18 @@
 #include <QJsonArray>
 #include <QCoreApplication>
 
+static QString formatBytesHelper(qint64 bytes) {
+    if (bytes <= 0) return QString();
+    double b = static_cast<double>(bytes);
+    if (b < 1024.0 * 1024.0) {
+        return QString::asprintf("%.1f KB", b / 1024.0);
+    } else if (b < 1024.0 * 1024.0 * 1024.0) {
+        return QString::asprintf("%.1f MB", b / (1024.0 * 1024.0));
+    } else {
+        return QString::asprintf("%.2f GB", b / (1024.0 * 1024.0 * 1024.0));
+    }
+}
+
 DownloadManager::DownloadManager(QObject *parent)
     : QObject(parent)
 {
@@ -115,13 +127,21 @@ void DownloadManager::retryDownload(const QString &id) {
 }
 
 DownloadManager::~DownloadManager() {
+    for (auto it = m_activeHttpDownloads.begin(); it != m_activeHttpDownloads.end(); ++it) {
+        if (it.value()) {
+            disconnect(it.value(), nullptr, this, nullptr);
+            it.value()->pause();
+            m_queueModel.updateStatus(it.key(), "Paused");
+        }
+    }
+    for (auto it = m_activeYtDlpDownloads.begin(); it != m_activeYtDlpDownloads.end(); ++it) {
+        if (it.value()) {
+            disconnect(it.value(), nullptr, this, nullptr);
+            it.value()->pause();
+            m_queueModel.updateStatus(it.key(), "Paused");
+        }
+    }
     saveQueueState();
-    for (auto d : m_activeHttpDownloads) {
-        if (d) d->cancel();
-    }
-    for (auto d : m_activeYtDlpDownloads) {
-        if (d) d->cancel();
-    }
 }
 
 QString DownloadManager::queueStateFilePath() {
@@ -222,8 +242,13 @@ void DownloadManager::loadQueueState() {
         item.createdTime = QDateTime::fromString(obj["createdTime"].toString(), Qt::ISODate);
 
         // Check if file partially exists on disk to ensure accurate byte count
-        if (item.status == "Paused" && QFile::exists(item.destinationPath)) {
-            qint64 actualSize = QFileInfo(item.destinationPath).size();
+        if (item.status == "Paused") {
+            qint64 actualSize = 0;
+            if (QFile::exists(item.destinationPath)) {
+                actualSize = QFileInfo(item.destinationPath).size();
+            } else if (QFile::exists(item.destinationPath + ".part")) {
+                actualSize = QFileInfo(item.destinationPath + ".part").size();
+            }
             if (actualSize > 0) {
                 item.bytesDownloaded = actualSize;
                 if (item.totalBytes > 0) {
@@ -231,6 +256,18 @@ void DownloadManager::loadQueueState() {
                 }
             }
         }
+
+        if (item.bytesDownloaded > 0) {
+            item.downloadedFormatted = formatBytesHelper(item.bytesDownloaded);
+        }
+        if (item.totalBytes > 0) {
+            item.totalFormatted = formatBytesHelper(item.totalBytes);
+            if (item.totalBytes > item.bytesDownloaded) {
+                item.remainingFormatted = formatBytesHelper(item.totalBytes - item.bytesDownloaded);
+            }
+        }
+        item.speed = "";
+        item.eta = "--:--";
 
         m_queueModel.addItem(item);
     }
@@ -373,7 +410,7 @@ void DownloadManager::pauseActiveDownloadsExcept(const QString &keepId) {
 
 void DownloadManager::startTask(const QueuedTask &task) {
     m_queueModel.updateStatus(task.id, "Downloading");
-    m_queueModel.updateProgress(task.id, 0.0, "Starting...", "--:--", -1, -1);
+    m_queueModel.updateProgress(task.id, -1, "Starting...", "--:--", -1, -1);
 
     int effectiveLimit = m_speedLimitEnabled ? m_speedLimitMBps : 0;
 
