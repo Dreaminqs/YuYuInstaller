@@ -169,6 +169,7 @@ void DownloadManager::saveQueueState() {
         obj["bytesDownloaded"] = item.bytesDownloaded;
         obj["totalBytes"] = item.totalBytes;
         obj["isAudioOnly"] = item.isAudioOnly;
+        obj["thumbnailUrl"] = item.thumbnailUrl;
         obj["createdTime"] = item.createdTime.isValid() ? item.createdTime.toString(Qt::ISODate) : QDateTime::currentDateTime().toString(Qt::ISODate);
 
         if (m_taskRegistry.contains(item.id)) {
@@ -239,6 +240,7 @@ void DownloadManager::loadQueueState() {
         item.bytesDownloaded = obj["bytesDownloaded"].toInteger(0);
         item.totalBytes = obj["totalBytes"].toInteger(0);
         item.isAudioOnly = task.isAudioOnly;
+        item.thumbnailUrl = obj["thumbnailUrl"].toString();
         item.createdTime = QDateTime::fromString(obj["createdTime"].toString(), Qt::ISODate);
 
         // Check if file partially exists on disk to ensure accurate byte count
@@ -622,8 +624,10 @@ void DownloadManager::addDownload(const QString &url, const QString &title, cons
     bool useYtDlp = isWebPlatform || (!isDirectFile && !FFmpegProcessor::findYtDlpExecutable().isEmpty());
 
     QString referer;
+    QString thumbnailUrl;
     if (m_urlAnalyzer.currentMediaInfo()) {
         referer = m_urlAnalyzer.currentMediaInfo()->referer();
+        thumbnailUrl = m_urlAnalyzer.currentMediaInfo()->thumbnailUrl();
     }
 
     QueuedTask task;
@@ -646,6 +650,7 @@ void DownloadManager::addDownload(const QString &url, const QString &title, cons
     item.destinationPath = finalFilePath;
     item.progress = 0.0;
     item.isAudioOnly = isAudioOnly;
+    item.thumbnailUrl = thumbnailUrl;
     item.createdTime = QDateTime::currentDateTime();
 
     m_taskRegistry[id] = task;

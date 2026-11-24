@@ -11,7 +11,7 @@ QtObject {
         "en": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.2.3 Pro",
+            "appVersion": "v1.2.4 Pro",
             "appSubtitle": "Media Downloader & Converter",
             
             // Sidebar
@@ -187,6 +187,10 @@ QtObject {
 
             "updateLogTitle": "Release Notes & Changelog",
             "updateLogSubtitle": "Detailed history of improvements and release notes",
+            "log124_1": "Animecix Direct Episode API: Fast single-request episode resolution via secure/episode-videos bypassing deleted legacy Google Drive links",
+            "log124_2": "Queue Thumbnail Previews: Download Queue cards now display video/episode cover thumbnails with persistent storage and mini format badges",
+            "log124_3": "Multi-Mirror Tau Video Failover: Automatic failover across all available Tau Video fansub streams and 1080p stream selection",
+            "log124_4": "TMDB Poster Optimization: Automatically scales poster previews to w500 for instant thumbnail loading",
             "log123_1": "Exit Protection Dialog: Prevents accidental application closing during active downloads with options to minimize or pause",
             "log123_2": "Queue State Persistence: Automatically saves and restores download queue across app restarts in queue_state.json",
             "log123_3": "Seamless HTTP Resume: Smart partial download resuming using HTTP Range headers for uninterrupted downloads",
@@ -262,7 +266,7 @@ QtObject {
         "tr": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.2.3 Pro",
+            "appVersion": "v1.2.4 Pro",
             "appSubtitle": "Medya İndirici & Dönüştürücü",
 
             // Sidebar
@@ -438,6 +442,10 @@ QtObject {
 
             "updateLogTitle": "Güncelleme Notları & Sürüm Logları",
             "updateLogSubtitle": "Yayınlanan sürümler ve yapılan yeniliklerin detaylı listesi",
+            "log124_1": "Animecix Doğrudan Bölüm Çözücü: Silinmiş eski Google Drive (404) linklerini atlayarak secure/episode-videos ile anında 1080p Tau Video çözümü",
+            "log124_2": "İndirme Kuyruğu Kapak Fotoğrafları: İndirme kuyruğundaki kartlara bölüm/video kapak fotoğrafı önizlemesi ve kalıcı kayıt desteği eklendi",
+            "log124_3": "Çoklu Tau Video Yedekliliği: Aynı bölüme ait tüm alternatif Tau Video kaynakları arasında otomatik yedekli geçiş",
+            "log124_4": "Hızlı Kapak Yükleme: Yüksek boyutlu poster görselleri otomatik w500 boyutuna optimize edilerek anında yükleme sağlandı",
             "log123_1": "Kapanma Koruması: İndirme esnasında yanlışlıkla kapanmayı önleyen arka planda devam etme ve duraklatma diyaloğu",
             "log123_2": "Kalıcı İndirme Kuyruğu: Uygulama kapandığında indirmeler diske kaydedilir ve açılışta kaldığı yerden devam edilebilir",
             "log123_3": "Akıllı HTTP Parçalı İndirme: Kesilen indirmeler baştan indirmek yerine kaldığı bayttan indirmeye devam eder",
@@ -513,7 +521,7 @@ QtObject {
         "uk": {
             // General
             "appName": "YuYuInstaller",
-            "appVersion": "v1.2.3 Pro",
+            "appVersion": "v1.2.4 Pro",
             "appSubtitle": "Завантажувач та конвертер медіа",
 
             // Sidebar
@@ -689,6 +697,10 @@ QtObject {
 
             "updateLogTitle": "Журнал оновлень та історія змін",
             "updateLogSubtitle": "Детальний список випусків та реалізованих покращень",
+            "log124_1": "Прямий резолвер епізодів Animecix: Миттєве отримання потоків 1080p Tau Video через secure/episode-videos без застарілих посилань 404",
+            "log124_2": "Обкладинки в черзі завантажень: Картки в черзі завантажень тепер відображають прев'ю відео та зберігають їх між запусками",
+            "log124_3": "Резервні джерела Tau Video: Автоматичне перемикання між альтернативними потоками Tau Video",
+            "log124_4": "Оптимізація постерів: Швидке завантаження обкладинок завдяки оптимізації розміру w500",
             "log123_1": "Захист від випадкового закриття: Діалог вибору мінімізації або призупинення під час завантажень",
             "log123_2": "Збереження черги завантажень: Черга зберігається на диск та автоматично відновлюється при запуску",
             "log123_3": "Розумне відновлення HTTP: Завантаження поновлюється з поточного місця за допомогою заголовків Range",

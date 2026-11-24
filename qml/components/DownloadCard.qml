@@ -29,15 +29,51 @@ Rectangle {
         anchors.margins: 16
         spacing: 14
 
-        // Icon Box
+        // Icon / Thumbnail Box
         Rectangle {
-            width: 44
-            height: 44
+            id: thumbBox
+            width: 68
+            height: 46
             radius: Theme.radiusSm
             color: Theme.bgElevated
+            border.color: thumbImg.visible ? Theme.borderDim : "transparent"
+            border.width: thumbImg.visible ? 1 : 0
+            clip: true
             anchors.verticalCenter: parent.verticalCenter
 
+            Image {
+                id: thumbImg
+                anchors.fill: parent
+                source: (model && model.thumbnailUrl) ? model.thumbnailUrl : ""
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                cache: true
+                visible: status === Image.Ready
+            }
+
+            Rectangle {
+                visible: thumbImg.visible
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: 3
+                width: cornerFmtTxt.implicitWidth + 6
+                height: 14
+                radius: 3
+                color: "#cc0a0d14"
+
+                Text {
+                    id: cornerFmtTxt
+                    anchors.centerIn: parent
+                    text: root.getTargetFormat()
+                    color: Theme.accent
+                    font.pixelSize: 8
+                    font.family: Theme.fontFamily
+                    font.weight: Font.Bold
+                }
+            }
+
             Text {
+                visible: !thumbImg.visible
                 anchors.centerIn: parent
                 text: root.getTargetFormat()
                 color: Theme.accent
@@ -49,7 +85,7 @@ Rectangle {
 
         // Center Content: Info & Progress
         Column {
-            width: parent.width - 44 - 14 - actionButtons.width - 14
+            width: parent.width - thumbBox.width - 14 - actionButtons.width - 14
             anchors.verticalCenter: parent.verticalCenter
             spacing: 6
 

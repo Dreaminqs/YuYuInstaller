@@ -46,6 +46,7 @@ QVariant DownloadQueueModel::data(const QModelIndex &index, int role) const {
     case TotalFormattedRole: return item.totalFormatted;
     case RemainingFormattedRole: return item.remainingFormatted;
     case IsAudioOnlyRole: return item.isAudioOnly;
+    case ThumbnailUrlRole: return item.thumbnailUrl;
     case ErrorMessageRole: return item.errorMessage;
     default: return QVariant();
     }
@@ -65,6 +66,7 @@ QHash<int, QByteArray> DownloadQueueModel::roleNames() const {
     roles[TotalFormattedRole] = "totalFormatted";
     roles[RemainingFormattedRole] = "remainingFormatted";
     roles[IsAudioOnlyRole] = "isAudioOnly";
+    roles[ThumbnailUrlRole] = "thumbnailUrl";
     roles[ErrorMessageRole] = "errorMessage";
     return roles;
 }

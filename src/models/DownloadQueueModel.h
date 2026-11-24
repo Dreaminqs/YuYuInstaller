@@ -20,6 +20,7 @@ struct DownloadItem {
     QString totalFormatted;
     QString remainingFormatted;
     bool isAudioOnly = false;
+    QString thumbnailUrl;
     QString errorMessage;
     QDateTime createdTime;
 };
@@ -43,6 +44,7 @@ public:
         TotalFormattedRole,
         RemainingFormattedRole,
         IsAudioOnlyRole,
+        ThumbnailUrlRole,
         ErrorMessageRole
     };
 
