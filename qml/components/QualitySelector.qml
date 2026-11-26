@@ -125,7 +125,11 @@ Rectangle {
                     id: thumbImg
                     anchors.fill: parent
                     source: root.mediaInfo ? root.mediaInfo.thumbnailUrl : ""
+                    sourceSize.width: 160
+                    sourceSize.height: 90
                     fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    cache: true
                     visible: status === Image.Ready
                 }
 

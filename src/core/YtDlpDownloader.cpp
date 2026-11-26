@@ -60,10 +60,6 @@ void YtDlpDownloader::start() {
     args << "--concurrent-fragments" << "4";
     args << "--buffer-size" << "64K";
     args << "--http-chunk-size" << "10M";
-    if (!m_impersonateRetried) {
-        args << "--impersonate" << "Chrome";
-        args << "--extractor-args" << "generic:impersonate";
-    }
 
     if (m_speedLimitMBps > 0) {
         args << "--limit-rate" << QString("%1M").arg(m_speedLimitMBps);
@@ -77,6 +73,11 @@ void YtDlpDownloader::start() {
     bool isSocial = lowerUrl.contains("instagram.com") || lowerUrl.contains("tiktok.com") ||
                     lowerUrl.contains("twitter.com") || lowerUrl.contains("x.com") ||
                     lowerUrl.contains("facebook.com") || lowerUrl.contains("fb.watch");
+
+    if (!isYouTube && !m_impersonateRetried) {
+        args << "--impersonate" << "Chrome";
+        args << "--extractor-args" << "generic:impersonate";
+    }
 
     if (!m_referer.isEmpty()) {
         QString encodedRef = QString::fromUtf8(QUrl::fromUserInput(m_referer.trimmed()).toEncoded(QUrl::FullyEncoded));

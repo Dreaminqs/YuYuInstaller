@@ -2484,10 +2484,6 @@ void UrlAnalyzer::startYtDlpProbe(const QString &rawUrl) {
         args << "--proxy" << ProxyManager::instance()->proxyUrl();
         args << "--geo-bypass";
     }
-    if (!m_ytDlpRetried) {
-        args << "--impersonate" << "Chrome";
-        args << "--extractor-args" << "generic:impersonate";
-    }
 
     QString lower = encodedUrl.toLower();
     bool isYouTube = lower.contains("youtube.com") || lower.contains("youtu.be");
@@ -2495,7 +2491,12 @@ void UrlAnalyzer::startYtDlpProbe(const QString &rawUrl) {
                     lower.contains("twitter.com") || lower.contains("x.com") ||
                     lower.contains("facebook.com") || lower.contains("fb.watch");
 
-    if (!isSocial) {
+    if (!isYouTube && !m_ytDlpRetried) {
+        args << "--impersonate" << "Chrome";
+        args << "--extractor-args" << "generic:impersonate";
+    }
+
+    if (!isSocial && !isYouTube) {
         QString ref = !m_pageReferer.isEmpty() ? m_pageReferer : encodedUrl;
         QString encRef = encodeUrlSafely(ref);
         args << "--referer" << (encRef.isEmpty() ? ref : encRef);

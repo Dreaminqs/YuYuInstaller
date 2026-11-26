@@ -45,6 +45,8 @@ Rectangle {
                 id: thumbImg
                 anchors.fill: parent
                 source: (model && model.thumbnailUrl) ? model.thumbnailUrl : ""
+                sourceSize.width: 160
+                sourceSize.height: 90
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true
