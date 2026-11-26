@@ -4,6 +4,7 @@
 #include <QString>
 #include <QMap>
 #include <QPointer>
+#include <QTimer>
 #include "DownloadQueueModel.h"
 #include "UrlAnalyzer.h"
 #include "Downloader.h"
@@ -66,6 +67,7 @@ public:
     Q_INVOKABLE void retryDownload(const QString &id);
     Q_INVOKABLE void pauseAllAndQuit();
     Q_INVOKABLE void saveQueueState();
+    void scheduleSaveQueueState();
     void loadQueueState();
     static QString queueStateFilePath();
 
@@ -123,4 +125,5 @@ private:
     QMap<QString, QPointer<Downloader>> m_activeHttpDownloads;
     QMap<QString, QPointer<YtDlpDownloader>> m_activeYtDlpDownloads;
     QMap<QString, bool> m_pendingAudioConversion;
+    QTimer m_saveDebounceTimer;
 };

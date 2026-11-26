@@ -205,6 +205,9 @@ void VideoDecoderWorker::readNextFrame() {
                         for (int y = 0; y < m_videoHeight; ++y)
                             memcpy(dst + y * dstStride, pData + y * srcStride, srcStride);
                     }
+                    if (m_firstFrame.isNull()) {
+                        m_firstFrame = frame;
+                    }
                     m_inFlight.store(true);
                     emit frameReady(frame);
                 }
@@ -272,8 +275,20 @@ void VideoBackgroundItem::setSource(const QString &source) {
 
     const QString path = resolvePath(m_source);
     QMetaObject::invokeMethod(m_worker, "setPlaying", Qt::QueuedConnection, Q_ARG(bool, m_playing));
-    QMetaObject::invokeMethod(m_worker, "open", Qt::QueuedConnection,
-                              Q_ARG(QString, path), Q_ARG(int, m_targetFps));
+    // Blocking call on initial source load so frame #1 is already decoded before the window shows (no blank flash)
+    if (m_frame.isNull()) {
+        QMetaObject::invokeMethod(m_worker, "open", Qt::BlockingQueuedConnection,
+                                  Q_ARG(QString, path), Q_ARG(int, m_targetFps));
+        m_frame = m_worker->firstFrame();
+        if (!m_frame.isNull()) {
+            m_frameDirty = true;
+            m_worker->markConsumed();
+            update();
+        }
+    } else {
+        QMetaObject::invokeMethod(m_worker, "open", Qt::QueuedConnection,
+                                  Q_ARG(QString, path), Q_ARG(int, m_targetFps));
+    }
 }
 
 void VideoBackgroundItem::setPlaying(bool play) {

@@ -16,33 +16,51 @@ FFmpegProcessor::~FFmpegProcessor() {
 
 #include <QDirIterator>
 
+static QString s_cachedFFmpegPath;
+static bool s_ffmpegSearched = false;
+static QString s_cachedYtDlpPath;
+static bool s_ytDlpSearched = false;
+
 QString FFmpegProcessor::findFFmpegExecutable() {
+    if (s_ffmpegSearched) {
+        if (!s_cachedFFmpegPath.isEmpty() && QFileInfo::exists(s_cachedFFmpegPath)) {
+            return s_cachedFFmpegPath;
+        }
+        s_ffmpegSearched = false;
+    }
+
+    auto cacheAndReturn = [](const QString &path) -> QString {
+        s_cachedFFmpegPath = path;
+        s_ffmpegSearched = true;
+        return path;
+    };
+
     // 1. Check in application directory
     QString localApp = QCoreApplication::applicationDirPath() + "/ffmpeg.exe";
     if (QFileInfo::exists(localApp)) {
-        return QDir::toNativeSeparators(localApp);
+        return cacheAndReturn(QDir::toNativeSeparators(localApp));
     }
 
     // 2. Check in current directory or build subdirectory
     QString currentApp = QDir::currentPath() + "/ffmpeg.exe";
     if (QFileInfo::exists(currentApp)) {
-        return QDir::toNativeSeparators(currentApp);
+        return cacheAndReturn(QDir::toNativeSeparators(currentApp));
     }
     QString currentBuild = QDir::currentPath() + "/build/ffmpeg.exe";
     if (QFileInfo::exists(currentBuild)) {
-        return QDir::toNativeSeparators(currentBuild);
+        return cacheAndReturn(QDir::toNativeSeparators(currentBuild));
     }
 
     // 3. Check in parent build directory
     QString parentBuild = QCoreApplication::applicationDirPath() + "/../build/ffmpeg.exe";
     if (QFileInfo::exists(parentBuild)) {
-        return QDir::cleanPath(parentBuild);
+        return cacheAndReturn(QDir::cleanPath(parentBuild));
     }
 
     // 4. Check in PATH
     QString pathExe = QStandardPaths::findExecutable("ffmpeg");
     if (!pathExe.isEmpty()) {
-        return pathExe;
+        return cacheAndReturn(pathExe);
     }
 
     // 5. Check WinGet Links and common install locations
@@ -55,7 +73,7 @@ QString FFmpegProcessor::findFFmpegExecutable() {
 
     for (const QString &p : potentialPaths) {
         if (QFileInfo::exists(p)) {
-            return QDir::toNativeSeparators(p);
+            return cacheAndReturn(QDir::toNativeSeparators(p));
         }
     }
 
@@ -64,46 +82,59 @@ QString FFmpegProcessor::findFFmpegExecutable() {
     if (wingetDir.exists()) {
         QDirIterator it(wingetDir.absolutePath(), QStringList() << "ffmpeg.exe", QDir::Files, QDirIterator::Subdirectories);
         if (it.hasNext()) {
-            return QDir::toNativeSeparators(it.next());
+            return cacheAndReturn(QDir::toNativeSeparators(it.next()));
         }
     }
 
-    return QString();
+    return cacheAndReturn(QString());
 }
 
 QString FFmpegProcessor::findYtDlpExecutable() {
+    if (s_ytDlpSearched) {
+        if (!s_cachedYtDlpPath.isEmpty() && QFileInfo::exists(s_cachedYtDlpPath)) {
+            return s_cachedYtDlpPath;
+        }
+        s_ytDlpSearched = false;
+    }
+
+    auto cacheAndReturn = [](const QString &path) -> QString {
+        s_cachedYtDlpPath = path;
+        s_ytDlpSearched = true;
+        return path;
+    };
+
     // 1. Check in application directory
     QString localApp = QCoreApplication::applicationDirPath() + "/yt-dlp.exe";
     if (QFileInfo::exists(localApp)) {
-        return QDir::toNativeSeparators(localApp);
+        return cacheAndReturn(QDir::toNativeSeparators(localApp));
     }
 
     // 2. Check in current directory or build subdirectory
     QString currentApp = QDir::currentPath() + "/yt-dlp.exe";
     if (QFileInfo::exists(currentApp)) {
-        return QDir::toNativeSeparators(currentApp);
+        return cacheAndReturn(QDir::toNativeSeparators(currentApp));
     }
     QString currentBuild = QDir::currentPath() + "/build/yt-dlp.exe";
     if (QFileInfo::exists(currentBuild)) {
-        return QDir::toNativeSeparators(currentBuild);
+        return cacheAndReturn(QDir::toNativeSeparators(currentBuild));
     }
 
     // 3. Check in parent build directory
     QString parentBuild = QCoreApplication::applicationDirPath() + "/../build/yt-dlp.exe";
     if (QFileInfo::exists(parentBuild)) {
-        return QDir::cleanPath(parentBuild);
+        return cacheAndReturn(QDir::cleanPath(parentBuild));
     }
 
     // 4. Check in PATH
     QString pathExe = QStandardPaths::findExecutable("yt-dlp");
     if (!pathExe.isEmpty()) {
-        return pathExe;
+        return cacheAndReturn(pathExe);
     }
 
     // 5. Check WinGet Links
     QString wingetLink = QDir::homePath() + "/AppData/Local/Microsoft/WinGet/Links/yt-dlp.exe";
     if (QFileInfo::exists(wingetLink)) {
-        return QDir::toNativeSeparators(wingetLink);
+        return cacheAndReturn(QDir::toNativeSeparators(wingetLink));
     }
 
     // 6. Search WinGet Packages directory
@@ -111,11 +142,11 @@ QString FFmpegProcessor::findYtDlpExecutable() {
     if (wingetDir.exists()) {
         QDirIterator it(wingetDir.absolutePath(), QStringList() << "yt-dlp.exe", QDir::Files, QDirIterator::Subdirectories);
         if (it.hasNext()) {
-            return QDir::toNativeSeparators(it.next());
+            return cacheAndReturn(QDir::toNativeSeparators(it.next()));
         }
     }
 
-    return QString();
+    return cacheAndReturn(QString());
 }
 
 bool FFmpegProcessor::isFFmpegAvailable() const {
@@ -127,6 +158,8 @@ bool FFmpegProcessor::isYtDlpAvailable() const {
 }
 
 void FFmpegProcessor::refreshTools() {
+    s_ffmpegSearched = false;
+    s_ytDlpSearched = false;
     emit toolsStatusChanged();
 }
 

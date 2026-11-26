@@ -20,6 +20,7 @@ public:
 
     // Called from the GUI thread once a frame has been consumed (frame dropping).
     void markConsumed() { m_inFlight.store(false); }
+    QImage firstFrame() const { return m_firstFrame; }
 
 public slots:
     void open(const QString &path, int targetFps);
@@ -47,6 +48,7 @@ private:
     bool m_mfInitialized = false;
     bool m_comInitialized = false;
     std::atomic_bool m_inFlight { false };
+    QImage m_firstFrame;
 };
 
 class VideoBackgroundItem : public QQuickItem {

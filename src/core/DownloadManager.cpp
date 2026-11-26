@@ -58,6 +58,13 @@ DownloadManager::DownloadManager(QObject *parent)
         logDownloadFailure("URL Analysis Error", "", msg);
     });
 
+    m_saveDebounceTimer.setSingleShot(true);
+    m_saveDebounceTimer.setInterval(2000);
+    connect(&m_saveDebounceTimer, &QTimer::timeout, this, &DownloadManager::saveQueueState);
+    connect(&m_queueModel, &DownloadQueueModel::countChanged, this, &DownloadManager::scheduleSaveQueueState);
+    connect(&m_queueModel, &DownloadQueueModel::activeCountChanged, this, &DownloadManager::scheduleSaveQueueState);
+    connect(&m_queueModel, &DownloadQueueModel::queueOrderChanged, this, &DownloadManager::scheduleSaveQueueState);
+
     loadQueueState();
 }
 
@@ -150,7 +157,12 @@ QString DownloadManager::queueStateFilePath() {
     return stateDir + "/queue_state.json";
 }
 
+void DownloadManager::scheduleSaveQueueState() {
+    m_saveDebounceTimer.start();
+}
+
 void DownloadManager::saveQueueState() {
+    m_saveDebounceTimer.stop();
     QJsonArray array;
     for (int i = 0; i < m_queueModel.rowCount(); ++i) {
         DownloadItem item = m_queueModel.getItemAt(i);
