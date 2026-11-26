@@ -49,6 +49,7 @@ Downloader::~Downloader() {
 
 void Downloader::setSpeedLimitMBps(int mbps) {
     m_speedLimitMBps = mbps;
+    flushWriteBuffer();
     if (m_speedLimitMBps > 0 && m_isRunning) {
         if (m_reply) {
             m_reply->setReadBufferSize(128 * 1024);
@@ -116,6 +117,9 @@ void Downloader::start() {
 
     m_isPaused = false;
     m_isRunning = true;
+    m_initialProgressSent = false;
+    m_writeBuffer.clear();
+    m_writeBuffer.reserve(256 * 1024);
     m_speedTimer.start();
     m_totalTimer.start();
     m_lastSampleBytes = m_downloadedBytes;
@@ -144,6 +148,7 @@ void Downloader::start() {
         if (!m_reply) return;
         int statusCode = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (m_downloadedBytes > 0 && statusCode == 200) {
+            m_writeBuffer.clear();
             if (m_outputFile.isOpen()) {
                 m_outputFile.seek(0);
                 m_outputFile.resize(0);
@@ -152,6 +157,13 @@ void Downloader::start() {
             m_lastSampleBytes = 0;
         }
     });
+}
+
+void Downloader::flushWriteBuffer() {
+    if (!m_writeBuffer.isEmpty() && m_outputFile.isOpen()) {
+        m_outputFile.write(m_writeBuffer);
+        m_writeBuffer.clear();
+    }
 }
 
 void Downloader::pause() {
@@ -172,6 +184,7 @@ void Downloader::pause() {
     if (m_reply) {
         m_reply->abort();
     }
+    flushWriteBuffer();
     if (m_outputFile.isOpen()) {
         m_outputFile.flush();
         m_outputFile.close();
@@ -186,6 +199,7 @@ void Downloader::resume() {
 void Downloader::cancel() {
     m_isPaused = false;
     m_isRunning = false;
+    m_writeBuffer.clear();
     if (m_throttleTimer) {
         m_throttleTimer->stop();
     }
@@ -215,6 +229,7 @@ void Downloader::onReadyRead() {
         int sc = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (sc == 200) {
             // Server ignored Range header and sent from beginning: reset file
+            m_writeBuffer.clear();
             m_outputFile.resize(0);
             m_outputFile.seek(0);
             m_downloadedBytes = 0;
@@ -224,7 +239,10 @@ void Downloader::onReadyRead() {
     if (m_speedLimitMBps <= 0) {
         QByteArray chunk = m_reply->readAll();
         if (!chunk.isEmpty()) {
-            m_outputFile.write(chunk);
+            m_writeBuffer.append(chunk);
+            if (m_writeBuffer.size() >= 256 * 1024) {
+                flushWriteBuffer();
+            }
         }
     } else {
         processThrottledRead();
@@ -287,7 +305,11 @@ void Downloader::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal) {
     m_progress = percent;
 
     qint64 elapsedMs = m_speedTimer.elapsed();
-    if (elapsedMs >= 500) {
+    if (!m_initialProgressSent && actualTotal > 0 && currentDownloaded > 0) {
+        m_initialProgressSent = true;
+        emit progressUpdated(percent, "Starting...", "--:--", currentDownloaded, actualTotal);
+    }
+    if (elapsedMs >= 250) {
         qint64 deltaBytes = currentDownloaded - m_lastSampleBytes;
         double speedBps = (double(deltaBytes) / double(elapsedMs)) * 1000.0;
         m_speedString = formatSpeed(speedBps);
@@ -317,12 +339,13 @@ void Downloader::onFinished() {
         return;
     }
 
-    // Flush any pending buffered data in reply
+    // Flush any pending buffered data in reply and write buffer
     if (m_outputFile.isOpen()) {
         QByteArray chunk = m_reply->readAll();
         if (!chunk.isEmpty()) {
-            m_outputFile.write(chunk);
+            m_writeBuffer.append(chunk);
         }
+        flushWriteBuffer();
     }
 
     int statusCode = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -397,6 +420,7 @@ void Downloader::cleanup() {
     if (m_stallTimer) {
         m_stallTimer->stop();
     }
+    flushWriteBuffer();
     if (m_outputFile.isOpen()) {
         m_outputFile.flush();
         m_outputFile.close();

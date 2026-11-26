@@ -54,6 +54,7 @@ private slots:
 
 private:
     void cleanup();
+    void flushWriteBuffer();
     void processThrottledRead();
     QString formatSpeed(double bytesPerSec);
     QString formatEta(double seconds);
@@ -64,6 +65,7 @@ private:
     QString m_referer;
     bool m_isRunning = false;
     bool m_isPaused = false;
+    bool m_initialProgressSent = false;
     double m_progress = 0.0;
     QString m_speedString;
 
@@ -77,6 +79,7 @@ private:
     QNetworkAccessManager m_netManager;
     QNetworkReply *m_reply = nullptr;
     QFile m_outputFile;
+    QByteArray m_writeBuffer;
 
     qint64 m_downloadedBytes = 0;
     qint64 m_totalBytes = 0;

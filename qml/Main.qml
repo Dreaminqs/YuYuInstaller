@@ -52,8 +52,8 @@ ApplicationWindow {
         id: bgVideo
         anchors.fill: parent
         source: "assets/bg.mp4"
-        playing: window.active && downloadManager.videoBackgroundEnabled
-        targetFps: 45
+        playing: window.visible && window.visibility !== Window.Minimized && window.visibility !== Window.Hidden && window.active && downloadManager.videoBackgroundEnabled
+        targetFps: 30
     }
 
     // Hafif karartma: videonun görünmesi için düşük tutuldu

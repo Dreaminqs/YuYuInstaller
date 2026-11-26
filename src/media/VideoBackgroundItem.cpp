@@ -14,6 +14,7 @@
 #include <propvarutil.h>
 
 #include <QCoreApplication>
+#include <QQuickWindow>
 #include <QFileInfo>
 #include <QDir>
 #include <QUrl>
@@ -248,7 +249,7 @@ void VideoBackgroundItem::readNextFrame() {
 }
 
 void VideoBackgroundItem::onTimerTick() {
-    if (m_playing && isVisible() && opacity() > 0.01) {
+    if (m_playing && isVisible() && window() && window()->isVisible() && opacity() > 0.01) {
         readNextFrame();
     }
 }

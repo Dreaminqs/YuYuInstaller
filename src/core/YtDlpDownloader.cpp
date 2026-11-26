@@ -57,6 +57,9 @@ void YtDlpDownloader::start() {
     args << "--continue";
     args << "--socket-timeout" << "15";
     args << "--retries" << "3";
+    args << "--concurrent-fragments" << "4";
+    args << "--buffer-size" << "64K";
+    args << "--http-chunk-size" << "10M";
     if (!m_impersonateRetried) {
         args << "--impersonate" << "Chrome";
         args << "--extractor-args" << "generic:impersonate";
