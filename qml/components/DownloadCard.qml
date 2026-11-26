@@ -110,13 +110,13 @@ Rectangle {
                     width: statusText.width + 10
                     radius: 4
                     color: {
-                        if (model.status === "Completed") return Theme.success + "22"
-                        if (model.status === "Downloading") return Theme.accent + "22"
-                        if (model.status === "Converting") return Theme.accentPurple + "22"
-                        if (model.status === "Paused") return Theme.warning + "22"
-                        if (model.status === "Queued") return Theme.accentCyan + "22"
-                        if (model.status === "Failed") return Theme.error + "22"
-                        if (model.status === "Cancelled") return Theme.error + "22"
+                        if (model.status === "Completed") return Qt.alpha(Theme.success, 0.13)
+                        if (model.status === "Downloading") return Qt.alpha(Theme.accent, 0.13)
+                        if (model.status === "Converting") return Qt.alpha(Theme.accentPurple, 0.13)
+                        if (model.status === "Paused") return Qt.alpha(Theme.warning, 0.13)
+                        if (model.status === "Queued") return Qt.alpha(Theme.accentCyan, 0.13)
+                        if (model.status === "Failed") return Qt.alpha(Theme.error, 0.13)
+                        if (model.status === "Cancelled") return Qt.alpha(Theme.error, 0.13)
                         return Theme.bgElevated
                     }
 
@@ -496,8 +496,8 @@ Rectangle {
                 width: 34
                 height: 34
                 radius: 17
-                color: cancelMouse.containsMouse ? Theme.error + "22" : Theme.bgElevated
-                border.color: cancelMouse.containsMouse ? Theme.error + "66" : Theme.borderDim
+                color: cancelMouse.containsMouse ? Qt.alpha(Theme.error, 0.13) : Theme.bgElevated
+                border.color: cancelMouse.containsMouse ? Qt.alpha(Theme.error, 0.4) : Theme.borderDim
                 border.width: 1
                 scale: cancelMouse.containsMouse ? 1.08 : 1.0
                 Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }

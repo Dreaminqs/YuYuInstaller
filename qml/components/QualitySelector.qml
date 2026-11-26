@@ -199,7 +199,7 @@ Rectangle {
                                 width: titleHover.hovered ? 60 : 18
                                 height: 18
                                 radius: 4
-                                color: titleHover.hovered ? (Theme.accent + "33") : "transparent"
+                                color: titleHover.hovered ? (Qt.alpha(Theme.accent, 0.2)) : "transparent"
                                 border.color: titleHover.hovered ? Theme.accent : "transparent"
                                 border.width: 1
 
@@ -624,7 +624,7 @@ Rectangle {
                     height: 18
                     width: ccText.implicitWidth + 12
                     radius: 4
-                    color: Theme.accent + "22"
+                    color: Qt.alpha(Theme.accent, 0.13)
                     border.color: Theme.accent
                     border.width: 1
                     anchors.verticalCenter: parent.verticalCenter
@@ -745,7 +745,7 @@ Rectangle {
                     width: embedTxt.implicitWidth + 20
                     height: 28
                     radius: Theme.radiusSm
-                    color: root.selectedSubtitleEmbed ? (Theme.accent + "26") : (embedHover.hovered ? Theme.bgCardHover : Theme.bgElevated)
+                    color: root.selectedSubtitleEmbed ? (Qt.alpha(Theme.accent, 0.15)) : (embedHover.hovered ? Theme.bgCardHover : Theme.bgElevated)
                     border.color: root.selectedSubtitleEmbed ? Theme.accent : Theme.borderDim
                     border.width: root.selectedSubtitleEmbed ? 1.5 : 1
 
@@ -780,7 +780,7 @@ Rectangle {
                     width: srtTxt.implicitWidth + 20
                     height: 28
                     radius: Theme.radiusSm
-                    color: !root.selectedSubtitleEmbed ? (Theme.accent + "26") : (srtHover.hovered ? Theme.bgCardHover : Theme.bgElevated)
+                    color: !root.selectedSubtitleEmbed ? (Qt.alpha(Theme.accent, 0.15)) : (srtHover.hovered ? Theme.bgCardHover : Theme.bgElevated)
                     border.color: !root.selectedSubtitleEmbed ? Theme.accent : Theme.borderDim
                     border.width: !root.selectedSubtitleEmbed ? 1.5 : 1
 

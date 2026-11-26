@@ -205,7 +205,7 @@ Item {
                 implicitHeight: warpCol.implicitHeight + 32
                 radius: Theme.radiusLg
                 color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? "#102334" : "#131b26"
-                border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : (Theme.accent + "55")
+                border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : (Qt.alpha(Theme.accent, 0.33))
                 border.width: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? 1.5 : 1
 
                 Behavior on color { ColorAnimation { duration: 250 } }
@@ -244,8 +244,8 @@ Item {
                                     width: warpBadgeTxt.implicitWidth + 12
                                     radius: 10
                                     color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
-                                           ? Theme.accent + "22"
-                                           : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#eab30822" : "#222c3c"
+                                           ? Qt.alpha(Theme.accent, 0.13)
+                                           : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#22eab308" : "#222c3c"
                                     border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
                                                   ? Theme.accent
                                                   : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#eab308" : Theme.borderDim
@@ -461,7 +461,7 @@ Item {
                     implicitHeight: f1Row.implicitHeight + 22
                     radius: Theme.radiusMd
                     color: "#cc0a0f1e"
-                    border.color: Theme.accent + "26"
+                    border.color: Qt.alpha(Theme.accent, 0.15)
                     border.width: 1
 
                     Rectangle {
@@ -483,8 +483,8 @@ Item {
 
                         Rectangle {
                             width: 34; height: 34; radius: 10
-                            color: Theme.accent + "1a"
-                            border.color: Theme.accent + "40"
+                            color: Qt.alpha(Theme.accent, 0.1)
+                            border.color: Qt.alpha(Theme.accent, 0.25)
                             border.width: 1
                             anchors.verticalCenter: parent.verticalCenter
                             Canvas {
@@ -543,7 +543,7 @@ Item {
                     implicitHeight: f2Row.implicitHeight + 22
                     radius: Theme.radiusMd
                     color: "#cc0a0f1e"
-                    border.color: Theme.accent + "26"
+                    border.color: Qt.alpha(Theme.accent, 0.15)
                     border.width: 1
 
                     Rectangle {
@@ -565,8 +565,8 @@ Item {
 
                         Rectangle {
                             width: 34; height: 34; radius: 10
-                            color: Theme.accent + "1a"
-                            border.color: Theme.accent + "40"
+                            color: Qt.alpha(Theme.accent, 0.1)
+                            border.color: Qt.alpha(Theme.accent, 0.25)
                             border.width: 1
                             anchors.verticalCenter: parent.verticalCenter
                             Canvas {
@@ -621,7 +621,7 @@ Item {
                     implicitHeight: f3Row.implicitHeight + 22
                     radius: Theme.radiusMd
                     color: "#cc0a0f1e"
-                    border.color: Theme.accent + "26"
+                    border.color: Qt.alpha(Theme.accent, 0.15)
                     border.width: 1
 
                     Rectangle {
@@ -643,8 +643,8 @@ Item {
 
                         Rectangle {
                             width: 34; height: 34; radius: 10
-                            color: Theme.accent + "1a"
-                            border.color: Theme.accent + "40"
+                            color: Qt.alpha(Theme.accent, 0.1)
+                            border.color: Qt.alpha(Theme.accent, 0.25)
                             border.width: 1
                             anchors.verticalCenter: parent.verticalCenter
                             Canvas {

@@ -81,8 +81,8 @@ Item {
                 implicitHeight: visible ? (errorRow.implicitHeight + 28) : 0
                 height: implicitHeight
                 radius: Theme.radiusMd
-                color: Theme.error + "18"
-                border.color: Theme.error + "55"
+                color: Qt.alpha(Theme.error, 0.09)
+                border.color: Qt.alpha(Theme.error, 0.33)
                 border.width: 1
 
                 RowLayout {

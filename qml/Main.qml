@@ -56,11 +56,15 @@ ApplicationWindow {
         targetFps: 60
     }
 
-    // Hafif karartma: videonun görünmesi için düşük tutuldu
+    // Okunabilirlik karartması: sidebar tarafı hafif, içerik tarafı daha koyu
     Rectangle {
         anchors.fill: parent
-        color: "#070a12"
-        opacity: 0.15
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: "#59070a12" }
+            GradientStop { position: 0.35; color: "#8c070a12" }
+            GradientStop { position: 1.0; color: "#a6070a12" }
+        }
     }
 
     // Subtle ambient gradient background glow

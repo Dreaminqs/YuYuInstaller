@@ -794,8 +794,8 @@ Item {
                             width: 90
                             height: 36
                             radius: 18
-                            color: clearLogBtnMouse.containsMouse ? Theme.error + "22" : Theme.bgElevated
-                            border.color: clearLogBtnMouse.containsMouse ? Theme.error + "66" : Theme.borderDim
+                            color: clearLogBtnMouse.containsMouse ? Qt.alpha(Theme.error, 0.13) : Theme.bgElevated
+                            border.color: clearLogBtnMouse.containsMouse ? Qt.alpha(Theme.error, 0.4) : Theme.borderDim
                             border.width: 1
                             scale: clearLogBtnMouse.containsMouse ? 1.04 : 1.0
                             Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
