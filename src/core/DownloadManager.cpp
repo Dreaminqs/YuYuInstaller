@@ -189,8 +189,6 @@ void DownloadManager::saveQueueState() {
             obj["formatId"] = task.formatId;
             obj["customFolder"] = task.customFolder;
             obj["referer"] = task.referer;
-            obj["subtitleLang"] = task.subtitleLang;
-            obj["embedSubtitles"] = task.embedSubtitles;
             obj["useYtDlp"] = task.useYtDlp;
         }
 
@@ -233,8 +231,6 @@ void DownloadManager::loadQueueState() {
         task.customFolder = obj["customFolder"].toString();
         task.finalFilePath = obj["destinationPath"].toString();
         task.referer = obj["referer"].toString();
-        task.subtitleLang = obj["subtitleLang"].toString();
-        task.embedSubtitles = obj["embedSubtitles"].toBool(true);
         task.isAudioOnly = obj["isAudioOnly"].toBool(false);
         task.useYtDlp = obj["useYtDlp"].toBool(false);
         m_taskRegistry[id] = task;
@@ -442,10 +438,6 @@ void DownloadManager::startTask(const QueuedTask &task) {
         if (!task.referer.isEmpty()) {
             ytDownloader->setReferer(task.referer);
         }
-        if (!task.subtitleLang.isEmpty()) {
-            ytDownloader->setSubtitleLang(task.subtitleLang);
-            ytDownloader->setEmbedSubtitles(task.embedSubtitles);
-        }
         m_activeYtDlpDownloads[task.id] = ytDownloader;
 
         connect(ytDownloader, &YtDlpDownloader::progressUpdated, this, [this, id = task.id](double pct, const QString &speed, const QString &eta, qint64 down, qint64 tot) {
@@ -590,7 +582,7 @@ QString DownloadManager::sanitizeFileName(const QString &name) const {
     return safe;
 }
 
-void DownloadManager::addDownload(const QString &url, const QString &title, const QString &formatId, const QString &customFolder, const QString &subtitleLang, bool embedSubs) {
+void DownloadManager::addDownload(const QString &url, const QString &title, const QString &formatId, const QString &customFolder) {
     QString targetDir = customFolder.trimmed().isEmpty() ? m_defaultDownloadPath : customFolder;
     QDir().mkpath(targetDir);
 
@@ -666,8 +658,6 @@ void DownloadManager::addDownload(const QString &url, const QString &title, cons
     task.customFolder = customFolder;
     task.finalFilePath = finalFilePath;
     task.referer = referer;
-    task.subtitleLang = subtitleLang;
-    task.embedSubtitles = embedSubs;
     task.isAudioOnly = isAudioOnly;
     task.useYtDlp = useYtDlp;
 

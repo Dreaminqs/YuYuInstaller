@@ -111,10 +111,12 @@ if(MSVC)
         /Ot
         /GF
         /Gy
+        /GL
     )
     add_link_options(
         /OPT:REF
         /OPT:ICF
+        /LTCG
     )
 endif()
 

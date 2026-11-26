@@ -17,8 +17,6 @@ Rectangle {
     property string selectedVideoQuality: "best_video"
     property string selectedAudioQuality: "audio_mp3_320"
     property string selectedOptionId: "best_video"
-    property string selectedSubtitleLang: "none"
-    property bool selectedSubtitleEmbed: true
     property string customFolder: downloadManager.defaultDownloadPath
     property string customTitle: ""
     property bool isEditingTitle: false
@@ -38,8 +36,6 @@ Rectangle {
         customTitle = mediaInfo ? mediaInfo.title : ""
         isEditingTitle = false
         selectedVideoQuality = "best_video"
-        selectedSubtitleLang = "none"
-        selectedSubtitleEmbed = true
         if (mediaInfo && mediaInfo.isAudioOnly) {
             selectedFormatType = "audio"
             selectedOptionId = selectedAudioQuality
@@ -96,7 +92,7 @@ Rectangle {
         return list;
     }
 
-    signal downloadTriggered(string url, string title, string formatId, string folder, string subtitleLang, bool embedSubs)
+    signal downloadTriggered(string url, string title, string formatId, string folder)
 
     Column {
         id: contentColumn
@@ -739,9 +735,7 @@ Rectangle {
                                     root.mediaInfo.url,
                                     titleToUse,
                                     root.selectedOptionId,
-                                    root.customFolder,
-                                    "none",
-                                    false
+                                    root.customFolder
                                 )
                             }
                         }

@@ -12,6 +12,10 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 
 if exist build\assets rmdir /S /Q build\assets >nul 2>&1
 mkdir build\assets >nul 2>&1
-copy /Y assets\* build\assets\ >nul 2>&1
+copy /Y assets\bg.mp4 build\assets\ >nul 2>&1
+copy /Y assets\logo.png build\assets\ >nul 2>&1
+copy /Y assets\app.ico build\assets\ >nul 2>&1
+copy /Y assets\ffmpeg.png build\assets\ >nul 2>&1
+copy /Y assets\ytdlp.png build\assets\ >nul 2>&1
 
 echo === Build Successful! ===

@@ -534,16 +534,6 @@ void UrlAnalyzer::startPichiveResolve(const QUrl &iframeUrl, const QString &titl
                         posterUrl = npPoster;
                     }
 
-                    QVariantList subLangs;
-                    QJsonArray subs = npObj.value("subtitles").toArray();
-                    for (const QJsonValue &sVal : subs) {
-                        QJsonObject sObj = sVal.toObject();
-                        QString lang = sObj.value("lang").toString();
-                        if (!lang.isEmpty() && !subLangs.contains(lang)) {
-                            subLangs.append(lang);
-                        }
-                    }
-
                     QString finalReferer = QUrl(iframeUrl).adjusted(QUrl::RemovePath | QUrl::RemoveQuery).toString();
                     if (!finalReferer.endsWith("/")) finalReferer += "/";
 
@@ -553,10 +543,6 @@ void UrlAnalyzer::startPichiveResolve(const QUrl &iframeUrl, const QString &titl
                         m_currentInfo->setAvailableHeights({1080, 720, 480});
                         m_currentInfo->setMaxHeight(1080);
                         populateWebStreamOptions(m_currentInfo);
-
-                        if (!subLangs.isEmpty()) {
-                            m_currentInfo->setAvailableSubtitles(subLangs);
-                        }
                     }
                     return;
                 }
@@ -688,10 +674,6 @@ void UrlAnalyzer::fetchPichiveSource(const QString &sourceUrl, const QString &if
             m_currentInfo->setAvailableHeights({1080, 480});
             m_currentInfo->setMaxHeight(1080);
             populateWebStreamOptions(m_currentInfo);
-
-            if (sourceTitle.contains("altyaz", Qt::CaseInsensitive) || cleanTitle.contains("altyaz", Qt::CaseInsensitive)) {
-                m_currentInfo->setAvailableSubtitles(QVariantList{"tr"});
-            }
         }
     });
 }
@@ -844,27 +826,6 @@ void UrlAnalyzer::startSonanimeResolve(const QUrl &url) {
                         m_currentInfo->setReferer("https://sonanime.com/");
                         m_currentInfo->setMaxHeight(maxHeight);
                         m_currentInfo->setAvailableHeights(availableHeights);
-
-                        // Subtitles
-                        QJsonArray subsArr = matchedEp.value("subtitles").toArray();
-                        if (!subsArr.isEmpty()) {
-                            QVariantList subList;
-                            for (const QJsonValue &sVal : subsArr) {
-                                QJsonObject sObj = sVal.toObject();
-                                QString lang = sObj.value("language").toString().trimmed();
-                                QString sUrl = sObj.value("url").toString().trimmed();
-                                if (!lang.isEmpty() && !sUrl.isEmpty()) {
-                                    QVariantMap sMap;
-                                    sMap["code"] = lang;
-                                    sMap["name"] = (lang.toLower() == "tr" || lang.toLower().contains("türk")) ? "Türkçe" : lang;
-                                    sMap["url"] = sUrl;
-                                    subList.append(sMap);
-                                }
-                            }
-                            if (!subList.isEmpty()) {
-                                m_currentInfo->setAvailableSubtitles(subList);
-                            }
-                        }
 
                         populateDirectFileOptions(m_currentInfo, 0, "video/mp4", formattedTitle + ".mp4");
 

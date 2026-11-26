@@ -129,8 +129,8 @@ Item {
                 visible: urlAnalyzer.currentMediaInfo !== null
                 mediaInfo: urlAnalyzer.currentMediaInfo
 
-                onDownloadTriggered: function(url, title, formatId, folder, subtitleLang, embedSubs) {
-                    downloadManager.addDownload(url, title, formatId, folder, subtitleLang, embedSubs)
+                onDownloadTriggered: function(url, title, formatId, folder) {
+                    downloadManager.addDownload(url, title, formatId, folder)
                     urlInputField.clear()
                     urlAnalyzer.clear()
                     root.navigateToQueue()
