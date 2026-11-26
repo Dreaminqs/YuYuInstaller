@@ -22,7 +22,6 @@ ProxyManager::ProxyManager(QObject *parent)
     s_instance = this;
     initAutoPool();
     loadSettings();
-    fetchLiveProxies();
 }
 
 ProxyManager::~ProxyManager() {
@@ -424,11 +423,16 @@ void ProxyManager::launchUsqueSocks(const QString &exePath, const QString &confi
         QByteArray out = proc->readAllStandardOutput();
         std::cout << "[WARP/usque] " << out.toStdString() << std::endl;
         if (proc != m_warpProcess || session != m_warpSession) return;
-        if (!m_usqueVerifying && QString::fromUtf8(out).contains("SOCKS proxy listening")) {
+        const QString text = QString::fromUtf8(out);
+        if (!m_usqueVerifying && (text.contains("Connected to MASQUE server") || text.contains("SOCKS proxy listening"))) {
             m_usqueVerifying = true;
             m_autoStatusMessage = "WARP tüneli doğrulanıyor...";
             emit autoStatusMessageChanged();
-            verifyUsqueTunnel(session, 1);
+            // Small delay if triggered on 'SOCKS proxy listening' so '--always-reconnect' finishes TLS handshake
+            const int delayMs = text.contains("Connected to MASQUE server") ? 50 : 600;
+            QTimer::singleShot(delayMs, this, [this, session]() {
+                verifyUsqueTunnel(session, 1);
+            });
         }
     });
 
@@ -439,6 +443,8 @@ void ProxyManager::launchUsqueSocks(const QString &exePath, const QString &confi
     args << "-c" << configPath << "socks";
     args << "-b" << "127.0.0.1" << "-p" << "40000";
     args << "--http2";                 // TLS over TCP 443: passes eduroam / campus firewalls
+    args << "--always-reconnect";      // Connect immediately and prevent idle tunnel drops
+    args << "-S";                      // Disable IPv6 inside tunnel for faster IPv4 CDN resolution
     args << "-d" << "1.1.1.1" << "-d" << "1.0.0.1";
     proc->start(exePath, args);
 

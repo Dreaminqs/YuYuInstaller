@@ -52,10 +52,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "build\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
-; Tools (ffmpeg & yt-dlp & embedded warp-plus)
+; Tools (ffmpeg, yt-dlp & embedded usque MASQUE tunnel)
 Source: "build\ffmpeg.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\yt-dlp.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "build\warp-plus.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\usque.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Qt 6 & Windows Runtime DLLs
