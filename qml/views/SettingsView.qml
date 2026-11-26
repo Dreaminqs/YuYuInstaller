@@ -583,10 +583,29 @@ Item {
                         border.width: 1
                         anchors.verticalCenter: parent.verticalCenter
 
-                        Text {
+                        Item {
                             anchors.centerIn: parent
-                            text: "⚡"
-                            font.pixelSize: 22
+                            width: 22; height: 22
+                            Canvas {
+                                anchors.fill: parent
+                                onPaint: {
+                                    var ctx = getContext("2d");
+                                    ctx.reset();
+                                    ctx.strokeStyle = Theme.accent;
+                                    ctx.lineWidth = 1.6;
+                                    ctx.strokeRect(5, 5, 12, 12);
+                                    ctx.beginPath();
+                                    ctx.moveTo(8, 2); ctx.lineTo(8, 5);
+                                    ctx.moveTo(14, 2); ctx.lineTo(14, 5);
+                                    ctx.moveTo(8, 17); ctx.lineTo(8, 20);
+                                    ctx.moveTo(14, 17); ctx.lineTo(14, 20);
+                                    ctx.moveTo(2, 8); ctx.lineTo(5, 8);
+                                    ctx.moveTo(2, 14); ctx.lineTo(5, 14);
+                                    ctx.moveTo(17, 8); ctx.lineTo(20, 8);
+                                    ctx.moveTo(17, 14); ctx.lineTo(20, 14);
+                                    ctx.stroke();
+                                }
+                            }
                         }
                     }
 

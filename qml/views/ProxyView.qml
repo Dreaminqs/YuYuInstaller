@@ -257,20 +257,8 @@ Item {
                         width: parent.width
                         spacing: 12
 
-                        Rectangle {
-                            width: 36; height: 36; radius: 18
-                            color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : (Theme.accent + "25")
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "⚡"
-                                font.pixelSize: 16
-                            }
-                        }
-
                         Column {
-                            width: parent.width - 180
+                            width: parent.width - 132
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 4
 

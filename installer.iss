@@ -56,6 +56,7 @@ Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\ffmpeg.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\yt-dlp.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\warp-plus.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\usque.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Qt 6 & Windows Runtime DLLs
 Source: "build\*.dll"; DestDir: "{app}"; Flags: ignoreversion

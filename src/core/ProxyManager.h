@@ -185,4 +185,18 @@ private:
     // Embedded WARP Process
     QProcess *m_warpProcess{nullptr};
     bool m_warpRunning{false};
+
+    // MASQUE (usque) engine: Cloudflare WARP over HTTP/2 + TLS on TCP 443.
+    // Works on restrictive networks (eduroam, campus/corporate Wi-Fi) that block WireGuard UDP.
+    QProcess *m_usqueRegProcess{nullptr};
+    int m_warpSession{0};
+    bool m_usqueVerifying{false};
+
+    static QString findUsqueExecutable();
+    void startUsqueTunnel(const QString &exePath);
+    void launchUsqueSocks(const QString &exePath, const QString &configPath, int session);
+    void verifyUsqueTunnel(int session, int attempt);
+    void failWarpTunnel(const QString &message);
+    void markWarpActive(const QString &location);
+    void handleWarpProcessExit(QProcess *proc);
 };
