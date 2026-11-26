@@ -37,48 +37,10 @@ ProxyManager* ProxyManager::instance() {
 
 void ProxyManager::initAutoPool() {
     m_autoPool.clear();
-
-    // Priority 0: Cloudflare WARP / Local SOCKS5 Tunnel (Fastest & Unblocked)
-    m_autoPool.append({"Cloudflare WARP (Yerel Güvenli Tünel)", "CF", "127.0.0.1", 40000, true, -1});
-    m_autoPool.append({"SOCKS5 Local Tunnel", "LOCAL", "127.0.0.1", 1080, true, -1});
-
-    // High-uptime, fast verified live public proxy nodes
-    m_autoPool.append({"Netherlands (Amsterdam)", "NL", "144.124.251.24", 10649, false, -1});
-    m_autoPool.append({"Germany (Frankfurt)", "DE", "159.65.120.144", 1080, true, -1});
-    m_autoPool.append({"France (Paris)", "FR", "51.15.242.202", 1080, true, -1});
-    m_autoPool.append({"United States (New York)", "US", "192.241.178.115", 1080, true, -1});
-    m_autoPool.append({"United Kingdom (London)", "GB", "51.89.255.67", 8080, false, -1});
 }
 
 void ProxyManager::fetchLiveProxies() {
-    // Dynamically retrieve fresh verified HTTPS proxies from GitHub RAW repository
-    QNetworkRequest req(QUrl("https://raw.githubusercontent.com/roosterkid/openproxylist/main/HTTPS_RAW.txt"));
-    req.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0.0.0 Safari/537.36");
-
-    QNetworkReply *reply = m_fetchNam->get(req);
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        if (reply->error() == QNetworkReply::NoError) {
-            QString content = QString::fromUtf8(reply->readAll());
-            QStringList lines = content.split(QRegularExpression("[\r\n]+"), Qt::SkipEmptyParts);
-            int addedCount = 0;
-            for (const QString &line : lines) {
-                QString trimmed = line.trimmed();
-                if (trimmed.isEmpty()) continue;
-                QStringList parts = trimmed.split(":");
-                if (parts.size() == 2) {
-                    bool ok = false;
-                    int port = parts[1].toInt(&ok);
-                    if (ok && port > 0 && port <= 65535) {
-                        m_autoPool.append({"Global Cloud Node", "GL", parts[0], port, false, -1});
-                        addedCount++;
-                        if (addedCount >= 40) break;
-                    }
-                }
-            }
-            std::cout << "[ProxyManager] Auto VPN pool updated with " << addedCount << " live HTTPS nodes." << std::endl;
-        }
-        reply->deleteLater();
-    });
+    // Deprecated: YuYuInstaller now uses dedicated embedded Cloudflare WARP (usque MASQUE tunnel).
 }
 
 QString ProxyManager::proxyUrl() const {
@@ -541,155 +503,18 @@ void ProxyManager::stopWarpTunnel() {
 }
 
 void ProxyManager::startAutoTunnel() {
-    if (m_autoConnecting) return;
-
-    if (m_autoPool.isEmpty()) {
-        initAutoPool();
-    }
-
-    m_autoConnecting = true;
-    m_autoConnected = false;
-    m_batchWon = false;
-    m_autoStatusMessage = "Connecting to fast node...";
-    emit autoConnectingChanged();
-    emit autoConnectedChanged();
-    emit autoStatusMessageChanged();
-
-    testBatch(m_currentPoolIndex);
+    startWarpTunnel();
 }
 
 void ProxyManager::testBatch(int startIndex) {
-    if (!m_enabled || m_proxyMode != ModeAutoVPN) {
-        m_autoConnecting = false;
-        emit autoConnectingChanged();
-        return;
-    }
-
-    if (m_autoPool.isEmpty() || startIndex >= m_currentPoolIndex + 16) {
-        m_autoConnecting = false;
-        m_autoConnected = false;
-        m_autoStatusMessage = "No node responded. Click to retry.";
-        emit autoConnectingChanged();
-        emit autoConnectedChanged();
-        emit autoStatusMessageChanged();
-        return;
-    }
-
-    m_batchWon = false;
-    int batchSize = qMin(4, m_autoPool.size());
-    m_batchPending = batchSize;
-
-    for (int i = 0; i < batchSize; ++i) {
-        int idx = (startIndex + i) % m_autoPool.size();
-        AutoProxyNode node = m_autoPool[idx];
-
-        QNetworkAccessManager *probeNam = new QNetworkAccessManager(this);
-        QNetworkProxy proxy(node.isSocks5 ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy,
-                            node.host, static_cast<quint16>(node.port));
-        probeNam->setProxy(proxy);
-
-        QNetworkRequest req(QUrl("https://cp.cloudflare.com/generate_204"));
-        req.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.2.5");
-
-        QElapsedTimer *timer = new QElapsedTimer();
-        timer->start();
-
-        QNetworkReply *reply = probeNam->get(req);
-        reply->ignoreSslErrors();
-
-        // 2-second timeout per candidate
-        QTimer *timeoutTimer = new QTimer(reply);
-        timeoutTimer->setSingleShot(true);
-        connect(timeoutTimer, &QTimer::timeout, reply, [reply]() {
-            if (reply->isRunning()) {
-                reply->abort();
-            }
-        });
-        timeoutTimer->start(2000);
-
-        connect(reply, &QNetworkReply::finished, this, [this, reply, timeoutTimer, timer, probeNam, node, idx, startIndex]() {
-            timeoutTimer->stop();
-            qint64 elapsedMs = timer->elapsed();
-            delete timer;
-
-            int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            bool ok = (reply->error() == QNetworkReply::NoError) && (statusCode == 204 || statusCode == 200);
-
-            if (ok && !m_batchWon && m_enabled && m_proxyMode == ModeAutoVPN) {
-                m_batchWon = true;
-                m_currentPoolIndex = (idx + 1) % m_autoPool.size();
-                m_autoConnecting = false;
-                m_autoConnected = true;
-                m_autoHost = node.host;
-                m_autoPort = node.port;
-                m_autoIsSocks5 = node.isSocks5;
-                m_autoLocation = node.country;
-                m_autoCountryCode = node.countryCode;
-                m_autoLatency = static_cast<int>(elapsedMs);
-                m_autoStatusMessage = QString("Connected (%1 ms)").arg(elapsedMs);
-                m_autoExitIp = node.host;
-
-                emit autoConnectingChanged();
-                emit autoConnectedChanged();
-                emit autoLocationChanged();
-                emit autoCountryCodeChanged();
-                emit autoLatencyChanged();
-                emit autoStatusMessageChanged();
-                emit autoProtocolChanged();
-                emit autoExitIpChanged();
-                emit proxyUrlChanged();
-
-                applyProxy();
-
-                // Concurrently query external exit IP through this proxy to confirm real IP concealment
-                QNetworkAccessManager *ipNam = new QNetworkAccessManager(this);
-                QNetworkProxy ipProxy(node.isSocks5 ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy,
-                                      node.host, static_cast<quint16>(node.port));
-                ipNam->setProxy(ipProxy);
-                QNetworkRequest ipReq(QUrl("https://api.ipify.org"));
-                ipReq.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.2.5");
-                QNetworkReply *ipReply = ipNam->get(ipReq);
-                ipReply->ignoreSslErrors();
-                QTimer *ipTimeout = new QTimer(ipReply);
-                ipTimeout->setSingleShot(true);
-                connect(ipTimeout, &QTimer::timeout, ipReply, [ipReply]() {
-                    if (ipReply->isRunning()) ipReply->abort();
-                });
-                ipTimeout->start(3500);
-                connect(ipReply, &QNetworkReply::finished, this, [this, ipReply, ipNam, ipTimeout]() {
-                    ipTimeout->stop();
-                    if (ipReply->error() == QNetworkReply::NoError) {
-                        QString raw = QString::fromUtf8(ipReply->readAll()).trimmed();
-                        if (!raw.isEmpty()) {
-                            m_autoExitIp = raw;
-                            emit autoExitIpChanged();
-                        }
-                    }
-                    ipReply->deleteLater();
-                    ipNam->deleteLater();
-                });
-            }
-
-            reply->deleteLater();
-            probeNam->deleteLater();
-
-            m_batchPending--;
-            if (m_batchPending <= 0 && !m_batchWon) {
-                // Entire batch failed, try next batch!
-                testBatch(startIndex + 4);
-            }
-        });
-    }
+    Q_UNUSED(startIndex);
 }
 
 void ProxyManager::switchAutoTunnelNode() {
-    m_currentPoolIndex = (m_currentPoolIndex + 1) % qMax(1, m_autoPool.size());
-    m_autoConnected = false;
-    m_autoExitIp = "";
-    emit autoConnectedChanged();
-    emit autoExitIpChanged();
-    emit proxyUrlChanged();
-    startAutoTunnel();
+    if (m_warpRunning) {
+        stopWarpTunnel();
+    }
+    startWarpTunnel();
 }
 
 void ProxyManager::stopAutoTunnel() {
