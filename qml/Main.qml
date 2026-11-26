@@ -52,18 +52,18 @@ ApplicationWindow {
         id: bgVideo
         anchors.fill: parent
         source: "assets/bg.mp4"
-        playing: window.visible && window.visibility !== Window.Minimized && window.visibility !== Window.Hidden && window.active && downloadManager.videoBackgroundEnabled
+        playing: window.visible && window.visibility !== Window.Minimized && window.visibility !== Window.Hidden && downloadManager.videoBackgroundEnabled
         targetFps: 60
     }
 
-    // Okunabilirlik karartması: sidebar tarafı hafif, içerik tarafı daha koyu
+    // Okunabilirlik karartması: videoyu boğmadan metinleri netleştiren dengeli katman
     Rectangle {
         anchors.fill: parent
         gradient: Gradient {
             orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: "#59070a12" }
-            GradientStop { position: 0.35; color: "#8c070a12" }
-            GradientStop { position: 1.0; color: "#a6070a12" }
+            GradientStop { position: 0.0; color: "#28070a12" }
+            GradientStop { position: 0.35; color: "#45070a12" }
+            GradientStop { position: 1.0; color: "#58070a12" }
         }
     }
 

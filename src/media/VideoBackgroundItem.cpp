@@ -178,11 +178,13 @@ void VideoDecoderWorker::readNextFrame() {
         m_reader->SetCurrentPosition(GUID_NULL, var);
         PropVariantClear(&var);
         if (pSample) pSample->Release();
+        m_inFlight.store(false);
         return;
     }
 
     if (FAILED(hr) || !pSample) {
         if (pSample) pSample->Release();
+        m_inFlight.store(false);
         return;
     }
 
@@ -193,7 +195,7 @@ void VideoDecoderWorker::readNextFrame() {
             DWORD maxLength = 0, currentLength = 0;
             if (SUCCEEDED(pBuffer->Lock(&pData, &maxLength, &currentLength))) {
                 const int srcStride = m_videoWidth * 4;
-                if (currentLength >= static_cast<DWORD>(srcStride * m_videoHeight)) {
+                if (m_videoWidth > 0 && m_videoHeight > 0 && pData) {
                     QImage frame(m_videoWidth, m_videoHeight, QImage::Format_RGB32);
                     const qsizetype dstStride = frame.bytesPerLine();
                     uchar *dst = frame.bits();
@@ -228,7 +230,7 @@ VideoBackgroundItem::VideoBackgroundItem(QQuickItem *parent)
     connect(m_worker, &VideoDecoderWorker::frameReady,
             this, &VideoBackgroundItem::onFrameReady, Qt::QueuedConnection);
     m_thread.setObjectName("VideoDecoder");
-    m_thread.start(QThread::LowPriority);
+    m_thread.start();
 
     QMetaObject::invokeMethod(m_worker, "setPlaying", Qt::QueuedConnection, Q_ARG(bool, m_playing));
 }
@@ -269,6 +271,7 @@ void VideoBackgroundItem::setSource(const QString &source) {
     emit sourceChanged();
 
     const QString path = resolvePath(m_source);
+    QMetaObject::invokeMethod(m_worker, "setPlaying", Qt::QueuedConnection, Q_ARG(bool, m_playing));
     QMetaObject::invokeMethod(m_worker, "open", Qt::QueuedConnection,
                               Q_ARG(QString, path), Q_ARG(int, m_targetFps));
 }
@@ -313,13 +316,18 @@ QSGNode *VideoBackgroundItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeD
         node = window()->createImageNode();
         node->setOwnsTexture(true);
         node->setFiltering(QSGTexture::Linear);
+        // Prime with a dummy 1x1 texture so setTexture() never runs with a null initial state
+        QImage dummy(1, 1, QImage::Format_RGB32);
+        dummy.fill(QColor("#0a0d13"));
+        node->setTexture(window()->createTextureFromImage(dummy));
         m_frameDirty = true;
     }
 
-    if (m_frameDirty || !node->texture()) {
+    if (m_frameDirty) {
         // Upload to GPU; scaling is done by the GPU, not the CPU.
         QSGTexture *texture = window()->createTextureFromImage(m_frame);
         node->setTexture(texture);   // node owns the texture and frees the previous one
+        node->markDirty(QSGNode::DirtyMaterial);
         m_frameDirty = false;
     }
 

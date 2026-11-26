@@ -4,11 +4,11 @@ import QtQuick
 QtObject {
     // Backgrounds - Translucent frosted obsidian glass HUD (Saydam cam estetiği)
     readonly property color bgApp: "transparent"
-    readonly property color bgSidebar: "#99080b12"      // ~60% opacity glass
-    readonly property color bgCard: "#cc0f1420"         // ~80% opacity card (readable over video)
-    readonly property color bgCardHover: "#e0161f2e"    // ~88% opacity hover
-    readonly property color bgInput: "#b30c1018"        // ~70% opacity input
-    readonly property color bgElevated: "#b3131826"     // ~70% opacity elevated
+    readonly property color bgSidebar: "#80080b12"      // ~50% opacity glass
+    readonly property color bgCard: "#a60f1420"         // ~65% opacity card (readable over video)
+    readonly property color bgCardHover: "#bf161f2e"    // ~75% opacity hover
+    readonly property color bgInput: "#990c1018"        // ~60% opacity input
+    readonly property color bgElevated: "#99131826"     // ~60% opacity elevated
 
     // Signature Accents & Gradients (Electric Ice Cyan to Azure Blue - No More Green)
     readonly property color accent: "#38bdf8"          // Electric Sky / Ice Cyan
