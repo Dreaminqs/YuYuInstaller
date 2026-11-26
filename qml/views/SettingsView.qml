@@ -40,7 +40,7 @@ Item {
                 Text {
                     text: I18n.t("settingsSubtitle")
                     color: Theme.textSecondary
-                    font.pixelSize: 12
+                    font.pixelSize: 13
                     font.family: Theme.fontFamily
                 }
             }
@@ -462,25 +462,35 @@ Item {
                         }
                     }
 
-                    Rectangle {
-                        height: 28
-                        width: ffmpegBadgeText.width + 18
-                        radius: 14
+                    Row {
+                        spacing: 6
                         anchors.verticalCenter: parent.verticalCenter
-                        color: ffmpegProcessor.isFFmpegAvailable ? "transparent" : (Theme.warning + "22")
-                        border.color: ffmpegProcessor.isFFmpegAvailable ? Theme.accent : Theme.warning
-                        border.width: 1
-
+                        Rectangle {
+                            width: 8; height: 8; radius: 4
+                            color: ffmpegProcessor.isFFmpegAvailable ? "#10b981" : Theme.error
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
                         Text {
                             id: ffmpegBadgeText
-                            anchors.centerIn: parent
                             text: ffmpegProcessor.isFFmpegAvailable ? I18n.t("readyStatus") : I18n.t("missingStatus")
-                            color: ffmpegProcessor.isFFmpegAvailable ? Theme.success : Theme.warning
+                            color: ffmpegProcessor.isFFmpegAvailable ? "#10b981" : Theme.error
                             font.pixelSize: 11
                             font.family: Theme.fontFamily
                             font.weight: Font.DemiBold
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
+                }
+
+                Rectangle {
+                    width: 3
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: 14
+                    anchors.bottomMargin: 14
+                    radius: 1.5
+                    color: ffmpegProcessor.isFFmpegAvailable ? "#10b981" : Theme.error
                 }
             }
 
@@ -538,25 +548,35 @@ Item {
                         }
                     }
 
-                    Rectangle {
-                        height: 28
-                        width: ytdlpBadgeText.width + 18
-                        radius: 14
+                    Row {
+                        spacing: 6
                         anchors.verticalCenter: parent.verticalCenter
-                        color: ffmpegProcessor.isYtDlpAvailable ? "transparent" : (Theme.warning + "22")
-                        border.color: ffmpegProcessor.isYtDlpAvailable ? Theme.accent : Theme.warning
-                        border.width: 1
-
+                        Rectangle {
+                            width: 8; height: 8; radius: 4
+                            color: ffmpegProcessor.isYtDlpAvailable ? "#10b981" : Theme.error
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
                         Text {
                             id: ytdlpBadgeText
-                            anchors.centerIn: parent
                             text: ffmpegProcessor.isYtDlpAvailable ? I18n.t("readyStatus") : I18n.t("missingStatus")
-                            color: ffmpegProcessor.isYtDlpAvailable ? Theme.success : Theme.warning
+                            color: ffmpegProcessor.isYtDlpAvailable ? "#10b981" : Theme.error
                             font.pixelSize: 11
                             font.family: Theme.fontFamily
                             font.weight: Font.DemiBold
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
+                }
+
+                Rectangle {
+                    width: 3
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: 14
+                    anchors.bottomMargin: 14
+                    radius: 1.5
+                    color: ffmpegProcessor.isYtDlpAvailable ? "#10b981" : Theme.error
                 }
             }
 
@@ -631,25 +651,35 @@ Item {
                         }
                     }
 
-                    Rectangle {
-                        height: 28
-                        width: coreEngineBadgeText.width + 18
-                        radius: 14
+                    Row {
+                        spacing: 6
                         anchors.verticalCenter: parent.verticalCenter
-                        color: "transparent"
-                        border.color: Theme.accent
-                        border.width: 1
-
+                        Rectangle {
+                            width: 8; height: 8; radius: 4
+                            color: "#10b981"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
                         Text {
                             id: coreEngineBadgeText
-                            anchors.centerIn: parent
                             text: I18n.t("readyStatus")
-                            color: Theme.success
+                            color: "#10b981"
                             font.pixelSize: 11
                             font.family: Theme.fontFamily
                             font.weight: Font.DemiBold
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
+                }
+
+                Rectangle {
+                    width: 3
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: 14
+                    anchors.bottomMargin: 14
+                    radius: 1.5
+                    color: "#10b981"
                 }
             }
 

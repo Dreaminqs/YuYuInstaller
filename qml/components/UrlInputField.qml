@@ -99,20 +99,19 @@ Item {
                 }
             }
 
-            // Paste Button (Tatlı Frosted Glass Pill)
+            // Paste Button (Ghost Outline Style — secondary action)
             Rectangle {
                 id: pasteBtn
                 width: 76
                 height: 38
                 anchors.verticalCenter: parent.verticalCenter
                 radius: 19
-                color: pasteHover.hovered ? "#35ffffff" : "#18ffffff"
-                border.color: pasteHover.hovered ? Theme.accent : "#25ffffff"
+                color: "transparent"
+                border.color: pasteHover.hovered ? Theme.borderBright : Theme.borderDim
                 border.width: 1
-                scale: pasteTap.pressed ? 0.94 : (pasteHover.hovered ? 1.05 : 1.0)
+                scale: pasteTap.pressed ? 0.94 : (pasteHover.hovered ? 1.03 : 1.0)
 
                 Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutQuad } }
-                Behavior on color { ColorAnimation { duration: 150 } }
                 Behavior on border.color { ColorAnimation { duration: 150 } }
 
                 HoverHandler {
@@ -123,10 +122,10 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     text: I18n.t("pasteBtn")
-                    color: pasteHover.hovered ? "#ffffff" : Theme.textSecondary
+                    color: pasteHover.hovered ? Theme.textPrimary : Theme.textSecondary
                     font.pixelSize: 12
                     font.family: Theme.fontFamily
-                    font.weight: Font.DemiBold
+                    font.weight: Font.Medium
                 }
 
                 TapHandler {

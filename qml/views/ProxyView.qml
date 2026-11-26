@@ -34,7 +34,7 @@ Item {
                              ? "Обходьте блокування в мережах eduroam, університетах та гуртожитках за допомогою Cloudflare WARP."
                              : "Bypass campus, dorm and eduroam firewalls securely with Cloudflare WARP in-app tunnel.")
                     color: Theme.textSecondary
-                    font.pixelSize: 12
+                    font.pixelSize: 13
                     font.family: Theme.fontFamily
                 }
             }
@@ -44,7 +44,7 @@ Item {
                 width: parent.width
                 implicitHeight: statusCol.implicitHeight + 32
                 radius: Theme.radiusLg
-                color: Theme.bgCard
+                color: "#cc0a0f1e"
                 border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : Theme.borderDim
                 border.width: 1
 
@@ -460,9 +460,20 @@ Item {
                     width: parent.width
                     implicitHeight: f1Row.implicitHeight + 22
                     radius: Theme.radiusMd
-                    color: Theme.bgCard
-                    border.color: Theme.borderDim
+                    color: "#cc0a0f1e"
+                    border.color: Theme.accent + "26"
                     border.width: 1
+
+                    Rectangle {
+                        width: 3
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: 10
+                        anchors.bottomMargin: 10
+                        radius: 1.5
+                        color: Theme.accent
+                    }
 
                     Row {
                         id: f1Row
@@ -471,16 +482,37 @@ Item {
                         spacing: 14
 
                         Rectangle {
-                            width: 3
-                            height: 28
-                            radius: 1.5
-                            color: Theme.accent
+                            width: 34; height: 34; radius: 10
+                            color: Theme.accent + "1a"
+                            border.color: Theme.accent + "40"
+                            border.width: 1
                             anchors.verticalCenter: parent.verticalCenter
+                            Canvas {
+                                anchors.centerIn: parent
+                                width: 18; height: 18
+                                onPaint: {
+                                    var ctx = getContext("2d");
+                                    ctx.reset();
+                                    ctx.strokeStyle = Theme.accent;
+                                    ctx.fillStyle = Theme.accent;
+                                    ctx.lineWidth = 1.7;
+                                    ctx.lineCap = "round";
+                                    var radii = [3.5, 7, 10.5];
+                                    for (var i = 0; i < radii.length; i++) {
+                                        ctx.beginPath();
+                                        ctx.arc(9, 15, radii[i], Math.PI * 1.25, Math.PI * 1.75);
+                                        ctx.stroke();
+                                    }
+                                    ctx.beginPath();
+                                    ctx.arc(9, 15, 1.4, 0, Math.PI * 2);
+                                    ctx.fill();
+                                }
+                            }
                         }
 
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 24
+                            width: parent.width - 48
                             spacing: 3
 
                             Text {
@@ -510,9 +542,20 @@ Item {
                     width: parent.width
                     implicitHeight: f2Row.implicitHeight + 22
                     radius: Theme.radiusMd
-                    color: Theme.bgCard
-                    border.color: Theme.borderDim
+                    color: "#cc0a0f1e"
+                    border.color: Theme.accent + "26"
                     border.width: 1
+
+                    Rectangle {
+                        width: 3
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: 10
+                        anchors.bottomMargin: 10
+                        radius: 1.5
+                        color: Theme.accent
+                    }
 
                     Row {
                         id: f2Row
@@ -521,16 +564,33 @@ Item {
                         spacing: 14
 
                         Rectangle {
-                            width: 3
-                            height: 28
-                            radius: 1.5
-                            color: Theme.accent
+                            width: 34; height: 34; radius: 10
+                            color: Theme.accent + "1a"
+                            border.color: Theme.accent + "40"
+                            border.width: 1
                             anchors.verticalCenter: parent.verticalCenter
+                            Canvas {
+                                anchors.centerIn: parent
+                                width: 18; height: 18
+                                onPaint: {
+                                    var ctx = getContext("2d");
+                                    ctx.reset();
+                                    ctx.strokeStyle = Theme.accent;
+                                    ctx.lineWidth = 1.7;
+                                    ctx.lineCap = "round";
+                                    ctx.lineJoin = "round";
+                                    ctx.strokeRect(2, 3, 14, 9.5);
+                                    ctx.beginPath();
+                                    ctx.moveTo(9, 12.5); ctx.lineTo(9, 15.5);
+                                    ctx.moveTo(5.5, 15.5); ctx.lineTo(12.5, 15.5);
+                                    ctx.stroke();
+                                }
+                            }
                         }
 
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 24
+                            width: parent.width - 48
                             spacing: 3
 
                             Text {
@@ -560,9 +620,20 @@ Item {
                     width: parent.width
                     implicitHeight: f3Row.implicitHeight + 22
                     radius: Theme.radiusMd
-                    color: Theme.bgCard
-                    border.color: Theme.borderDim
+                    color: "#cc0a0f1e"
+                    border.color: Theme.accent + "26"
                     border.width: 1
+
+                    Rectangle {
+                        width: 3
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: 10
+                        anchors.bottomMargin: 10
+                        radius: 1.5
+                        color: Theme.accent
+                    }
 
                     Row {
                         id: f3Row
@@ -571,16 +642,37 @@ Item {
                         spacing: 14
 
                         Rectangle {
-                            width: 3
-                            height: 28
-                            radius: 1.5
-                            color: Theme.accent
+                            width: 34; height: 34; radius: 10
+                            color: Theme.accent + "1a"
+                            border.color: Theme.accent + "40"
+                            border.width: 1
                             anchors.verticalCenter: parent.verticalCenter
+                            Canvas {
+                                anchors.centerIn: parent
+                                width: 18; height: 18
+                                onPaint: {
+                                    var ctx = getContext("2d");
+                                    ctx.reset();
+                                    ctx.strokeStyle = Theme.accent;
+                                    ctx.lineWidth = 1.7;
+                                    ctx.lineCap = "round";
+                                    ctx.lineJoin = "round";
+                                    ctx.beginPath();
+                                    ctx.moveTo(10.5, 1.5);
+                                    ctx.lineTo(4, 10);
+                                    ctx.lineTo(8.5, 10);
+                                    ctx.lineTo(7.5, 16.5);
+                                    ctx.lineTo(14, 8);
+                                    ctx.lineTo(9.5, 8);
+                                    ctx.closePath();
+                                    ctx.stroke();
+                                }
+                            }
                         }
 
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 24
+                            width: parent.width - 48
                             spacing: 3
 
                             Text {

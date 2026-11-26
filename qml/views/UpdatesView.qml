@@ -30,7 +30,7 @@ Item {
                 Text {
                     text: I18n.t("updateSubtitle")
                     color: Theme.textSecondary
-                    font.pixelSize: 12
+                    font.pixelSize: 13
                     font.family: Theme.fontFamily
                 }
             }

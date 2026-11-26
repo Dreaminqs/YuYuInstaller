@@ -7,6 +7,20 @@ Rectangle {
     color: Theme.bgSidebar
     border.width: 0
 
+    // Extra dark overlay for stronger separation from the video background
+    Rectangle {
+        anchors.fill: parent
+        color: "#59060912"
+    }
+
+    // Subtle right edge divider
+    Rectangle {
+        anchors.right: parent.right
+        width: 1
+        height: parent.height
+        color: "#14ffffff"
+    }
+
     property int activeTab: 0 // 0: Dashboard, 1: Queue, 2: Updates, 3: Proxy, 4: Settings
 
     Column {
@@ -68,6 +82,8 @@ Rectangle {
                 color: (root.activeTab === 0) ? Theme.activeTabBg : (tab0Mouse.containsMouse ? Theme.bgCardHover : "transparent")
                 border.color: (root.activeTab === 0) ? Theme.activeTabBorder : "transparent"
                 border.width: 1
+                opacity: (root.activeTab === 0) ? 1.0 : (tab0Mouse.containsMouse ? 0.85 : 0.55)
+                Behavior on opacity { NumberAnimation { duration: 150 } }
 
                 // Left vertical neon indicator line (like the screenshot)
                 Rectangle {
@@ -153,6 +169,8 @@ Rectangle {
                 height: 42
                 radius: Theme.radiusMd
                 color: (root.activeTab === 1) ? Theme.activeTabBg : (tab1Mouse.containsMouse ? Theme.bgCardHover : "transparent")
+                opacity: (root.activeTab === 1) ? 1.0 : (tab1Mouse.containsMouse ? 0.85 : 0.55)
+                Behavior on opacity { NumberAnimation { duration: 150 } }
                 border.color: (root.activeTab === 1) ? Theme.activeTabBorder : "transparent"
                 border.width: 1
 
@@ -268,6 +286,8 @@ Rectangle {
                 height: 42
                 radius: Theme.radiusMd
                 color: (root.activeTab === 2) ? Theme.activeTabBg : (tab2Mouse.containsMouse ? Theme.bgCardHover : "transparent")
+                opacity: (root.activeTab === 2) ? 1.0 : (tab2Mouse.containsMouse ? 0.85 : 0.55)
+                Behavior on opacity { NumberAnimation { duration: 150 } }
                 border.color: (root.activeTab === 2) ? Theme.activeTabBorder : "transparent"
                 border.width: 1
 
@@ -391,6 +411,8 @@ Rectangle {
                 height: 42
                 radius: Theme.radiusMd
                 color: (root.activeTab === 3) ? Theme.activeTabBg : (tabProxyMouse.containsMouse ? Theme.bgCardHover : "transparent")
+                opacity: (root.activeTab === 3) ? 1.0 : (tabProxyMouse.containsMouse ? 0.85 : 0.55)
+                Behavior on opacity { NumberAnimation { duration: 150 } }
                 border.color: (root.activeTab === 3) ? Theme.activeTabBorder : "transparent"
                 border.width: 1
 
@@ -498,6 +520,8 @@ Rectangle {
                 height: 42
                 radius: Theme.radiusMd
                 color: (root.activeTab === 4) ? Theme.activeTabBg : (tab3Mouse.containsMouse ? Theme.bgCardHover : "transparent")
+                opacity: (root.activeTab === 4) ? 1.0 : (tab3Mouse.containsMouse ? 0.85 : 0.55)
+                Behavior on opacity { NumberAnimation { duration: 150 } }
                 border.color: (root.activeTab === 4) ? Theme.activeTabBorder : "transparent"
                 border.width: 1
 
