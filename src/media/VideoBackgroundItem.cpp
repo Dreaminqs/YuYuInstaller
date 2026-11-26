@@ -25,7 +25,7 @@ VideoBackgroundItem::VideoBackgroundItem(QQuickItem *parent)
 {
     setOpaquePainting(true);
     setRenderTarget(QQuickPaintedItem::FramebufferObject);
-    m_timer.setTimerType(Qt::CoarseTimer);
+    m_timer.setTimerType(Qt::PreciseTimer);
     connect(&m_timer, &QTimer::timeout, this, &VideoBackgroundItem::onTimerTick);
 }
 

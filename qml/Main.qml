@@ -53,7 +53,7 @@ ApplicationWindow {
         anchors.fill: parent
         source: "assets/bg.mp4"
         playing: window.visible && window.visibility !== Window.Minimized && window.visibility !== Window.Hidden && window.active && downloadManager.videoBackgroundEnabled
-        targetFps: 30
+        targetFps: 60
     }
 
     // Hafif karartma: videonun görünmesi için düşük tutuldu
