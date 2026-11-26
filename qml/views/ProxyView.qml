@@ -15,7 +15,7 @@ Item {
             id: contentCol
             width: Math.min(parent.width, 760)
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 20
+            spacing: 22
 
             // Header Section
             Column {
@@ -39,50 +39,57 @@ Item {
                 }
             }
 
-            // Card 1: Master Status & Quick Switch
+            // ═══════════════════════════════════════════════════════════
+            // UNIFIED HERO CARD: Cloudflare WARP Tunnel Controller
+            // ═══════════════════════════════════════════════════════════
             Rectangle {
                 width: parent.width
-                implicitHeight: statusCol.implicitHeight + 32
+                implicitHeight: heroCol.implicitHeight + 40
                 radius: Theme.radiusLg
-                color: "#cc0a0f1e"
-                border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : Theme.borderDim
+                color: Theme.bgCard
+                border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                              ? Qt.alpha(Theme.accent, 0.45)
+                              : Theme.borderDim
                 border.width: 1
 
-                Behavior on border.color { ColorAnimation { duration: 250 } }
+                Behavior on border.color { ColorAnimation { duration: 220 } }
 
                 Column {
-                    id: statusCol
-                    anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 12
+                    id: heroCol
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: 20
+                    spacing: 16
 
+                    // Top Row: Pulsing LED + Title & Status + Action Button
                     Item {
                         width: parent.width
-                        height: 38
+                        height: 48
 
                         Row {
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 12
+                            spacing: 14
 
-                            // Pulsing status LED
+                            // Pulsing Status Indicator
                             Item {
-                                width: 28; height: 28
+                                width: 36; height: 36
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Rectangle {
                                     anchors.centerIn: parent
-                                    width: 26; height: 26; radius: 13
+                                    width: 34; height: 34; radius: 17
                                     color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
-                                           ? Theme.accent
+                                           ? "#10b981"
                                            : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting ? "#eab308" : "#64748b")
-                                    opacity: 0.18
+                                    opacity: 0.16
 
                                     SequentialAnimation on scale {
                                         running: (typeof proxyManager !== "undefined" && (proxyManager.warpRunning || proxyManager.autoConnecting))
                                         loops: Animation.Infinite
-                                        NumberAnimation { from: 0.9; to: 1.28; duration: 1200; easing.type: Easing.InOutQuad }
-                                        NumberAnimation { from: 1.28; to: 0.9; duration: 1200; easing.type: Easing.InOutQuad }
+                                        NumberAnimation { from: 0.88; to: 1.22; duration: 1200; easing.type: Easing.InOutQuad }
+                                        NumberAnimation { from: 1.22; to: 0.88; duration: 1200; easing.type: Easing.InOutQuad }
                                     }
                                 }
 
@@ -90,239 +97,123 @@ Item {
                                     anchors.centerIn: parent
                                     width: 12; height: 12; radius: 6
                                     color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
-                                           ? Theme.accent
+                                           ? "#10b981"
                                            : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting ? "#eab308" : "#64748b")
                                 }
                             }
 
-                            // Status Info
                             Column {
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
+                                spacing: 4
 
-                                Text {
-                                    text: I18n.language === "tr" ? "Tünel Bağlantı Durumu" : (I18n.language === "uk" ? "Статус тунелю" : "Tunnel Connection Status")
-                                    color: Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.DemiBold
+                                Row {
+                                    spacing: 10
+                                    Text {
+                                        text: I18n.language === "tr" ? "Cloudflare WARP (Uygulama İçi Tünel)" : "Cloudflare WARP (In-App Tunnel)"
+                                        color: Theme.textPrimary
+                                        font.pixelSize: 15
+                                        font.family: Theme.fontFamily
+                                        font.weight: Font.Bold
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    // Subtle status pill
+                                    Rectangle {
+                                        height: 20
+                                        width: warpBadgeTxt.implicitWidth + 14
+                                        radius: 10
+                                        color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                               ? Qt.alpha("#10b981", 0.14)
+                                               : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#22eab308" : Theme.bgElevated
+                                        border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                                      ? Qt.alpha("#10b981", 0.45)
+                                                      : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#eab308" : Theme.borderDim
+                                        border.width: 1
+                                        anchors.verticalCenter: parent.verticalCenter
+
+                                        Text {
+                                            id: warpBadgeTxt
+                                            anchors.centerIn: parent
+                                            text: {
+                                                if (typeof proxyManager === "undefined") return I18n.language === "tr" ? "Kapalı" : "Inactive"
+                                                if (proxyManager.autoConnecting) return I18n.language === "tr" ? "Bağlanıyor..." : "Connecting..."
+                                                if (proxyManager.warpRunning) return I18n.language === "tr" ? "Korumalı • Aktif" : "Protected • Active"
+                                                return I18n.language === "tr" ? "Doğrudan Bağlantı" : "Direct Connection"
+                                            }
+                                            color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                                   ? "#10b981"
+                                                   : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#eab308" : Theme.textSecondary
+                                            font.pixelSize: 10
+                                            font.family: Theme.fontFamily
+                                            font.weight: Font.DemiBold
+                                        }
+                                    }
                                 }
 
                                 Text {
                                     text: {
-                                        if (typeof proxyManager === "undefined") return "Tünel Kapalı"
-                                        if (proxyManager.autoConnecting) return I18n.language === "tr" ? "Cloudflare Ağına Bağlanılıyor..." : "Connecting to Cloudflare Network..."
-                                        if (proxyManager.warpRunning) return I18n.language === "tr" ? "Cloudflare WARP Aktif (Korumalı)" : "Cloudflare WARP Active (Protected)"
-                                        return I18n.language === "tr" ? "Doğrudan Bağlantı (Tünel Kapalı)" : "Direct Connection (Tunnel Inactive)"
-                                    }
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
-                                           ? Theme.accent
-                                           : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting ? "#eab308" : Theme.textPrimary)
-                                    font.pixelSize: 13
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.Bold
-                                }
-                            }
-                        }
-
-                        // Animated Master Toggle Switch
-                        Item {
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.right: parent.right
-                            width: 50; height: 26
-
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: 13
-                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : "#222c3c"
-                                border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : Theme.borderDim
-                                border.width: 1
-
-                                Behavior on color { ColorAnimation { duration: 200 } }
-
-                                Rectangle {
-                                    width: 20; height: 20; radius: 10
-                                    color: "#ffffff"
-                                    y: 3
-                                    x: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? 27 : 3
-
-                                    Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? Qt.ArrowCursor : Qt.PointingHandCursor
-                                    enabled: typeof proxyManager !== "undefined" && !proxyManager.autoConnecting
-                                    onClicked: {
-                                        if (typeof proxyManager !== "undefined") {
-                                            proxyManager.toggleWarpTunnel()
+                                        if (typeof proxyManager !== "undefined" && proxyManager.warpRunning) {
+                                            return I18n.language === "tr"
+                                                   ? "Yalnızca YuYuInstaller trafiği Cloudflare üzerinden şifreleniyor. Oyun ve diğer uygulamalar etkilenmez."
+                                                   : "Only YuYuInstaller traffic is routed through Cloudflare. Games and other apps remain untouched."
                                         }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Active Protocol Summary Bar
-                    Rectangle {
-                        width: parent.width
-                        height: 30
-                        radius: Theme.radiusMd
-                        color: Theme.bgElevated
-                        border.color: Theme.borderDim
-                        border.width: 1
-
-                        Row {
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
-                            spacing: 10
-
-                            Text {
-                                text: {
-                                    if (typeof proxyManager === "undefined" || !proxyManager.warpRunning) {
-                                        if (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) {
-                                            return "Cloudflare WARP (MASQUE / TCP 443): " + proxyManager.autoStatusMessage
+                                        if (typeof proxyManager !== "undefined" && !proxyManager.autoConnecting && proxyManager.autoStatusMessage.indexOf("engeli") !== -1) {
+                                            return proxyManager.autoStatusMessage
                                         }
-                                        return I18n.language === "tr" ? "Doğrudan bağlantı aktif (Proxy kapalı)" : "Direct connection active (Proxy inactive)"
-                                    }
-                                    var ipPart = (proxyManager.autoExitIp !== "") ? (" • Çıkış IP: " + proxyManager.autoExitIp) : ""
-                                    return "Cloudflare WARP: " + proxyManager.autoLocation + ipPart + " (127.0.0.1:40000)"
-                                }
-                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : Theme.textSecondary
-                                font.pixelSize: 11
-                                font.family: Theme.fontFamily
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Card 2: Main Cloudflare WARP Controller Card
-            Rectangle {
-                width: parent.width
-                implicitHeight: warpCol.implicitHeight + 32
-                radius: Theme.radiusLg
-                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? "#102334" : "#131b26"
-                border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : (Qt.alpha(Theme.accent, 0.33))
-                border.width: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? 1.5 : 1
-
-                Behavior on color { ColorAnimation { duration: 250 } }
-                Behavior on border.color { ColorAnimation { duration: 250 } }
-
-                Column {
-                    id: warpCol
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.margins: 18
-                    spacing: 16
-
-                    // Header Row with Title, Badge, and Action Button
-                    Row {
-                        width: parent.width
-                        spacing: 12
-
-                        Column {
-                            width: parent.width - 140
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 6
-
-                            Row {
-                                spacing: 8
-                                Text {
-                                    text: I18n.language === "tr" ? "Cloudflare WARP (Uygulama İçi Tünel)" : "Cloudflare WARP (In-App Tunnel)"
-                                    color: Theme.textPrimary
-                                    font.pixelSize: 14
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.Bold
-                                }
-
-                                Rectangle {
-                                    height: 20
-                                    width: warpBadgeTxt.implicitWidth + 12
-                                    radius: 10
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
-                                           ? Qt.alpha(Theme.accent, 0.13)
-                                           : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#22eab308" : "#222c3c"
-                                    border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
-                                                  ? Theme.accent
-                                                  : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#eab308" : Theme.borderDim
-                                    border.width: 1
-                                    anchors.verticalCenter: parent.verticalCenter
-
-                                    Text {
-                                        id: warpBadgeTxt
-                                        anchors.centerIn: parent
-                                        text: {
-                                            if (typeof proxyManager === "undefined") return "Kapalı"
-                                            if (proxyManager.autoConnecting) return I18n.language === "tr" ? "Bağlanıyor..." : "Connecting..."
-                                            if (proxyManager.warpRunning) return "Aktif • 127.0.0.1:40000"
-                                            return I18n.language === "tr" ? "Devre Dışı" : "Disabled"
-                                        }
-                                        color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
-                                               ? Theme.accent
-                                               : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#eab308" : Theme.textSecondary
-                                        font.pixelSize: 10
-                                        font.family: Theme.fontFamily
-                                        font.weight: Font.DemiBold
-                                    }
-                                }
-                            }
-
-                            Text {
-                                width: parent.width
-                                text: {
-                                    if (typeof proxyManager !== "undefined" && proxyManager.warpRunning) {
                                         return I18n.language === "tr"
-                                               ? "Aktif: Yalnızca YuYuInstaller Cloudflare ağına tünellendi. Bilgisayarınızın geri kalanı, oyunlar veya diğer uygulamalar etkilenmez."
-                                               : "Active: Only YuYuInstaller traffic is securely routed through Cloudflare. System, ping, and other apps are unaffected."
+                                               ? "Eduroam, üniversite ve yurt ağlarındaki engelleri sistem VPN'i kurmadan aşar."
+                                               : "Bypasses campus, eduroam and dorm firewalls with zero system-wide network changes."
                                     }
-                                    if (typeof proxyManager !== "undefined" && !proxyManager.autoConnecting && proxyManager.autoStatusMessage.indexOf("engeli") !== -1) {
-                                        return proxyManager.autoStatusMessage
-                                    }
-                                    return I18n.language === "tr"
-                                           ? "Eduroam, üniversite ve yurt ağlarındaki engelleri aşar. Sisteme harici VPN kurmaz, doğrudan uygulama içinde çalışır."
-                                           : "Bypasses campus, eduroam and dorm firewalls. Runs strictly inside the application with zero system-wide network changes."
+                                    color: (typeof proxyManager !== "undefined" && !proxyManager.autoConnecting && proxyManager.autoStatusMessage.indexOf("engeli") !== -1)
+                                           ? Theme.error
+                                           : Theme.textSecondary
+                                    font.pixelSize: 12
+                                    font.family: Theme.fontFamily
                                 }
-                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
-                                       ? Theme.accent
-                                       : ((typeof proxyManager !== "undefined" && proxyManager.autoStatusMessage.indexOf("engeli") !== -1) ? "#f87171" : Theme.textSecondary)
-                                font.pixelSize: 11
-                                font.family: Theme.fontFamily
-                                wrapMode: Text.WordWrap
-                                lineHeight: 1.3
                             }
                         }
 
-                        // Toggle Action Button
+                        // Action Button: Solid Cyan when disconnected, Ghost/Outline when connected (red only on hover)
                         Rectangle {
-                            width: 128; height: 38
+                            width: 132; height: 38
                             radius: Theme.radiusMd
+                            anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
-                                   ? (warpBtnMouse.containsMouse ? "#dc2626" : Theme.error)
-                                   : ((typeof proxyManager !== "undefined" && proxyManager.autoConnecting)
-                                      ? "#334155"
-                                      : (warpBtnMouse.containsMouse ? "#00e5ab" : Theme.accent))
+
+                            readonly property bool isRunning: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                            readonly property bool isConnecting: (typeof proxyManager !== "undefined" && proxyManager.autoConnecting)
+
+                            color: {
+                                if (isConnecting) return Theme.bgElevated
+                                if (isRunning) return warpBtnMouse.containsMouse ? Qt.alpha(Theme.error, 0.16) : "transparent"
+                                return warpBtnMouse.containsMouse ? Theme.accentHover : Theme.accent
+                            }
+                            border.color: {
+                                if (isConnecting) return Theme.borderDim
+                                if (isRunning) return warpBtnMouse.containsMouse ? Theme.error : Theme.borderBright
+                                return "transparent"
+                            }
+                            border.width: (isRunning || isConnecting) ? 1 : 0
 
                             Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
 
                             Text {
                                 anchors.centerIn: parent
                                 text: {
-                                    if (typeof proxyManager === "undefined") return "Aç"
+                                    if (typeof proxyManager === "undefined") return "Connect"
                                     if (proxyManager.autoConnecting) return I18n.language === "tr" ? "Bağlanıyor..." : "Connecting..."
                                     if (proxyManager.warpRunning) return I18n.language === "tr" ? "Tüneli Kapat" : "Disconnect"
                                     return I18n.language === "tr" ? "Tüneli Başlat" : "Connect Tunnel"
                                 }
-                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
-                                       ? "#ffffff"
-                                       : ((typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#94a3b8" : "#070a12")
-                                font.pixelSize: 11
+                                color: {
+                                    if (parent.isConnecting) return Theme.textSecondary
+                                    if (parent.isRunning) return warpBtnMouse.containsMouse ? Theme.error : Theme.textPrimary
+                                    return "#070a12"
+                                }
+                                font.pixelSize: 12
                                 font.family: Theme.fontFamily
-                                font.weight: Font.Bold
+                                font.weight: Font.DemiBold
                             }
 
                             MouseArea {
@@ -340,192 +231,254 @@ Item {
                         }
                     }
 
-                    // Live Diagnostics / Network Details Box (Shown when active)
+                    // Divider line
                     Rectangle {
-                        visible: typeof proxyManager !== "undefined" && (proxyManager.warpRunning || proxyManager.autoConnecting)
                         width: parent.width
-                        implicitHeight: detailsGrid.implicitHeight + 20
-                        radius: Theme.radiusMd
-                        color: Theme.bgElevated
-                        border.color: Theme.borderDim
-                        border.width: 1
+                        height: 1
+                        color: Theme.borderDim
+                    }
 
-                        Grid {
-                            id: detailsGrid
-                            anchors.fill: parent
-                            anchors.margins: 12
-                            columns: 2
-                            rowSpacing: 10
-                            columnSpacing: 16
+                    // 4-Column Telemetry Strip (Always visible, clean single source of truth)
+                    Row {
+                        width: parent.width
+                        spacing: 12
 
-                            // Detail 1: Node / Protocol
-                            Column {
-                                width: (detailsGrid.width - 16) * 0.5
-                                spacing: 2
-                                Text {
-                                    text: I18n.language === "tr" ? "Protokol & Port" : "Protocol & Port"
-                                    color: Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                }
-                                Text {
-                                    text: "MASQUE / HTTP/2 (TCP 443 TLS)"
-                                    color: Theme.textPrimary
-                                    font.pixelSize: 11
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.Bold
-                                }
+                        // Col 1: Protocol
+                        Column {
+                            width: (parent.width - 36) / 4
+                            spacing: 3
+                            Text {
+                                text: I18n.language === "tr" ? "PROTOKOL" : "PROTOCOL"
+                                color: Theme.textMuted
+                                font.pixelSize: 10
+                                font.family: Theme.fontFamily
+                                font.weight: Font.Bold
+                                font.letterSpacing: 0.5
                             }
-
-                            // Detail 2: Exit IP
-                            Column {
-                                width: (detailsGrid.width - 16) * 0.5
-                                spacing: 2
-                                Text {
-                                    text: I18n.language === "tr" ? "Çıkış IP Adresi" : "Exit IP Address"
-                                    color: Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                }
-                                Text {
-                                    text: (typeof proxyManager !== "undefined" && proxyManager.autoExitIp !== "")
-                                          ? proxyManager.autoExitIp
-                                          : (I18n.language === "tr" ? "Cloudflare Edge Ağı" : "Cloudflare Edge Network")
-                                    color: Theme.accent
-                                    font.pixelSize: 11
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.Bold
-                                }
+                            Text {
+                                text: (typeof proxyManager !== "undefined" && (proxyManager.warpRunning || proxyManager.autoConnecting))
+                                      ? "MASQUE / TLS 443"
+                                      : (I18n.language === "tr" ? "Doğrudan (HTTPS)" : "Direct (HTTPS)")
+                                color: Theme.textPrimary
+                                font.pixelSize: 12
+                                font.family: Theme.fontFamily
+                                font.weight: Font.DemiBold
                             }
+                        }
 
-                            // Detail 3: Location
-                            Column {
-                                width: (detailsGrid.width - 16) * 0.5
-                                spacing: 2
-                                Text {
-                                    text: I18n.language === "tr" ? "Tünel Tipi" : "Tunnel Type"
-                                    color: Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                }
-                                Text {
-                                    text: (typeof proxyManager !== "undefined" && proxyManager.autoLocation !== "")
-                                          ? proxyManager.autoLocation
-                                          : "Cloudflare WARP (Yerel SOCKS5)"
-                                    color: Theme.textPrimary
-                                    font.pixelSize: 11
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.Bold
-                                }
+                        // Col 2: Local Endpoint
+                        Column {
+                            width: (parent.width - 36) / 4
+                            spacing: 3
+                            Text {
+                                text: I18n.language === "tr" ? "YEREL TÜNEL" : "LOCAL ENDPOINT"
+                                color: Theme.textMuted
+                                font.pixelSize: 10
+                                font.family: Theme.fontFamily
+                                font.weight: Font.Bold
+                                font.letterSpacing: 0.5
                             }
+                            Text {
+                                text: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                      ? "127.0.0.1:40000"
+                                      : "—"
+                                color: Theme.textPrimary
+                                font.pixelSize: 12
+                                font.family: Theme.fontFamily
+                                font.weight: Font.DemiBold
+                            }
+                        }
 
-                            // Detail 4: Status / Isolation
-                            Column {
-                                width: (detailsGrid.width - 16) * 0.5
-                                spacing: 2
-                                Text {
-                                    text: I18n.language === "tr" ? "İzolasyon Seviyesi" : "Isolation Level"
-                                    color: Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
+                        // Col 3: Exit IP
+                        Column {
+                            width: (parent.width - 36) / 4
+                            spacing: 3
+                            Text {
+                                text: I18n.language === "tr" ? "ÇIKIŞ IP ADRESİ" : "EXIT IP ADDRESS"
+                                color: Theme.textMuted
+                                font.pixelSize: 10
+                                font.family: Theme.fontFamily
+                                font.weight: Font.Bold
+                                font.letterSpacing: 0.5
+                            }
+                            Text {
+                                text: {
+                                    if (typeof proxyManager !== "undefined" && proxyManager.warpRunning) {
+                                        return (proxyManager.autoExitIp !== "") ? proxyManager.autoExitIp : "Cloudflare Edge"
+                                    }
+                                    return I18n.language === "tr" ? "Standart ISP" : "Standard ISP"
                                 }
-                                Text {
-                                    text: I18n.language === "tr" ? "100% İzole • Yalnızca YuYuInstaller" : "100% Isolated • YuYuInstaller Only"
-                                    color: Theme.accent
-                                    font.pixelSize: 11
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.Bold
-                                }
+                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : Theme.textSecondary
+                                font.pixelSize: 12
+                                font.family: Theme.fontFamily
+                                font.weight: Font.DemiBold
+                            }
+                        }
+
+                        // Col 4: Scope
+                        Column {
+                            width: (parent.width - 36) / 4
+                            spacing: 3
+                            Text {
+                                text: I18n.language === "tr" ? "KAPSAM" : "ISOLATION SCOPE"
+                                color: Theme.textMuted
+                                font.pixelSize: 10
+                                font.family: Theme.fontFamily
+                                font.weight: Font.Bold
+                                font.letterSpacing: 0.5
+                            }
+                            Text {
+                                text: I18n.language === "tr" ? "Yalnızca Uygulama" : "App-Only (Isolated)"
+                                color: Theme.textPrimary
+                                font.pixelSize: 12
+                                font.family: Theme.fontFamily
+                                font.weight: Font.DemiBold
                             }
                         }
                     }
                 }
             }
 
-            // Card 3: Feature Highlights
+            // ═══════════════════════════════════════════════════════════
+            // 3-COLUMN COMPACT FEATURE HIGHLIGHTS
+            // ═══════════════════════════════════════════════════════════
             Column {
                 width: parent.width
-                spacing: 10
+                spacing: 8
 
                 Text {
-                    text: I18n.language === "tr" ? "WARP Tüneli Hakkında Bilgiler" : "About Cloudflare WARP Tunnel"
-                    color: Theme.textPrimary
-                    font.pixelSize: 13
+                    text: I18n.language === "tr" ? "TÜNEL MİMARİSİ" : (I18n.language === "uk" ? "АРХІТЕКТУРА ТУНЕЛЮ" : "TUNNEL ARCHITECTURE")
+                    color: Theme.textSecondary
+                    font.pixelSize: 11
                     font.family: Theme.fontFamily
                     font.weight: Font.Bold
+                    font.letterSpacing: 0.8
                 }
 
-                // Feature 1
-                Rectangle {
+                Row {
                     width: parent.width
-                    implicitHeight: f1Row.implicitHeight + 22
-                    radius: Theme.radiusMd
-                    color: "#cc0a0f1e"
-                    border.color: Qt.alpha(Theme.accent, 0.15)
-                    border.width: 1
+                    spacing: 12
 
+                    // Feature Card 1: Campus & Eduroam
                     Rectangle {
-                        width: 3
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        anchors.topMargin: 10
-                        anchors.bottomMargin: 10
-                        radius: 1.5
-                        color: Theme.accent
+                        width: (parent.width - 24) / 3
+                        height: 138
+                        radius: Theme.radiusLg
+                        color: Theme.bgCard
+                        border.color: Theme.borderDim
+                        border.width: 1
+
+                        Column {
+                            anchors.fill: parent
+                            anchors.margins: 16
+                            spacing: 10
+
+                            Rectangle {
+                                width: 32; height: 32; radius: 8
+                                color: Theme.bgElevated
+                                border.color: Theme.borderDim
+                                border.width: 1
+
+                                Canvas {
+                                    anchors.centerIn: parent
+                                    width: 16; height: 16
+                                    onPaint: {
+                                        var ctx = getContext("2d");
+                                        ctx.reset();
+                                        ctx.strokeStyle = Theme.accent;
+                                        ctx.fillStyle = Theme.accent;
+                                        ctx.lineWidth = 1.6;
+                                        ctx.lineCap = "round";
+                                        var radii = [3, 6.2, 9.4];
+                                        for (var i = 0; i < radii.length; i++) {
+                                            ctx.beginPath();
+                                            ctx.arc(8, 13.5, radii[i], Math.PI * 1.25, Math.PI * 1.75);
+                                            ctx.stroke();
+                                        }
+                                        ctx.beginPath();
+                                        ctx.arc(8, 13.5, 1.3, 0, Math.PI * 2);
+                                        ctx.fill();
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: I18n.language === "tr" ? "Eduroam & Yurt Uyumlu" : "Eduroam & Campus Ready"
+                                color: Theme.textPrimary
+                                font.pixelSize: 13
+                                font.family: Theme.fontFamily
+                                font.weight: Font.DemiBold
+                                width: parent.width
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                text: I18n.language === "tr"
+                                      ? "UDP engelleyen güvenlik duvarlarını standart HTTPS (TCP 443) üzerinden aşar."
+                                      : "Uses standard HTTPS (TCP 443) to bypass firewalls that block UDP packets."
+                                color: Theme.textSecondary
+                                font.pixelSize: 11
+                                font.family: Theme.fontFamily
+                                wrapMode: Text.WordWrap
+                                width: parent.width
+                                lineHeight: 1.25
+                            }
+                        }
                     }
 
-                    Row {
-                        id: f1Row
-                        anchors.fill: parent
-                        anchors.margins: 14
-                        spacing: 14
+                    // Feature Card 2: App-Isolated
+                    Rectangle {
+                        width: (parent.width - 24) / 3
+                        height: 138
+                        radius: Theme.radiusLg
+                        color: Theme.bgCard
+                        border.color: Theme.borderDim
+                        border.width: 1
 
-                        Rectangle {
-                            width: 34; height: 34; radius: 10
-                            color: Qt.alpha(Theme.accent, 0.1)
-                            border.color: Qt.alpha(Theme.accent, 0.25)
-                            border.width: 1
-                            anchors.verticalCenter: parent.verticalCenter
-                            Canvas {
-                                anchors.centerIn: parent
-                                width: 18; height: 18
-                                onPaint: {
-                                    var ctx = getContext("2d");
-                                    ctx.reset();
-                                    ctx.strokeStyle = Theme.accent;
-                                    ctx.fillStyle = Theme.accent;
-                                    ctx.lineWidth = 1.7;
-                                    ctx.lineCap = "round";
-                                    var radii = [3.5, 7, 10.5];
-                                    for (var i = 0; i < radii.length; i++) {
+                        Column {
+                            anchors.fill: parent
+                            anchors.margins: 16
+                            spacing: 10
+
+                            Rectangle {
+                                width: 32; height: 32; radius: 8
+                                color: Theme.bgElevated
+                                border.color: Theme.borderDim
+                                border.width: 1
+
+                                Canvas {
+                                    anchors.centerIn: parent
+                                    width: 16; height: 16
+                                    onPaint: {
+                                        var ctx = getContext("2d");
+                                        ctx.reset();
+                                        ctx.strokeStyle = Theme.accent;
+                                        ctx.lineWidth = 1.6;
+                                        ctx.lineCap = "round";
+                                        ctx.lineJoin = "round";
+                                        ctx.strokeRect(1.5, 2.5, 13, 8.5);
                                         ctx.beginPath();
-                                        ctx.arc(9, 15, radii[i], Math.PI * 1.25, Math.PI * 1.75);
+                                        ctx.moveTo(8, 11); ctx.lineTo(8, 14);
+                                        ctx.moveTo(5, 14); ctx.lineTo(11, 14);
                                         ctx.stroke();
                                     }
-                                    ctx.beginPath();
-                                    ctx.arc(9, 15, 1.4, 0, Math.PI * 2);
-                                    ctx.fill();
                                 }
                             }
-                        }
-
-                        Column {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 48
-                            spacing: 3
 
                             Text {
-                                text: I18n.language === "tr" ? "Eduroam & Üniversite / Yurt Ağları ile Tam Uyumlu" : "Fully Compatible with Eduroam & Campus Wi-Fi"
+                                text: I18n.language === "tr" ? "%100 Uygulama İçi İzole" : "100% App-Isolated"
                                 color: Theme.textPrimary
-                                font.pixelSize: 12
+                                font.pixelSize: 13
                                 font.family: Theme.fontFamily
-                                font.weight: Font.Bold
+                                font.weight: Font.DemiBold
+                                width: parent.width
+                                elide: Text.ElideRight
                             }
+
                             Text {
                                 text: I18n.language === "tr"
-                                      ? "Standart WireGuard/UDP paketlerini engelleyen katı üniversite ve yurt güvenlik duvarlarında bile standart HTTPS (TCP 443) portunu kullanarak kesintisiz tünel oluşturur."
-                                      : "Connects via standard HTTPS port (TCP 443) to overcome strict firewall restrictions that block traditional WireGuard UDP packets."
+                                      ? "Oyun pinginizi, Discord veya tarayıcı trafiğinizi kesinlikle etkilemez."
+                                      : "Never touches system network settings, game ping, or other running apps."
                                 color: Theme.textSecondary
                                 font.pixelSize: 11
                                 font.family: Theme.fontFamily
@@ -535,157 +488,64 @@ Item {
                             }
                         }
                     }
-                }
 
-                // Feature 2
-                Rectangle {
-                    width: parent.width
-                    implicitHeight: f2Row.implicitHeight + 22
-                    radius: Theme.radiusMd
-                    color: "#cc0a0f1e"
-                    border.color: Qt.alpha(Theme.accent, 0.15)
-                    border.width: 1
-
+                    // Feature Card 3: Zero Setup
                     Rectangle {
-                        width: 3
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        anchors.topMargin: 10
-                        anchors.bottomMargin: 10
-                        radius: 1.5
-                        color: Theme.accent
-                    }
-
-                    Row {
-                        id: f2Row
-                        anchors.fill: parent
-                        anchors.margins: 14
-                        spacing: 14
-
-                        Rectangle {
-                            width: 34; height: 34; radius: 10
-                            color: Qt.alpha(Theme.accent, 0.1)
-                            border.color: Qt.alpha(Theme.accent, 0.25)
-                            border.width: 1
-                            anchors.verticalCenter: parent.verticalCenter
-                            Canvas {
-                                anchors.centerIn: parent
-                                width: 18; height: 18
-                                onPaint: {
-                                    var ctx = getContext("2d");
-                                    ctx.reset();
-                                    ctx.strokeStyle = Theme.accent;
-                                    ctx.lineWidth = 1.7;
-                                    ctx.lineCap = "round";
-                                    ctx.lineJoin = "round";
-                                    ctx.strokeRect(2, 3, 14, 9.5);
-                                    ctx.beginPath();
-                                    ctx.moveTo(9, 12.5); ctx.lineTo(9, 15.5);
-                                    ctx.moveTo(5.5, 15.5); ctx.lineTo(12.5, 15.5);
-                                    ctx.stroke();
-                                }
-                            }
-                        }
+                        width: (parent.width - 24) / 3
+                        height: 138
+                        radius: Theme.radiusLg
+                        color: Theme.bgCard
+                        border.color: Theme.borderDim
+                        border.width: 1
 
                         Column {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 48
-                            spacing: 3
+                            anchors.fill: parent
+                            anchors.margins: 16
+                            spacing: 10
+
+                            Rectangle {
+                                width: 32; height: 32; radius: 8
+                                color: Theme.bgElevated
+                                border.color: Theme.borderDim
+                                border.width: 1
+
+                                Canvas {
+                                    anchors.centerIn: parent
+                                    width: 16; height: 16
+                                    onPaint: {
+                                        var ctx = getContext("2d");
+                                        ctx.reset();
+                                        ctx.strokeStyle = Theme.accent;
+                                        ctx.lineWidth = 1.6;
+                                        ctx.lineCap = "round";
+                                        ctx.lineJoin = "round";
+                                        ctx.beginPath();
+                                        ctx.moveTo(9.5, 1.5);
+                                        ctx.lineTo(3.5, 9);
+                                        ctx.lineTo(7.5, 9);
+                                        ctx.lineTo(6.5, 14.5);
+                                        ctx.lineTo(12.5, 7);
+                                        ctx.lineTo(8.5, 7);
+                                        ctx.closePath();
+                                        ctx.stroke();
+                                    }
+                                }
+                            }
 
                             Text {
-                                text: I18n.language === "tr" ? "Yalnızca Uygulama İçi (İzole Tünel)" : "App-Isolated (No System Lag or Ping Increase)"
+                                text: I18n.language === "tr" ? "Sıfır Sürücü & Tam Hız" : "Zero Drivers & Full Speed"
                                 color: Theme.textPrimary
-                                font.pixelSize: 12
+                                font.pixelSize: 13
                                 font.family: Theme.fontFamily
-                                font.weight: Font.Bold
-                            }
-                            Text {
-                                text: I18n.language === "tr"
-                                      ? "Bilgisayarınızın genel internet bağlantısını, Discord, Spotify veya oyun pinglerinizi kesinlikle etkilemez. Sadece YuYuInstaller'ın indirmeleri tünellenir."
-                                      : "Does not touch your system network settings, games or other apps. Only YuYuInstaller media downloads are tunneled."
-                                color: Theme.textSecondary
-                                font.pixelSize: 11
-                                font.family: Theme.fontFamily
-                                wrapMode: Text.WordWrap
+                                font.weight: Font.DemiBold
                                 width: parent.width
-                                lineHeight: 1.25
+                                elide: Text.ElideRight
                             }
-                        }
-                    }
-                }
 
-                // Feature 3
-                Rectangle {
-                    width: parent.width
-                    implicitHeight: f3Row.implicitHeight + 22
-                    radius: Theme.radiusMd
-                    color: "#cc0a0f1e"
-                    border.color: Qt.alpha(Theme.accent, 0.15)
-                    border.width: 1
-
-                    Rectangle {
-                        width: 3
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        anchors.topMargin: 10
-                        anchors.bottomMargin: 10
-                        radius: 1.5
-                        color: Theme.accent
-                    }
-
-                    Row {
-                        id: f3Row
-                        anchors.fill: parent
-                        anchors.margins: 14
-                        spacing: 14
-
-                        Rectangle {
-                            width: 34; height: 34; radius: 10
-                            color: Qt.alpha(Theme.accent, 0.1)
-                            border.color: Qt.alpha(Theme.accent, 0.25)
-                            border.width: 1
-                            anchors.verticalCenter: parent.verticalCenter
-                            Canvas {
-                                anchors.centerIn: parent
-                                width: 18; height: 18
-                                onPaint: {
-                                    var ctx = getContext("2d");
-                                    ctx.reset();
-                                    ctx.strokeStyle = Theme.accent;
-                                    ctx.lineWidth = 1.7;
-                                    ctx.lineCap = "round";
-                                    ctx.lineJoin = "round";
-                                    ctx.beginPath();
-                                    ctx.moveTo(10.5, 1.5);
-                                    ctx.lineTo(4, 10);
-                                    ctx.lineTo(8.5, 10);
-                                    ctx.lineTo(7.5, 16.5);
-                                    ctx.lineTo(14, 8);
-                                    ctx.lineTo(9.5, 8);
-                                    ctx.closePath();
-                                    ctx.stroke();
-                                }
-                            }
-                        }
-
-                        Column {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 48
-                            spacing: 3
-
-                            Text {
-                                text: I18n.language === "tr" ? "Sıfır Kurulum & Yüksek Hız" : "Zero Setup & Maximum Speed"
-                                color: Theme.textPrimary
-                                font.pixelSize: 12
-                                font.family: Theme.fontFamily
-                                font.weight: Font.Bold
-                            }
                             Text {
                                 text: I18n.language === "tr"
-                                      ? "Harici sanal ağ kartı (TAP adaptörü) veya yönetici izni gerekmez. Cloudflare'ın küresel Anycast ağı ile en yüksek hızda indirme sağlar."
-                                      : "No virtual network adapter drivers or administrative privileges needed. Backed by Cloudflare's global Anycast backbone."
+                                      ? "Sanal ağ adaptörü veya yönetici izni gerekmez; Cloudflare Anycast hızı."
+                                      : "No TAP adapter or admin rights required; powered by Cloudflare Anycast."
                                 color: Theme.textSecondary
                                 font.pixelSize: 11
                                 font.family: Theme.fontFamily
