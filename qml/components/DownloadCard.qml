@@ -51,27 +51,6 @@ Rectangle {
                 visible: status === Image.Ready
             }
 
-            Rectangle {
-                visible: thumbImg.visible
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.margins: 3
-                width: cornerFmtTxt.implicitWidth + 6
-                height: 14
-                radius: 3
-                color: "#cc0a0d14"
-
-                Text {
-                    id: cornerFmtTxt
-                    anchors.centerIn: parent
-                    text: root.getTargetFormat()
-                    color: Theme.accent
-                    font.pixelSize: 8
-                    font.family: Theme.fontFamily
-                    font.weight: Font.Bold
-                }
-            }
-
             Text {
                 visible: !thumbImg.visible
                 anchors.centerIn: parent
