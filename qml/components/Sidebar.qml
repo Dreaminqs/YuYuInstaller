@@ -477,7 +477,7 @@ Rectangle {
 
                     // Glowing indicator when proxy is actively enabled
                     Rectangle {
-                        visible: (typeof proxyManager !== "undefined" && proxyManager.enabled && proxyManager.proxyMode !== 0)
+                        visible: (typeof proxyManager !== "undefined" && (proxyManager.warpRunning || proxyManager.enabled))
                         width: 7; height: 7; radius: 3.5
                         color: Theme.accent
                         anchors.verticalCenter: parent.verticalCenter

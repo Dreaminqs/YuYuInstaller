@@ -5,21 +5,6 @@ import YuYuInstaller
 Item {
     id: root
 
-    property int selectedMode: (typeof proxyManager !== "undefined") ? proxyManager.proxyMode : 0
-    property string localHost: (typeof proxyManager !== "undefined") ? proxyManager.host : "127.0.0.1"
-    property int localPort: (typeof proxyManager !== "undefined") ? proxyManager.port : 40000
-    property string localUser: (typeof proxyManager !== "undefined") ? proxyManager.username : ""
-    property string localPass: (typeof proxyManager !== "undefined") ? proxyManager.password : ""
-    property bool showPassword: false
-    property bool savedNotification: false
-    property bool showModeInfo: false
-
-    Timer {
-        id: notificationTimer
-        interval: 3000
-        onTriggered: root.savedNotification = false
-    }
-
     Flickable {
         anchors.fill: parent
         anchors.margins: 28
@@ -43,20 +28,24 @@ Item {
                     font.weight: Font.Bold
                 }
                 Text {
-                    text: I18n.t("proxySubtitle")
+                    text: I18n.language === "tr"
+                          ? "Cloudflare WARP tüneli ile okul, yurt ve eduroam engellerini aşın, indirmelerinizi güvenceye alın."
+                          : (I18n.language === "uk"
+                             ? "Обходьте блокування в мережах eduroam, університетах та гуртожитках за допомогою Cloudflare WARP."
+                             : "Bypass campus, dorm and eduroam firewalls securely with Cloudflare WARP in-app tunnel.")
                     color: Theme.textSecondary
                     font.pixelSize: 12
                     font.family: Theme.fontFamily
                 }
             }
 
-            // Card 1: Live Status & Master Switch
+            // Card 1: Master Status & Quick Switch
             Rectangle {
                 width: parent.width
                 implicitHeight: statusCol.implicitHeight + 32
                 radius: Theme.radiusLg
                 color: Theme.bgCard
-                border.color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? Theme.accent : Theme.borderDim
+                border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : Theme.borderDim
                 border.width: 1
 
                 Behavior on border.color { ColorAnimation { duration: 250 } }
@@ -84,21 +73,25 @@ Item {
                                 Rectangle {
                                     anchors.centerIn: parent
                                     width: 26; height: 26; radius: 13
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? Theme.accent : "#64748b"
-                                    opacity: 0.15
+                                    color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                           ? Theme.accent
+                                           : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting ? "#eab308" : "#64748b")
+                                    opacity: 0.18
 
                                     SequentialAnimation on scale {
-                                        running: (typeof proxyManager !== "undefined" && proxyManager.enabled)
+                                        running: (typeof proxyManager !== "undefined" && (proxyManager.warpRunning || proxyManager.autoConnecting))
                                         loops: Animation.Infinite
-                                        NumberAnimation { from: 0.9; to: 1.25; duration: 1200; easing.type: Easing.InOutQuad }
-                                        NumberAnimation { from: 1.25; to: 0.9; duration: 1200; easing.type: Easing.InOutQuad }
+                                        NumberAnimation { from: 0.9; to: 1.28; duration: 1200; easing.type: Easing.InOutQuad }
+                                        NumberAnimation { from: 1.28; to: 0.9; duration: 1200; easing.type: Easing.InOutQuad }
                                     }
                                 }
 
                                 Rectangle {
                                     anchors.centerIn: parent
                                     width: 12; height: 12; radius: 6
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? Theme.accent : "#64748b"
+                                    color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                           ? Theme.accent
+                                           : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting ? "#eab308" : "#64748b")
                                 }
                             }
 
@@ -108,7 +101,7 @@ Item {
                                 spacing: 2
 
                                 Text {
-                                    text: I18n.t("proxyStatusCardTitle")
+                                    text: I18n.language === "tr" ? "Tünel Bağlantı Durumu" : (I18n.language === "uk" ? "Статус тунелю" : "Tunnel Connection Status")
                                     color: Theme.textSecondary
                                     font.pixelSize: 10
                                     font.family: Theme.fontFamily
@@ -116,12 +109,15 @@ Item {
                                 }
 
                                 Text {
-                                    text: (typeof proxyManager !== "undefined" && proxyManager.enabled)
-                                          ? I18n.t("proxyStatusActive")
-                                          : I18n.t("proxyStatusInactive")
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.enabled)
+                                    text: {
+                                        if (typeof proxyManager === "undefined") return "Tünel Kapalı"
+                                        if (proxyManager.autoConnecting) return I18n.language === "tr" ? "Cloudflare Ağına Bağlanılıyor..." : "Connecting to Cloudflare Network..."
+                                        if (proxyManager.warpRunning) return I18n.language === "tr" ? "Cloudflare WARP Aktif (Korumalı)" : "Cloudflare WARP Active (Protected)"
+                                        return I18n.language === "tr" ? "Doğrudan Bağlantı (Tünel Kapalı)" : "Direct Connection (Tunnel Inactive)"
+                                    }
+                                    color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
                                            ? Theme.accent
-                                           : Theme.textPrimary
+                                           : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting ? "#eab308" : Theme.textPrimary)
                                     font.pixelSize: 13
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
@@ -138,8 +134,8 @@ Item {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 13
-                                color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? Theme.accent : "#222c3c"
-                                border.color: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? Theme.accent : Theme.borderDim
+                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : "#222c3c"
+                                border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : Theme.borderDim
                                 border.width: 1
 
                                 Behavior on color { ColorAnimation { duration: 200 } }
@@ -148,17 +144,18 @@ Item {
                                     width: 20; height: 20; radius: 10
                                     color: "#ffffff"
                                     y: 3
-                                    x: (typeof proxyManager !== "undefined" && proxyManager.enabled) ? 27 : 3
+                                    x: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? 27 : 3
 
                                     Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                                 }
 
                                 MouseArea {
                                     anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
+                                    cursorShape: (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                    enabled: typeof proxyManager !== "undefined" && !proxyManager.autoConnecting
                                     onClicked: {
                                         if (typeof proxyManager !== "undefined") {
-                                            proxyManager.enabled = !proxyManager.enabled
+                                            proxyManager.toggleWarpTunnel()
                                         }
                                     }
                                 }
@@ -183,60 +180,29 @@ Item {
 
                             Text {
                                 text: {
-                                    if (typeof proxyManager === "undefined" || !proxyManager.enabled)
-                                        return I18n.t("proxyStatusInactive")
-                                    if (proxyManager.proxyMode === 0) {
-                                        if (proxyManager.autoConnecting) return "In-App VPN: " + I18n.t("proxyAutoConnecting")
-                                        if (proxyManager.autoConnected) {
-                                            var ipPart = (proxyManager.autoExitIp !== "") ? (" • IP: " + proxyManager.autoExitIp) : ""
-                                            return "In-App VPN: " + proxyManager.autoLocation + ipPart + " (" + proxyManager.autoLatency + " ms)"
+                                    if (typeof proxyManager === "undefined" || !proxyManager.warpRunning) {
+                                        if (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) {
+                                            return "Cloudflare WARP (MASQUE / TCP 443): " + proxyManager.autoStatusMessage
                                         }
-                                        return "In-App VPN: " + proxyManager.autoStatusMessage
+                                        return I18n.language === "tr" ? "Doğrudan bağlantı aktif (Proxy kapalı)" : "Direct connection active (Proxy inactive)"
                                     }
-                                    if (proxyManager.proxyMode === 1)
-                                        return "SOCKS5: " + proxyManager.host + ":" + proxyManager.port
-                                    if (proxyManager.proxyMode === 2)
-                                        return "HTTP: " + proxyManager.host + ":" + proxyManager.port
-                                    return ""
+                                    var ipPart = (proxyManager.autoExitIp !== "") ? (" • Çıkış IP: " + proxyManager.autoExitIp) : ""
+                                    return "Cloudflare WARP: " + proxyManager.autoLocation + ipPart + " (127.0.0.1:40000)"
                                 }
-                                color: Theme.textSecondary
+                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : Theme.textSecondary
                                 font.pixelSize: 11
                                 font.family: Theme.fontFamily
                                 anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            Item { width: 8; height: 1 }
-
-                            // Latency Badge if test passed (Manual mode)
-                            Rectangle {
-                                visible: (typeof proxyManager !== "undefined" && proxyManager.proxyMode !== 0 && proxyManager.testStatus === 1)
-                                height: 20
-                                width: latencyTxt.implicitWidth + 12
-                                radius: 10
-                                color: Theme.accent + "22"
-                                border.color: Theme.accent
-                                border.width: 1
-                                anchors.verticalCenter: parent.verticalCenter
-
-                                Text {
-                                    id: latencyTxt
-                                    anchors.centerIn: parent
-                                    text: (typeof proxyManager !== "undefined") ? proxyManager.testMessage : ""
-                                    color: Theme.accent
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.DemiBold
-                                }
                             }
                         }
                     }
                 }
             }
 
-            // Card: Embedded Cloudflare WARP In-App Tunnel Toggle
+            // Card 2: Main Cloudflare WARP Controller Card
             Rectangle {
                 width: parent.width
-                implicitHeight: eduroamCol.implicitHeight + 28
+                implicitHeight: warpCol.implicitHeight + 32
                 radius: Theme.radiusLg
                 color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? "#102334" : "#131b26"
                 border.color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : (Theme.accent + "55")
@@ -246,36 +212,37 @@ Item {
                 Behavior on border.color { ColorAnimation { duration: 250 } }
 
                 Column {
-                    id: eduroamCol
+                    id: warpCol
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    anchors.margins: 16
-                    spacing: 12
+                    anchors.margins: 18
+                    spacing: 16
 
+                    // Header Row with Title, Badge, and Action Button
                     Row {
                         width: parent.width
                         spacing: 12
 
                         Column {
-                            width: parent.width - 132
+                            width: parent.width - 140
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 4
+                            spacing: 6
 
                             Row {
                                 spacing: 8
                                 Text {
                                     text: I18n.language === "tr" ? "Cloudflare WARP (Uygulama İçi Tünel)" : "Cloudflare WARP (In-App Tunnel)"
                                     color: Theme.textPrimary
-                                    font.pixelSize: 13
+                                    font.pixelSize: 14
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
                                 }
 
                                 Rectangle {
-                                    height: 18
-                                    width: warpBadgeTxt.implicitWidth + 10
-                                    radius: 9
+                                    height: 20
+                                    width: warpBadgeTxt.implicitWidth + 12
+                                    radius: 10
                                     color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
                                            ? Theme.accent + "22"
                                            : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#eab30822" : "#222c3c"
@@ -290,14 +257,14 @@ Item {
                                         anchors.centerIn: parent
                                         text: {
                                             if (typeof proxyManager === "undefined") return "Kapalı"
-                                            if (proxyManager.autoConnecting) return "Bağlanıyor..."
+                                            if (proxyManager.autoConnecting) return I18n.language === "tr" ? "Bağlanıyor..." : "Connecting..."
                                             if (proxyManager.warpRunning) return "Aktif • 127.0.0.1:40000"
-                                            return "Devre Dışı"
+                                            return I18n.language === "tr" ? "Devre Dışı" : "Disabled"
                                         }
                                         color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
                                                ? Theme.accent
                                                : (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? "#eab308" : Theme.textSecondary
-                                        font.pixelSize: 9
+                                        font.pixelSize: 10
                                         font.family: Theme.fontFamily
                                         font.weight: Font.DemiBold
                                     }
@@ -308,30 +275,30 @@ Item {
                                 width: parent.width
                                 text: {
                                     if (typeof proxyManager !== "undefined" && proxyManager.warpRunning) {
-                                        return I18n.language === "tr" ? "Aktif: Yalnızca YuYuInstaller Cloudflare ağına tünellendi. Bilgisayarınızın geri kalanı veya oyunlar etkilenmez." : "Active: Only YuYuInstaller traffic is routed through Cloudflare. System is unaffected.";
+                                        return I18n.language === "tr"
+                                               ? "Aktif: Yalnızca YuYuInstaller Cloudflare ağına tünellendi. Bilgisayarınızın geri kalanı, oyunlar veya diğer uygulamalar etkilenmez."
+                                               : "Active: Only YuYuInstaller traffic is securely routed through Cloudflare. System, ping, and other apps are unaffected."
                                     }
                                     if (typeof proxyManager !== "undefined" && !proxyManager.autoConnecting && proxyManager.autoStatusMessage.indexOf("engeli") !== -1) {
-                                        if (I18n.language === "tr") {
-                                            return "WARP tüneli kurulamadı (Ağ / Eduroam engeli tespit edildi). (Arka planda Proton VPN veya harici VPN açıksa doğrudan kullanabilirsiniz.)";
-                                        } else if (I18n.language === "uk") {
-                                            return "Не вдалося встановити тунель WARP (виявлено блокування мережі / Eduroam). (Якщо увімкнено Proton VPN або інший VPN, ви можете завантажувати напряму.)";
-                                        } else {
-                                            return "WARP tunnel failed to connect (Network / Eduroam block detected). (If Proton VPN or external VPN is active, you can use it directly.)";
-                                        }
+                                        return proxyManager.autoStatusMessage
                                     }
-                                    return I18n.language === "tr" ? "Eduroam, üniversite ve yurt engellerini aşar. Sadece uygulama içinde çalışır, sisteme harici VPN kurmaz." : "Bypasses campus firewalls. Works only inside app with zero system VPN install.";
+                                    return I18n.language === "tr"
+                                           ? "Eduroam, üniversite ve yurt ağlarındaki engelleri aşar. Sisteme harici VPN kurmaz, doğrudan uygulama içinde çalışır."
+                                           : "Bypasses campus, eduroam and dorm firewalls. Runs strictly inside the application with zero system-wide network changes."
                                 }
-                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning) ? Theme.accent : ((typeof proxyManager !== "undefined" && proxyManager.autoStatusMessage.indexOf("engeli") !== -1) ? "#f87171" : Theme.textSecondary)
+                                color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
+                                       ? Theme.accent
+                                       : ((typeof proxyManager !== "undefined" && proxyManager.autoStatusMessage.indexOf("engeli") !== -1) ? "#f87171" : Theme.textSecondary)
                                 font.pixelSize: 11
                                 font.family: Theme.fontFamily
                                 wrapMode: Text.WordWrap
-                                lineHeight: 1.25
+                                lineHeight: 1.3
                             }
                         }
 
                         // Toggle Action Button
                         Rectangle {
-                            width: 120; height: 34
+                            width: 128; height: 38
                             radius: Theme.radiusMd
                             anchors.verticalCenter: parent.verticalCenter
                             color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
@@ -348,7 +315,7 @@ Item {
                                     if (typeof proxyManager === "undefined") return "Aç"
                                     if (proxyManager.autoConnecting) return I18n.language === "tr" ? "Bağlanıyor..." : "Connecting..."
                                     if (proxyManager.warpRunning) return I18n.language === "tr" ? "Tüneli Kapat" : "Disconnect"
-                                    return I18n.language === "tr" ? "Tüneli Aç" : "Connect Tunnel"
+                                    return I18n.language === "tr" ? "Tüneli Başlat" : "Connect Tunnel"
                                 }
                                 color: (typeof proxyManager !== "undefined" && proxyManager.warpRunning)
                                        ? "#ffffff"
@@ -363,1006 +330,291 @@ Item {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: (typeof proxyManager !== "undefined" && proxyManager.autoConnecting) ? Qt.ArrowCursor : Qt.PointingHandCursor
-                                enabled: (typeof proxyManager !== "undefined" && !proxyManager.autoConnecting)
+                                enabled: typeof proxyManager !== "undefined" && !proxyManager.autoConnecting
                                 onClicked: {
                                     if (typeof proxyManager !== "undefined") {
-                                        proxyManager.toggleWarpTunnel();
+                                        proxyManager.toggleWarpTunnel()
                                     }
                                 }
                             }
                         }
                     }
-                }
-            }
 
-            // Card 2: Tunnel Mode Selection (Auto VPN, SOCKS5, HTTP)
-            Rectangle {
-                width: parent.width
-                implicitHeight: modeCol.implicitHeight + 32
-                radius: Theme.radiusLg
-                color: Theme.bgCard
-                border.color: Theme.borderDim
-                border.width: 1
-
-                Column {
-                    id: modeCol
-                    anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 12
-
-                    // Header Row with Title and Info (i) Button
-                    Item {
-                        width: parent.width
-                        height: 24
-
-                        Text {
-                            anchors.left: parent.left
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: I18n.t("proxyModeTitle")
-                            color: Theme.textPrimary
-                            font.pixelSize: 13
-                            font.family: Theme.fontFamily
-                            font.weight: Font.Bold
-                        }
-
-                        // Info (i) Button on the right
-                        Rectangle {
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 22; height: 22; radius: 11
-                            color: root.showModeInfo ? Theme.accent : (infoMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
-                            border.color: root.showModeInfo ? Theme.accent : Theme.borderDim
-                            border.width: 1
-
-                            Behavior on color { ColorAnimation { duration: 150 } }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "i"
-                                font.pixelSize: 11
-                                font.weight: Font.Bold
-                                font.family: Theme.fontFamily
-                                color: root.showModeInfo ? "#07090e" : (infoMouse.containsMouse ? Theme.accent : Theme.textSecondary)
-                            }
-
-                            MouseArea {
-                                id: infoMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.showModeInfo = !root.showModeInfo
-                            }
-                        }
-                    }
-
-                    // Expandable Information Guide Card
+                    // Live Diagnostics / Network Details Box (Shown when active)
                     Rectangle {
-                        visible: root.showModeInfo
+                        visible: typeof proxyManager !== "undefined" && (proxyManager.warpRunning || proxyManager.autoConnecting)
                         width: parent.width
-                        implicitHeight: infoBoxCol.implicitHeight + 20
-                        radius: Theme.radiusMd
-                        color: Theme.bgElevated
-                        border.color: Theme.accent
-                        border.width: 1
-
-                        Column {
-                            id: infoBoxCol
-                            anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 8
-
-                            Text {
-                                text: I18n.t("proxyInfoTitle")
-                                color: Theme.accent
-                                font.pixelSize: 11
-                                font.family: Theme.fontFamily
-                                font.weight: Font.Bold
-                            }
-
-                            Text {
-                                text: I18n.t("proxyInfoVpn")
-                                color: Theme.textPrimary
-                                font.pixelSize: 10
-                                font.family: Theme.fontFamily
-                                wrapMode: Text.Wrap
-                                width: parent.width
-                            }
-
-                            Text {
-                                text: I18n.t("proxyInfoSocks5")
-                                color: Theme.textSecondary
-                                font.pixelSize: 10
-                                font.family: Theme.fontFamily
-                                wrapMode: Text.Wrap
-                                width: parent.width
-                            }
-
-                            Text {
-                                text: I18n.t("proxyInfoHttp")
-                                color: Theme.textSecondary
-                                font.pixelSize: 10
-                                font.family: Theme.fontFamily
-                                wrapMode: Text.Wrap
-                                width: parent.width
-                            }
-                        }
-                    }
-
-                    // Mode 0: In-App Stealth VPN (Recommended / Zero Setup)
-                    Rectangle {
-                        width: parent.width
-                        implicitHeight: 64
-                        radius: Theme.radiusMd
-                        color: (root.selectedMode === 0) ? Theme.activeTabBg : (m0Mouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
-                        border.color: (root.selectedMode === 0) ? Theme.accent : Theme.borderDim
-                        border.width: 1
-
-                        MouseArea {
-                            id: m0Mouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.selectedMode = 0
-                                if (typeof proxyManager !== "undefined") {
-                                    proxyManager.proxyMode = 0
-                                }
-                            }
-                        }
-
-                        Row {
-                            anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 12
-
-                            Rectangle {
-                                width: 48; height: 22; radius: 4
-                                color: (root.selectedMode === 0) ? Theme.accent : "#222c3c"
-                                anchors.verticalCenter: parent.verticalCenter
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "VPN"
-                                    color: (root.selectedMode === 0) ? "#07090e" : Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.weight: Font.Bold
-                                }
-                            }
-
-                            Column {
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
-                                width: parent.width - 120
-
-                                Text {
-                                    text: I18n.t("proxyModeAutoVPN")
-                                    color: (root.selectedMode === 0) ? Theme.accent : Theme.textPrimary
-                                    font.pixelSize: 12
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.Bold
-                                }
-                                Text {
-                                    text: I18n.t("proxyModeAutoVPNDesc")
-                                    color: Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                    elide: Text.ElideRight
-                                    width: parent.width
-                                }
-                            }
-
-                            Rectangle {
-                                width: 16; height: 16; radius: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: (root.selectedMode === 0) ? Theme.accent : "transparent"
-                                border.color: (root.selectedMode === 0) ? Theme.accent : Theme.borderBright
-                                border.width: 2
-
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 6; height: 6; radius: 3
-                                    color: "#07090e"
-                                    visible: root.selectedMode === 0
-                                }
-                            }
-                        }
-                    }
-
-                    // Mode 1: SOCKS5
-                    Rectangle {
-                        width: parent.width
-                        implicitHeight: 60
-                        radius: Theme.radiusMd
-                        color: (root.selectedMode === 1) ? Theme.activeTabBg : (m1Mouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
-                        border.color: (root.selectedMode === 1) ? Theme.accent : Theme.borderDim
-                        border.width: 1
-
-                        MouseArea {
-                            id: m1Mouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.selectedMode = 1
-                                if (typeof proxyManager !== "undefined") {
-                                    proxyManager.proxyMode = 1
-                                }
-                            }
-                        }
-
-                        Row {
-                            anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 12
-
-                            Rectangle {
-                                width: 72; height: 22; radius: 4
-                                color: (root.selectedMode === 1) ? Theme.accent : "#222c3c"
-                                anchors.verticalCenter: parent.verticalCenter
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "SOCKS5"
-                                    color: (root.selectedMode === 1) ? "#07090e" : Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.weight: Font.Bold
-                                }
-                            }
-
-                            Column {
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
-                                width: parent.width - 120
-
-                                Text {
-                                    text: I18n.t("proxyModeSocks5")
-                                    color: (root.selectedMode === 1) ? Theme.accent : Theme.textPrimary
-                                    font.pixelSize: 12
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.Bold
-                                }
-                                Text {
-                                    text: I18n.t("proxyModeSocks5Desc")
-                                    color: Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                    elide: Text.ElideRight
-                                    width: parent.width
-                                }
-                            }
-
-                            Rectangle {
-                                width: 16; height: 16; radius: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: (root.selectedMode === 1) ? Theme.accent : "transparent"
-                                border.color: (root.selectedMode === 1) ? Theme.accent : Theme.borderBright
-                                border.width: 2
-
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 6; height: 6; radius: 3
-                                    color: "#07090e"
-                                    visible: root.selectedMode === 1
-                                }
-                            }
-                        }
-                    }
-
-                    // Mode 2: HTTP / HTTPS
-                    Rectangle {
-                        width: parent.width
-                        implicitHeight: 60
-                        radius: Theme.radiusMd
-                        color: (root.selectedMode === 2) ? Theme.activeTabBg : (m2Mouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated)
-                        border.color: (root.selectedMode === 2) ? Theme.accent : Theme.borderDim
-                        border.width: 1
-
-                        MouseArea {
-                            id: m2Mouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.selectedMode = 2
-                                if (typeof proxyManager !== "undefined") {
-                                    proxyManager.proxyMode = 2
-                                }
-                            }
-                        }
-
-                        Row {
-                            anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 12
-
-                            Rectangle {
-                                width: 72; height: 22; radius: 4
-                                color: (root.selectedMode === 2) ? Theme.accent : "#222c3c"
-                                anchors.verticalCenter: parent.verticalCenter
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "HTTP"
-                                    color: (root.selectedMode === 2) ? "#07090e" : Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.weight: Font.Bold
-                                }
-                            }
-
-                            Column {
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
-                                width: parent.width - 120
-
-                                Text {
-                                    text: I18n.t("proxyModeHttp")
-                                    color: (root.selectedMode === 2) ? Theme.accent : Theme.textPrimary
-                                    font.pixelSize: 12
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.Bold
-                                }
-                                Text {
-                                    text: I18n.t("proxyModeHttpDesc")
-                                    color: Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                    elide: Text.ElideRight
-                                    width: parent.width
-                                }
-                            }
-
-                            Rectangle {
-                                width: 16; height: 16; radius: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: (root.selectedMode === 2) ? Theme.accent : "transparent"
-                                border.color: (root.selectedMode === 2) ? Theme.accent : Theme.borderBright
-                                border.width: 2
-
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 6; height: 6; radius: 3
-                                    color: "#07090e"
-                                    visible: root.selectedMode === 2
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Card 3-A: In-App VPN Active Node Control (Shown ONLY in Mode 0)
-            Rectangle {
-                visible: root.selectedMode === 0
-                width: parent.width
-                implicitHeight: autoVpnCol.implicitHeight + 32
-                radius: Theme.radiusLg
-                color: Theme.bgCard
-                border.color: Theme.borderDim
-                border.width: 1
-
-                Column {
-                    id: autoVpnCol
-                    anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 14
-
-                    Row {
-                        width: parent.width
-                        spacing: 8
-
-                        Text {
-                            text: "In-App VPN"
-                            color: Theme.textPrimary
-                            font.pixelSize: 13
-                            font.family: Theme.fontFamily
-                            font.weight: Font.Bold
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Item { width: 10; height: 1 }
-
-                        // Node Status Chip
-                        Rectangle {
-                            height: 22
-                            width: autoStatusChipTxt.implicitWidth + 16
-                            radius: 11
-                            color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? (Theme.accent + "22") : "#222c3c"
-                            border.color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? Theme.accent : Theme.borderDim
-                            border.width: 1
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            Text {
-                                id: autoStatusChipTxt
-                                anchors.centerIn: parent
-                                text: {
-                                    if (typeof proxyManager === "undefined") return "Ready"
-                                    if (proxyManager.autoConnecting) return I18n.t("proxyAutoConnecting")
-                                    if (proxyManager.autoConnected) return proxyManager.autoLocation + " (" + proxyManager.autoLatency + " ms)"
-                                    return proxyManager.autoStatusMessage
-                                }
-                                color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? Theme.accent : Theme.textSecondary
-                                font.pixelSize: 10
-                                font.family: Theme.fontFamily
-                                font.weight: Font.DemiBold
-                            }
-                        }
-                    }
-
-                    // Node Info Details Box
-                    Rectangle {
-                        width: parent.width
-                        implicitHeight: nodeDetailsRow.implicitHeight + 20
+                        implicitHeight: detailsGrid.implicitHeight + 20
                         radius: Theme.radiusMd
                         color: Theme.bgElevated
                         border.color: Theme.borderDim
                         border.width: 1
 
-                        Row {
-                            id: nodeDetailsRow
+                        Grid {
+                            id: detailsGrid
                             anchors.fill: parent
                             anchors.margins: 12
-                            spacing: 16
+                            columns: 2
+                            rowSpacing: 10
+                            columnSpacing: 16
 
+                            // Detail 1: Node / Protocol
                             Column {
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 4
-                                width: (parent.width - 16) * 0.55
-
+                                width: (detailsGrid.width - 16) * 0.5
+                                spacing: 2
                                 Text {
-                                    text: I18n.t("proxyAutoLocation")
+                                    text: I18n.language === "tr" ? "Protokol & Port" : "Protocol & Port"
                                     color: Theme.textSecondary
                                     font.pixelSize: 10
                                     font.family: Theme.fontFamily
                                 }
                                 Text {
-                                    text: (typeof proxyManager !== "undefined" && proxyManager.autoConnected && proxyManager.autoLocation !== "")
-                                          ? proxyManager.autoLocation
-                                          : "Standby / Ready"
+                                    text: "MASQUE / HTTP/2 (TCP 443 TLS)"
                                     color: Theme.textPrimary
-                                    font.pixelSize: 12
+                                    font.pixelSize: 11
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
-                                }
-                                Text {
-                                    visible: (typeof proxyManager !== "undefined" && proxyManager.autoConnected)
-                                    text: I18n.t("proxyExitIpLabel") + " " + ((proxyManager.autoExitIp !== "") ? proxyManager.autoExitIp : "Detecting...")
-                                    color: Theme.accent
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.DemiBold
                                 }
                             }
 
+                            // Detail 2: Exit IP
                             Column {
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 4
-                                width: (parent.width - 16) * 0.45
-
+                                width: (detailsGrid.width - 16) * 0.5
+                                spacing: 2
                                 Text {
-                                    text: "Protocol / Latency:"
+                                    text: I18n.language === "tr" ? "Çıkış IP Adresi" : "Exit IP Address"
                                     color: Theme.textSecondary
                                     font.pixelSize: 10
                                     font.family: Theme.fontFamily
                                 }
                                 Text {
-                                    text: (typeof proxyManager !== "undefined" && proxyManager.autoConnected)
-                                          ? proxyManager.autoProtocol + " • " + proxyManager.autoLatency + " ms"
-                                          : "--"
-                                    color: (typeof proxyManager !== "undefined" && proxyManager.autoConnected) ? Theme.accent : Theme.textSecondary
-                                    font.pixelSize: 12
+                                    text: (typeof proxyManager !== "undefined" && proxyManager.autoExitIp !== "")
+                                          ? proxyManager.autoExitIp
+                                          : (I18n.language === "tr" ? "Cloudflare Edge Ağı" : "Cloudflare Edge Network")
+                                    color: Theme.accent
+                                    font.pixelSize: 11
                                     font.family: Theme.fontFamily
                                     font.weight: Font.Bold
                                 }
+                            }
+
+                            // Detail 3: Location
+                            Column {
+                                width: (detailsGrid.width - 16) * 0.5
+                                spacing: 2
                                 Text {
-                                    visible: (typeof proxyManager !== "undefined" && proxyManager.autoConnected)
-                                    text: "Tunnel Verified (Domain Hidden)"
+                                    text: I18n.language === "tr" ? "Tünel Tipi" : "Tunnel Type"
                                     color: Theme.textSecondary
                                     font.pixelSize: 10
                                     font.family: Theme.fontFamily
+                                }
+                                Text {
+                                    text: (typeof proxyManager !== "undefined" && proxyManager.autoLocation !== "")
+                                          ? proxyManager.autoLocation
+                                          : "Cloudflare WARP (Yerel SOCKS5)"
+                                    color: Theme.textPrimary
+                                    font.pixelSize: 11
+                                    font.family: Theme.fontFamily
+                                    font.weight: Font.Bold
+                                }
+                            }
+
+                            // Detail 4: Status / Isolation
+                            Column {
+                                width: (detailsGrid.width - 16) * 0.5
+                                spacing: 2
+                                Text {
+                                    text: I18n.language === "tr" ? "İzolasyon Seviyesi" : "Isolation Level"
+                                    color: Theme.textSecondary
+                                    font.pixelSize: 10
+                                    font.family: Theme.fontFamily
+                                }
+                                Text {
+                                    text: I18n.language === "tr" ? "100% İzole • Yalnızca YuYuInstaller" : "100% Isolated • YuYuInstaller Only"
+                                    color: Theme.accent
+                                    font.pixelSize: 11
+                                    font.family: Theme.fontFamily
+                                    font.weight: Font.Bold
                                 }
                             }
                         }
                     }
+                }
+            }
 
-                    // Action Buttons for Auto VPN
+            // Card 3: Feature Highlights
+            Column {
+                width: parent.width
+                spacing: 10
+
+                Text {
+                    text: I18n.language === "tr" ? "WARP Tüneli Hakkında Bilgiler" : "About Cloudflare WARP Tunnel"
+                    color: Theme.textPrimary
+                    font.pixelSize: 13
+                    font.family: Theme.fontFamily
+                    font.weight: Font.Bold
+                }
+
+                // Feature 1
+                Rectangle {
+                    width: parent.width
+                    implicitHeight: f1Row.implicitHeight + 20
+                    radius: Theme.radiusMd
+                    color: Theme.bgCard
+                    border.color: Theme.borderDim
+                    border.width: 1
+
                     Row {
-                        width: parent.width
+                        id: f1Row
+                        anchors.fill: parent
+                        anchors.margins: 12
                         spacing: 12
 
-                        // Switch Server Node Button
                         Rectangle {
-                            width: (parent.width - 12) * 0.5
-                            height: 40
-                            radius: Theme.radiusMd
-                            color: switchMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
-                            border.color: Theme.borderBright
-                            border.width: 1
-
-                            MouseArea {
-                                id: switchMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (typeof proxyManager !== "undefined") {
-                                        proxyManager.enabled = true
-                                        proxyManager.switchAutoTunnelNode()
-                                    }
-                                }
-                            }
+                            width: 32; height: 32; radius: 16
+                            color: Theme.accent + "20"
+                            anchors.verticalCenter: parent.verticalCenter
 
                             Text {
                                 anchors.centerIn: parent
-                                text: I18n.t("proxyAutoSwitchBtn")
-                                color: Theme.textPrimary
-                                font.pixelSize: 12
-                                font.family: Theme.fontFamily
-                                font.weight: Font.DemiBold
+                                text: "🎓"
+                                font.pixelSize: 15
                             }
                         }
 
-                        // Connect / Reconnect Button
-                        Rectangle {
-                            width: (parent.width - 12) * 0.5
-                            height: 40
-                            radius: Theme.radiusMd
-                            color: connectVpnMouse.containsMouse ? "#00e5ab" : Theme.accent
-
-                            MouseArea {
-                                id: connectVpnMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (typeof proxyManager !== "undefined") {
-                                        proxyManager.enabled = true
-                                        proxyManager.startAutoTunnel()
-                                    }
-                                }
-                            }
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - 48
+                            spacing: 3
 
                             Text {
-                                anchors.centerIn: parent
-                                text: {
-                                    if (typeof proxyManager !== "undefined" && proxyManager.autoConnecting)
-                                        return I18n.t("proxyAutoConnecting")
-                                    if (typeof proxyManager !== "undefined" && proxyManager.autoConnected)
-                                        return "Connected (Reconnect)"
-                                    return "Connect"
-                                }
-                                color: "#07090e"
+                                text: I18n.language === "tr" ? "Eduroam & Üniversite / Yurt Ağları ile Tam Uyumlu" : "Fully Compatible with Eduroam & Campus Wi-Fi"
+                                color: Theme.textPrimary
                                 font.pixelSize: 12
                                 font.family: Theme.fontFamily
                                 font.weight: Font.Bold
                             }
-                        }
-                    }
-                }
-            }
-
-            // Card 3-B: Server Configuration & Quick Presets (Shown for SOCKS5 or HTTP)
-            Rectangle {
-                visible: root.selectedMode !== 0
-                width: parent.width
-                implicitHeight: configCol.implicitHeight + 32
-                radius: Theme.radiusLg
-                color: Theme.bgCard
-                border.color: Theme.borderDim
-                border.width: 1
-
-                Column {
-                    id: configCol
-                    anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 14
-
-                    Row {
-                        width: parent.width
-                        spacing: 8
-
-                        Text {
-                            text: I18n.t("proxyConfigTitle")
-                            color: Theme.textPrimary
-                            font.pixelSize: 13
-                            font.family: Theme.fontFamily
-                            font.weight: Font.Bold
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Item { width: 10; height: 1 }
-
-                        // Quick Presets (Only shown for SOCKS5)
-                        Row {
-                            visible: root.selectedMode === 1
-                            spacing: 6
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            // WARP Preset
-                            Rectangle {
-                                height: 22
-                                width: warpTxt.implicitWidth + 14
-                                radius: 4
-                                color: warpMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
-                                border.color: (root.localPort === 40000) ? Theme.accent : Theme.borderDim
-                                border.width: 1
-
-                                Text {
-                                    id: warpTxt
-                                    anchors.centerIn: parent
-                                    text: "Cloudflare WARP (40000)"
-                                    color: (root.localPort === 40000) ? Theme.accent : Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                }
-
-                                MouseArea {
-                                    id: warpMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.localHost = "127.0.0.1"
-                                        root.localPort = 40000
-                                    }
-                                }
-                            }
-
-                            // Tor Preset
-                            Rectangle {
-                                height: 22
-                                width: torTxt.implicitWidth + 14
-                                radius: 4
-                                color: torMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
-                                border.color: (root.localPort === 9050) ? Theme.accent : Theme.borderDim
-                                border.width: 1
-
-                                Text {
-                                    id: torTxt
-                                    anchors.centerIn: parent
-                                    text: "Tor (9050)"
-                                    color: (root.localPort === 9050) ? Theme.accent : Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                }
-
-                                MouseArea {
-                                    id: torMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.localHost = "127.0.0.1"
-                                        root.localPort = 9050
-                                    }
-                                }
-                            }
-
-                            // Xray / v2ray Preset
-                            Rectangle {
-                                height: 22
-                                width: xrayTxt.implicitWidth + 14
-                                radius: 4
-                                color: xrayMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
-                                border.color: (root.localPort === 10808) ? Theme.accent : Theme.borderDim
-                                border.width: 1
-
-                                Text {
-                                    id: xrayTxt
-                                    anchors.centerIn: parent
-                                    text: "v2ray / Xray (10808)"
-                                    color: (root.localPort === 10808) ? Theme.accent : Theme.textSecondary
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                }
-
-                                MouseArea {
-                                    id: xrayMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.localHost = "127.0.0.1"
-                                        root.localPort = 10808
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Host & Port Row
-                    Row {
-                        width: parent.width
-                        spacing: 12
-
-                        // Host Input
-                        Column {
-                            width: (parent.width - 12) * 0.72
-                            spacing: 5
-
                             Text {
-                                text: I18n.t("proxyHost")
+                                text: I18n.language === "tr"
+                                      ? "Standart WireGuard/UDP paketlerini engelleyen katı üniversite ve yurt güvenlik duvarlarında bile standart HTTPS (TCP 443) portunu kullanarak kesintisiz tünel oluşturur."
+                                      : "Connects via standard HTTPS port (TCP 443) to overcome strict firewall restrictions that block traditional WireGuard UDP packets."
                                 color: Theme.textSecondary
                                 font.pixelSize: 11
                                 font.family: Theme.fontFamily
-                            }
-
-                            Rectangle {
+                                wrapMode: Text.WordWrap
                                 width: parent.width
-                                height: 36
-                                radius: Theme.radiusMd
-                                color: Theme.bgElevated
-                                border.color: hostInput.activeFocus ? Theme.accent : Theme.borderDim
-                                border.width: 1
-
-                                TextInput {
-                                    id: hostInput
-                                    anchors.fill: parent
-                                    anchors.margins: 8
-                                    text: root.localHost
-                                    color: Theme.textPrimary
-                                    font.pixelSize: 12
-                                    font.family: Theme.fontFamily
-                                    verticalAlignment: TextInput.AlignVCenter
-                                    selectByMouse: true
-                                    onTextChanged: root.localHost = text
-                                }
-                            }
-                        }
-
-                        // Port Input
-                        Column {
-                            width: (parent.width - 12) * 0.28
-                            spacing: 5
-
-                            Text {
-                                text: I18n.t("proxyPort")
-                                color: Theme.textSecondary
-                                font.pixelSize: 11
-                                font.family: Theme.fontFamily
-                            }
-
-                            Rectangle {
-                                width: parent.width
-                                height: 36
-                                radius: Theme.radiusMd
-                                color: Theme.bgElevated
-                                border.color: portInput.activeFocus ? Theme.accent : Theme.borderDim
-                                border.width: 1
-
-                                TextInput {
-                                    id: portInput
-                                    anchors.fill: parent
-                                    anchors.margins: 8
-                                    text: root.localPort.toString()
-                                    color: Theme.textPrimary
-                                    font.pixelSize: 12
-                                    font.family: Theme.fontFamily
-                                    verticalAlignment: TextInput.AlignVCenter
-                                    selectByMouse: true
-                                    validator: IntValidator { bottom: 1; top: 65535 }
-                                    onTextChanged: root.localPort = parseInt(text) || 40000
-                                }
-                            }
-                        }
-                    }
-
-                    // Credentials Row (Optional)
-                    Row {
-                        width: parent.width
-                        spacing: 12
-
-                        // Username Input
-                        Column {
-                            width: (parent.width - 12) * 0.5
-                            spacing: 5
-
-                            Text {
-                                text: I18n.t("proxyUser")
-                                color: Theme.textSecondary
-                                font.pixelSize: 11
-                                font.family: Theme.fontFamily
-                            }
-
-                            Rectangle {
-                                width: parent.width
-                                height: 36
-                                radius: Theme.radiusMd
-                                color: Theme.bgElevated
-                                border.color: userInput.activeFocus ? Theme.accent : Theme.borderDim
-                                border.width: 1
-
-                                TextInput {
-                                    id: userInput
-                                    anchors.fill: parent
-                                    anchors.margins: 8
-                                    text: root.localUser
-                                    color: Theme.textPrimary
-                                    font.pixelSize: 12
-                                    font.family: Theme.fontFamily
-                                    verticalAlignment: TextInput.AlignVCenter
-                                    selectByMouse: true
-                                    onTextChanged: root.localUser = text
-                                }
-                            }
-                        }
-
-                        // Password Input
-                        Column {
-                            width: (parent.width - 12) * 0.5
-                            spacing: 5
-
-                            Text {
-                                text: I18n.t("proxyPass")
-                                color: Theme.textSecondary
-                                font.pixelSize: 11
-                                font.family: Theme.fontFamily
-                            }
-
-                            Rectangle {
-                                width: parent.width
-                                height: 36
-                                radius: Theme.radiusMd
-                                color: Theme.bgElevated
-                                border.color: passInput.activeFocus ? Theme.accent : Theme.borderDim
-                                border.width: 1
-
-                                TextInput {
-                                    id: passInput
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 8
-                                    anchors.rightMargin: 52
-                                    text: root.localPass
-                                    echoMode: root.showPassword ? TextInput.Normal : TextInput.Password
-                                    color: Theme.textPrimary
-                                    font.pixelSize: 12
-                                    font.family: Theme.fontFamily
-                                    verticalAlignment: TextInput.AlignVCenter
-                                    selectByMouse: true
-                                    onTextChanged: root.localPass = text
-                                }
-
-                                Text {
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 10
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: root.showPassword ? "Hide" : "Show"
-                                    color: Theme.accent
-                                    font.pixelSize: 10
-                                    font.family: Theme.fontFamily
-                                    font.weight: Font.DemiBold
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.showPassword = !root.showPassword
-                                    }
-                                }
+                                lineHeight: 1.25
                             }
                         }
                     }
                 }
-            }
 
-            // Card 4: Action Buttons (Only shown in Manual SOCKS5 or HTTP modes)
-            Row {
-                visible: root.selectedMode !== 0
-                width: parent.width
-                spacing: 12
-
-                // Test Connection Button
+                // Feature 2
                 Rectangle {
-                    width: (parent.width - 12) * 0.42
-                    height: 42
+                    width: parent.width
+                    implicitHeight: f2Row.implicitHeight + 20
                     radius: Theme.radiusMd
-                    color: testMouse.containsMouse ? Theme.bgCardHover : Theme.bgElevated
-                    border.color: (typeof proxyManager !== "undefined" && proxyManager.isTesting) ? Theme.accent : Theme.borderBright
+                    color: Theme.bgCard
+                    border.color: Theme.borderDim
                     border.width: 1
 
-                    MouseArea {
-                        id: testMouse
+                    Row {
+                        id: f2Row
                         anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        enabled: typeof proxyManager !== "undefined" && !proxyManager.isTesting
-                        onClicked: {
-                            if (typeof proxyManager !== "undefined") {
-                                proxyManager.setProxyMode(root.selectedMode)
-                                proxyManager.setHost(root.localHost)
-                                proxyManager.setPort(root.localPort)
-                                proxyManager.setUsername(root.localUser)
-                                proxyManager.setPassword(root.localPass)
-                                proxyManager.testConnection()
+                        anchors.margins: 12
+                        spacing: 12
+
+                        Rectangle {
+                            width: 32; height: 32; radius: 16
+                            color: Theme.accent + "20"
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "⚡"
+                                font.pixelSize: 15
+                            }
+                        }
+
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - 48
+                            spacing: 3
+
+                            Text {
+                                text: I18n.language === "tr" ? "Yalnızca Uygulama İçi (İzole Tünel)" : "App-Isolated (No System Lag or Ping Increase)"
+                                color: Theme.textPrimary
+                                font.pixelSize: 12
+                                font.family: Theme.fontFamily
+                                font.weight: Font.Bold
+                            }
+                            Text {
+                                text: I18n.language === "tr"
+                                      ? "Bilgisayarınızın genel internet bağlantısını, Discord, Spotify veya oyun pinglerinizi kesinlikle etkilemez. Sadece YuYuInstaller'ın indirmeleri tünellenir."
+                                      : "Does not touch your system network settings, games or other apps. Only YuYuInstaller media downloads are tunneled."
+                                color: Theme.textSecondary
+                                font.pixelSize: 11
+                                font.family: Theme.fontFamily
+                                wrapMode: Text.WordWrap
+                                width: parent.width
+                                lineHeight: 1.25
                             }
                         }
                     }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: (typeof proxyManager !== "undefined" && proxyManager.isTesting)
-                              ? I18n.t("proxyStatusTesting")
-                              : I18n.t("proxyTestBtn")
-                        color: Theme.textPrimary
-                        font.pixelSize: 12
-                        font.family: Theme.fontFamily
-                        font.weight: Font.DemiBold
-                    }
                 }
 
-                // Save & Apply Button
+                // Feature 3
                 Rectangle {
-                    width: (parent.width - 12) * 0.58
-                    height: 42
+                    width: parent.width
+                    implicitHeight: f3Row.implicitHeight + 20
                     radius: Theme.radiusMd
-                    color: saveMouse.containsMouse ? "#00e5ab" : Theme.accent
+                    color: Theme.bgCard
+                    border.color: Theme.borderDim
+                    border.width: 1
 
-                    MouseArea {
-                        id: saveMouse
+                    Row {
+                        id: f3Row
                         anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (typeof proxyManager !== "undefined") {
-                                proxyManager.setProxyMode(root.selectedMode)
-                                proxyManager.setHost(root.localHost)
-                                proxyManager.setPort(root.localPort)
-                                proxyManager.setUsername(root.localUser)
-                                proxyManager.setPassword(root.localPass)
-                                proxyManager.enabled = true
-                                proxyManager.applyProxy()
-                                proxyManager.saveSettings()
-                                root.savedNotification = true
-                                notificationTimer.restart()
+                        anchors.margins: 12
+                        spacing: 12
+
+                        Rectangle {
+                            width: 32; height: 32; radius: 16
+                            color: Theme.accent + "20"
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "🔒"
+                                font.pixelSize: 15
+                            }
+                        }
+
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - 48
+                            spacing: 3
+
+                            Text {
+                                text: I18n.language === "tr" ? "Sıfır Kurulum & Yüksek Hız" : "Zero Setup & Maximum Speed"
+                                color: Theme.textPrimary
+                                font.pixelSize: 12
+                                font.family: Theme.fontFamily
+                                font.weight: Font.Bold
+                            }
+                            Text {
+                                text: I18n.language === "tr"
+                                      ? "Harici sanal ağ kartı (TAP adaptörü) veya yönetici izni gerekmez. Cloudflare'ın küresel Anycast ağı ile en yüksek hızda indirme sağlar."
+                                      : "No virtual network adapter drivers or administrative privileges needed. Backed by Cloudflare's global Anycast backbone."
+                                color: Theme.textSecondary
+                                font.pixelSize: 11
+                                font.family: Theme.fontFamily
+                                wrapMode: Text.WordWrap
+                                width: parent.width
+                                lineHeight: 1.25
                             }
                         }
                     }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: I18n.t("proxySaveBtn")
-                        color: "#07090e"
-                        font.pixelSize: 13
-                        font.family: Theme.fontFamily
-                        font.weight: Font.Bold
-                    }
-                }
-            }
-
-            // Status message from test (Manual Mode)
-            Rectangle {
-                visible: (root.selectedMode !== 0 && typeof proxyManager !== "undefined" && proxyManager.testStatus !== 0)
-                width: parent.width
-                height: 34
-                radius: Theme.radiusMd
-                color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? (Theme.accent + "22") : "#2a1515"
-                border.color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? Theme.accent : "#ef4444"
-                border.width: 1
-
-                Text {
-                    anchors.centerIn: parent
-                    text: (typeof proxyManager !== "undefined") ? proxyManager.testMessage : ""
-                    color: (typeof proxyManager !== "undefined" && proxyManager.testStatus === 1) ? Theme.accent : "#ef4444"
-                    font.pixelSize: 11
-                    font.family: Theme.fontFamily
-                    font.weight: Font.DemiBold
-                }
-            }
-
-            // Save Confirmation Notification Banner
-            Rectangle {
-                visible: root.savedNotification
-                width: parent.width
-                height: 34
-                radius: Theme.radiusMd
-                color: Theme.accent + "22"
-                border.color: Theme.accent
-                border.width: 1
-
-                Text {
-                    anchors.centerIn: parent
-                    text: I18n.t("proxyAppliedSuccess")
-                    color: Theme.accent
-                    font.pixelSize: 11
-                    font.family: Theme.fontFamily
-                    font.weight: Font.DemiBold
                 }
             }
         }

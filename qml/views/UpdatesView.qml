@@ -357,6 +357,65 @@ Item {
                         width: parent.width
                         spacing: 10
 
+                        // v1.2.5 Pro
+                        Rectangle {
+                            width: parent.width
+                            implicitHeight: log125Col.implicitHeight + 20
+                            radius: Theme.radiusMd
+                            color: Theme.bgInput
+                            border.color: Theme.borderDim
+                            border.width: 1
+
+                            Column {
+                                id: log125Col
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 8
+
+                                Row {
+                                    spacing: 8
+                                    Rectangle {
+                                        width: 58; height: 20; radius: 4
+                                        color: Theme.accent
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "v1.2.5"
+                                            color: "#07090e"
+                                            font.pixelSize: 11
+                                            font.weight: Font.Bold
+                                        }
+                                    }
+                                    Rectangle {
+                                        width: 54; height: 18; radius: 9
+                                        color: "#162338"
+                                        border.color: Theme.accent
+                                        border.width: 1
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "CURRENT"
+                                            color: Theme.accent
+                                            font.pixelSize: 9
+                                            font.weight: Font.Bold
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    text: I18n.language === "tr"
+                                          ? "• Cloudflare WARP MASQUE (TCP 443): Eduroam, üniversite ve yurt ağlarındaki engelleri aşan yerleşik tünel motoru (usque) entegrasyonu\n• Sadeleştirilmiş Proxy & Gizlilik Arayüzü: Çalışmayan genel proxy modları kaldırılarak tek tıkla izole Cloudflare WARP tünel kontrolü sağlandı\n• Arayüz İyileştirmeleri: Ayarlar ve proxy sayfalarındaki emojiler temizlendi, modern sistem ikonlarıyla yenilendi\n• Otomatik Güncelleme Optimizasyonu: Dahili sürüm denetimi ve tünel durum bildirimleri güncellendi"
+                                          : (I18n.language === "uk"
+                                             ? "• Cloudflare WARP MASQUE (TCP 443): Інтеграція нового рушія тунелювання (usque) для обходу блокувань у мережах eduroam та університетах\n• Спрощений інтерфейс Proxy & Privacy: Видалено неробочі загальнодоступні проксі на користь швидкого ізольованого тунелю Cloudflare WARP\n• Оновлення інтерфейсу: Очищено емодзі в налаштуваннях та замінено на сучасні системні іконки\n• Оптимізація оновлень: Оновлено внутрішню перевірку версій та повідомлення про стан тунелю"
+                                             : "• Cloudflare WARP MASQUE (TCP 443): Integrated new tunnel engine (usque) overcoming strict campus/eduroam firewall restrictions\n• Streamlined Proxy & Privacy Interface: Removed dysfunctional public proxies in favor of an instant, isolated one-click Cloudflare WARP tunnel\n• UI Refinements: Cleaned up emojis across settings and proxy views, replacing with modern sleek vector icons\n• Versioning & Diagnostics: Upgraded in-app update checks and live connection diagnostics")
+                                    color: Theme.textSecondary
+                                    font.pixelSize: 11
+                                    font.family: Theme.fontFamily
+                                    lineHeight: 1.45
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+
                         // v1.2.4 Pro
                         Rectangle {
                             width: parent.width
@@ -376,25 +435,12 @@ Item {
                                     spacing: 8
                                     Rectangle {
                                         width: 58; height: 20; radius: 4
-                                        color: Theme.accent
+                                        color: "#222c3c"
                                         Text {
                                             anchors.centerIn: parent
                                             text: "v1.2.4"
-                                            color: "#07090e"
+                                            color: Theme.textSecondary
                                             font.pixelSize: 11
-                                            font.weight: Font.Bold
-                                        }
-                                    }
-                                    Rectangle {
-                                        width: 54; height: 18; radius: 9
-                                        color: "#162338"
-                                        border.color: Theme.accent
-                                        border.width: 1
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "CURRENT"
-                                            color: Theme.accent
-                                            font.pixelSize: 9
                                             font.weight: Font.Bold
                                         }
                                     }
