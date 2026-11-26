@@ -69,33 +69,30 @@ Rectangle {
             height: 1
         }
 
-        // Navigation Menu
+        // Navigation Menu — Concept F: Morph & Tilt
         Column {
             width: parent.width
             spacing: 6
 
+            // ═══════════════════════════════════════════════════════
             // Tab 0: Dashboard (Downloader)
+            // ═══════════════════════════════════════════════════════
             Rectangle {
                 width: parent.width
                 height: 42
-                radius: Theme.radiusMd
-                color: (root.activeTab === 0) ? Theme.activeTabBg : (tab0Mouse.containsMouse ? Theme.bgCardHover : "transparent")
-                border.color: (root.activeTab === 0) ? Theme.activeTabBorder : "transparent"
-                border.width: 1
-                opacity: (root.activeTab === 0) ? 1.0 : (tab0Mouse.containsMouse ? 0.85 : 0.55)
-                Behavior on opacity { NumberAnimation { duration: 150 } }
+                readonly property bool isActive: root.activeTab === 0
+                readonly property bool isHover: tab0Mouse.containsMouse
 
-                // Left vertical neon indicator line (like the screenshot)
-                Rectangle {
-                    width: 3
-                    height: 18
-                    radius: 2
-                    color: Theme.activeTabIndicator
-                    anchors.left: parent.left
-                    anchors.leftMargin: 2
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: root.activeTab === 0
-                }
+                radius: (isActive || isHover) ? 14 : 9
+                color: isActive ? Qt.alpha(Theme.accent, 0.20) : (isHover ? "#12ffffff" : "transparent")
+                border.color: isActive ? Qt.alpha(Theme.accent, 0.45) : (isHover ? "#1affffff" : "transparent")
+                border.width: 1
+                opacity: isActive ? 1.0 : (isHover ? 0.94 : 0.55)
+
+                Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on border.color { ColorAnimation { duration: 200 } }
+                Behavior on opacity { NumberAnimation { duration: 180 } }
 
                 MouseArea {
                     id: tab0Mouse
@@ -105,86 +102,87 @@ Rectangle {
                     onClicked: root.activeTab = 0
                 }
 
-                Row {
-                    anchors.fill: parent
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 12
-                    spacing: 12
+                Item {
+                    width: 18; height: 18
+                    x: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    rotation: (parent.isActive || parent.isHover) ? -8 : 0
+                    scale: parent.isHover ? 1.15 : (parent.isActive ? 1.10 : 1.0)
 
-                    Item {
-                        width: 18; height: 18
-                        anchors.verticalCenter: parent.verticalCenter
-                        Canvas {
-                            id: tab0Canvas
-                            anchors.fill: parent
-                            onPaint: {
-                                var ctx = getContext("2d");
-                                ctx.reset();
-                                ctx.strokeStyle = (root.activeTab === 0) ? Theme.accent : (tab0Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary);
-                                ctx.fillStyle = ctx.strokeStyle;
-                                ctx.lineWidth = 1.75;
-                                ctx.lineCap = "round";
-                                ctx.lineJoin = "round";
+                    Behavior on rotation { NumberAnimation { duration: 230; easing.type: Easing.OutBack } }
+                    Behavior on scale { NumberAnimation { duration: 230; easing.type: Easing.OutBack } }
 
-                                ctx.beginPath();
-                                ctx.moveTo(9, 2);
-                                ctx.lineTo(9, 11);
-                                ctx.moveTo(5.5, 7.5);
-                                ctx.lineTo(9, 11);
-                                ctx.lineTo(12.5, 7.5);
-                                ctx.stroke();
+                    Canvas {
+                        id: tab0Canvas
+                        anchors.fill: parent
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.reset();
+                            ctx.strokeStyle = (root.activeTab === 0 || tab0Mouse.containsMouse) ? Theme.accent : Theme.textSecondary;
+                            ctx.fillStyle = ctx.strokeStyle;
+                            ctx.lineWidth = 1.75;
+                            ctx.lineCap = "round";
+                            ctx.lineJoin = "round";
 
-                                ctx.beginPath();
-                                ctx.moveTo(3, 11);
-                                ctx.lineTo(3, 15);
-                                ctx.lineTo(15, 15);
-                                ctx.lineTo(15, 11);
-                                ctx.stroke();
-                            }
-                            Connections {
-                                target: root
-                                function onActiveTabChanged() { tab0Canvas.requestPaint(); }
-                            }
-                            Connections {
-                                target: tab0Mouse
-                                function onContainsMouseChanged() { tab0Canvas.requestPaint(); }
-                            }
+                            ctx.beginPath();
+                            ctx.moveTo(9, 2);
+                            ctx.lineTo(9, 11);
+                            ctx.moveTo(5.5, 7.5);
+                            ctx.lineTo(9, 11);
+                            ctx.lineTo(12.5, 7.5);
+                            ctx.stroke();
+
+                            ctx.beginPath();
+                            ctx.moveTo(3, 11);
+                            ctx.lineTo(3, 15);
+                            ctx.lineTo(15, 15);
+                            ctx.lineTo(15, 11);
+                            ctx.stroke();
+                        }
+                        Connections {
+                            target: root
+                            function onActiveTabChanged() { tab0Canvas.requestPaint(); }
+                        }
+                        Connections {
+                            target: tab0Mouse
+                            function onContainsMouseChanged() { tab0Canvas.requestPaint(); }
                         }
                     }
+                }
 
-                    Text {
-                        text: I18n.t("navDownloader")
-                        color: (root.activeTab === 0) ? Theme.activeTabText : (tab0Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary)
-                        font.pixelSize: 13
-                        font.family: Theme.fontFamily
-                        font.weight: (root.activeTab === 0) ? Font.DemiBold : Font.Normal
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+                Text {
+                    text: I18n.t("navDownloader")
+                    x: (parent.isActive || parent.isHover) ? 47 : 44
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: parent.isActive ? Theme.activeTabText : (parent.isHover ? Theme.textPrimary : Theme.textSecondary)
+                    font.pixelSize: 13
+                    font.family: Theme.fontFamily
+                    font.weight: parent.isActive ? Font.DemiBold : Font.Normal
+
+                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 180 } }
                 }
             }
 
+            // ═══════════════════════════════════════════════════════
             // Tab 1: Queue
+            // ═══════════════════════════════════════════════════════
             Rectangle {
                 width: parent.width
                 height: 42
-                radius: Theme.radiusMd
-                color: (root.activeTab === 1) ? Theme.activeTabBg : (tab1Mouse.containsMouse ? Theme.bgCardHover : "transparent")
-                opacity: (root.activeTab === 1) ? 1.0 : (tab1Mouse.containsMouse ? 0.85 : 0.55)
-                Behavior on opacity { NumberAnimation { duration: 150 } }
-                border.color: (root.activeTab === 1) ? Theme.activeTabBorder : "transparent"
-                border.width: 1
+                readonly property bool isActive: root.activeTab === 1
+                readonly property bool isHover: tab1Mouse.containsMouse
 
-                // Left vertical neon indicator line
-                Rectangle {
-                    width: 3
-                    height: 18
-                    radius: 2
-                    color: Theme.activeTabIndicator
-                    anchors.left: parent.left
-                    anchors.leftMargin: 2
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: root.activeTab === 1
-                }
+                radius: (isActive || isHover) ? 14 : 9
+                color: isActive ? Qt.alpha(Theme.accent, 0.20) : (isHover ? "#12ffffff" : "transparent")
+                border.color: isActive ? Qt.alpha(Theme.accent, 0.45) : (isHover ? "#1affffff" : "transparent")
+                border.width: 1
+                opacity: isActive ? 1.0 : (isHover ? 0.94 : 0.55)
+
+                Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on border.color { ColorAnimation { duration: 200 } }
+                Behavior on opacity { NumberAnimation { duration: 180 } }
 
                 MouseArea {
                     id: tab1Mouse
@@ -194,69 +192,73 @@ Rectangle {
                     onClicked: root.activeTab = 1
                 }
 
-                Row {
-                    anchors.fill: parent
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 12
-                    spacing: 12
+                Item {
+                    width: 18; height: 18
+                    x: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    rotation: (parent.isActive || parent.isHover) ? -8 : 0
+                    scale: parent.isHover ? 1.15 : (parent.isActive ? 1.10 : 1.0)
 
-                    Item {
-                        width: 18; height: 18
-                        anchors.verticalCenter: parent.verticalCenter
-                        Canvas {
-                            id: tab1Canvas
-                            anchors.fill: parent
-                            onPaint: {
-                                var ctx = getContext("2d");
-                                ctx.reset();
-                                ctx.strokeStyle = (root.activeTab === 1) ? Theme.accent : (tab1Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary);
-                                ctx.fillStyle = ctx.strokeStyle;
-                                ctx.lineWidth = 1.75;
-                                ctx.lineCap = "round";
+                    Behavior on rotation { NumberAnimation { duration: 230; easing.type: Easing.OutBack } }
+                    Behavior on scale { NumberAnimation { duration: 230; easing.type: Easing.OutBack } }
 
-                                ctx.beginPath();
-                                ctx.moveTo(7, 4);
-                                ctx.lineTo(15, 4);
-                                ctx.stroke();
-                                ctx.beginPath();
-                                ctx.arc(3.5, 4, 1.2, 0, Math.PI * 2);
-                                ctx.fill();
+                    Canvas {
+                        id: tab1Canvas
+                        anchors.fill: parent
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.reset();
+                            ctx.strokeStyle = (root.activeTab === 1 || tab1Mouse.containsMouse) ? Theme.accent : Theme.textSecondary;
+                            ctx.fillStyle = ctx.strokeStyle;
+                            ctx.lineWidth = 1.75;
+                            ctx.lineCap = "round";
 
-                                ctx.beginPath();
-                                ctx.moveTo(7, 9);
-                                ctx.lineTo(15, 9);
-                                ctx.stroke();
-                                ctx.beginPath();
-                                ctx.arc(3.5, 9, 1.2, 0, Math.PI * 2);
-                                ctx.fill();
+                            ctx.beginPath();
+                            ctx.moveTo(7, 4);
+                            ctx.lineTo(15, 4);
+                            ctx.stroke();
+                            ctx.beginPath();
+                            ctx.arc(3.5, 4, 1.2, 0, Math.PI * 2);
+                            ctx.fill();
 
-                                ctx.beginPath();
-                                ctx.moveTo(7, 14);
-                                ctx.lineTo(15, 14);
-                                ctx.stroke();
-                                ctx.beginPath();
-                                ctx.arc(3.5, 14, 1.2, 0, Math.PI * 2);
-                                ctx.fill();
-                            }
-                            Connections {
-                                target: root
-                                function onActiveTabChanged() { tab1Canvas.requestPaint(); }
-                            }
-                            Connections {
-                                target: tab1Mouse
-                                function onContainsMouseChanged() { tab1Canvas.requestPaint(); }
-                            }
+                            ctx.beginPath();
+                            ctx.moveTo(7, 9);
+                            ctx.lineTo(15, 9);
+                            ctx.stroke();
+                            ctx.beginPath();
+                            ctx.arc(3.5, 9, 1.2, 0, Math.PI * 2);
+                            ctx.fill();
+
+                            ctx.beginPath();
+                            ctx.moveTo(7, 14);
+                            ctx.lineTo(15, 14);
+                            ctx.stroke();
+                            ctx.beginPath();
+                            ctx.arc(3.5, 14, 1.2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        Connections {
+                            target: root
+                            function onActiveTabChanged() { tab1Canvas.requestPaint(); }
+                        }
+                        Connections {
+                            target: tab1Mouse
+                            function onContainsMouseChanged() { tab1Canvas.requestPaint(); }
                         }
                     }
+                }
 
-                    Text {
-                        text: I18n.t("navQueue")
-                        color: (root.activeTab === 1) ? Theme.activeTabText : (tab1Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary)
-                        font.pixelSize: 13
-                        font.family: Theme.fontFamily
-                        font.weight: (root.activeTab === 1) ? Font.DemiBold : Font.Normal
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+                Text {
+                    text: I18n.t("navQueue")
+                    x: (parent.isActive || parent.isHover) ? 47 : 44
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: parent.isActive ? Theme.activeTabText : (parent.isHover ? Theme.textPrimary : Theme.textSecondary)
+                    font.pixelSize: 13
+                    font.family: Theme.fontFamily
+                    font.weight: parent.isActive ? Font.DemiBold : Font.Normal
+
+                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 180 } }
                 }
 
                 // Badge for active downloads count (cleanly anchored inside the right edge)
@@ -284,28 +286,25 @@ Rectangle {
                 }
             }
 
+            // ═══════════════════════════════════════════════════════
             // Tab 2: Updates
+            // ═══════════════════════════════════════════════════════
             Rectangle {
                 width: parent.width
                 height: 42
-                radius: Theme.radiusMd
-                color: (root.activeTab === 2) ? Theme.activeTabBg : (tab2Mouse.containsMouse ? Theme.bgCardHover : "transparent")
-                opacity: (root.activeTab === 2) ? 1.0 : (tab2Mouse.containsMouse ? 0.85 : 0.55)
-                Behavior on opacity { NumberAnimation { duration: 150 } }
-                border.color: (root.activeTab === 2) ? Theme.activeTabBorder : "transparent"
-                border.width: 1
+                readonly property bool isActive: root.activeTab === 2
+                readonly property bool isHover: tab2Mouse.containsMouse
 
-                // Left vertical neon indicator line
-                Rectangle {
-                    width: 3
-                    height: 18
-                    radius: 2
-                    color: Theme.activeTabIndicator
-                    anchors.left: parent.left
-                    anchors.leftMargin: 2
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: root.activeTab === 2
-                }
+                radius: (isActive || isHover) ? 14 : 9
+                color: isActive ? Qt.alpha(Theme.accent, 0.20) : (isHover ? "#12ffffff" : "transparent")
+                border.color: isActive ? Qt.alpha(Theme.accent, 0.45) : (isHover ? "#1affffff" : "transparent")
+                border.width: 1
+                opacity: isActive ? 1.0 : (isHover ? 0.94 : 0.55)
+
+                Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on border.color { ColorAnimation { duration: 200 } }
+                Behavior on opacity { NumberAnimation { duration: 180 } }
 
                 MouseArea {
                     id: tab2Mouse
@@ -315,79 +314,83 @@ Rectangle {
                     onClicked: root.activeTab = 2
                 }
 
-                Row {
-                    anchors.fill: parent
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 12
-                    spacing: 12
+                Item {
+                    width: 18; height: 18
+                    x: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    rotation: (parent.isActive || parent.isHover) ? -8 : 0
+                    scale: parent.isHover ? 1.15 : (parent.isActive ? 1.10 : 1.0)
 
-                    Item {
-                        width: 18; height: 18
-                        anchors.verticalCenter: parent.verticalCenter
-                        Canvas {
-                            id: tab2Canvas
-                            anchors.fill: parent
-                            onPaint: {
-                                var ctx = getContext("2d");
-                                ctx.reset();
-                                ctx.strokeStyle = (root.activeTab === 2) ? Theme.accent : (tab2Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary);
-                                ctx.fillStyle = ctx.strokeStyle;
-                                ctx.lineWidth = 1.75;
-                                ctx.lineCap = "round";
-                                ctx.lineJoin = "round";
+                    Behavior on rotation { NumberAnimation { duration: 230; easing.type: Easing.OutBack } }
+                    Behavior on scale { NumberAnimation { duration: 230; easing.type: Easing.OutBack } }
 
-                                // Top sync arc (clear gap on both ends)
-                                var r = 6.0;
-                                var aTopStart = -135 * Math.PI / 180;
-                                var aTopEnd   =  -15 * Math.PI / 180;
-                                ctx.beginPath();
-                                ctx.arc(9, 9, r, aTopStart, aTopEnd);
-                                ctx.stroke();
+                    Canvas {
+                        id: tab2Canvas
+                        anchors.fill: parent
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.reset();
+                            ctx.strokeStyle = (root.activeTab === 2 || tab2Mouse.containsMouse) ? Theme.accent : Theme.textSecondary;
+                            ctx.fillStyle = ctx.strokeStyle;
+                            ctx.lineWidth = 1.75;
+                            ctx.lineCap = "round";
+                            ctx.lineJoin = "round";
 
-                                // Top-right arrowhead at aTopEnd
-                                var tx = 9 + r * Math.cos(aTopEnd);
-                                var ty = 9 + r * Math.sin(aTopEnd);
-                                ctx.beginPath();
-                                ctx.moveTo(tx - 3.2, ty - 1.2);
-                                ctx.lineTo(tx + 0.3, ty + 0.3);
-                                ctx.lineTo(tx + 1.0, ty - 3.3);
-                                ctx.stroke();
+                            // Top sync arc (clear gap on both ends)
+                            var r = 6.0;
+                            var aTopStart = -135 * Math.PI / 180;
+                            var aTopEnd   =  -15 * Math.PI / 180;
+                            ctx.beginPath();
+                            ctx.arc(9, 9, r, aTopStart, aTopEnd);
+                            ctx.stroke();
 
-                                // Bottom sync arc (clear gap on both ends)
-                                var aBotStart =  45 * Math.PI / 180;
-                                var aBotEnd   = 165 * Math.PI / 180;
-                                ctx.beginPath();
-                                ctx.arc(9, 9, r, aBotStart, aBotEnd);
-                                ctx.stroke();
+                            // Top-right arrowhead at aTopEnd
+                            var tx = 9 + r * Math.cos(aTopEnd);
+                            var ty = 9 + r * Math.sin(aTopEnd);
+                            ctx.beginPath();
+                            ctx.moveTo(tx - 3.2, ty - 1.2);
+                            ctx.lineTo(tx + 0.3, ty + 0.3);
+                            ctx.lineTo(tx + 1.0, ty - 3.3);
+                            ctx.stroke();
 
-                                // Bottom-left arrowhead at aBotEnd
-                                var bx = 9 + r * Math.cos(aBotEnd);
-                                var by = 9 + r * Math.sin(aBotEnd);
-                                ctx.beginPath();
-                                ctx.moveTo(bx + 3.2, by + 1.2);
-                                ctx.lineTo(bx - 0.3, by - 0.3);
-                                ctx.lineTo(bx - 1.0, by + 3.3);
-                                ctx.stroke();
-                            }
-                            Connections {
-                                target: root
-                                function onActiveTabChanged() { tab2Canvas.requestPaint(); }
-                            }
-                            Connections {
-                                target: tab2Mouse
-                                function onContainsMouseChanged() { tab2Canvas.requestPaint(); }
-                            }
+                            // Bottom sync arc (clear gap on both ends)
+                            var aBotStart =  45 * Math.PI / 180;
+                            var aBotEnd   = 165 * Math.PI / 180;
+                            ctx.beginPath();
+                            ctx.arc(9, 9, r, aBotStart, aBotEnd);
+                            ctx.stroke();
+
+                            // Bottom-left arrowhead at aBotEnd
+                            var bx = 9 + r * Math.cos(aBotEnd);
+                            var by = 9 + r * Math.sin(aBotEnd);
+                            ctx.beginPath();
+                            ctx.moveTo(bx + 3.2, by + 1.2);
+                            ctx.lineTo(bx - 0.3, by - 0.3);
+                            ctx.lineTo(bx - 1.0, by + 3.3);
+                            ctx.stroke();
+                        }
+                        Connections {
+                            target: root
+                            function onActiveTabChanged() { tab2Canvas.requestPaint(); }
+                        }
+                        Connections {
+                            target: tab2Mouse
+                            function onContainsMouseChanged() { tab2Canvas.requestPaint(); }
                         }
                     }
+                }
 
-                    Text {
-                        text: I18n.t("navUpdates")
-                        color: (root.activeTab === 2) ? Theme.activeTabText : (tab2Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary)
-                        font.pixelSize: 13
-                        font.family: Theme.fontFamily
-                        font.weight: (root.activeTab === 2) ? Font.DemiBold : Font.Normal
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+                Text {
+                    text: I18n.t("navUpdates")
+                    x: (parent.isActive || parent.isHover) ? 47 : 44
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: parent.isActive ? Theme.activeTabText : (parent.isHover ? Theme.textPrimary : Theme.textSecondary)
+                    font.pixelSize: 13
+                    font.family: Theme.fontFamily
+                    font.weight: parent.isActive ? Font.DemiBold : Font.Normal
+
+                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 180 } }
                 }
 
                 // Neon update notification badge with gentle breathing pulse
@@ -420,28 +423,25 @@ Rectangle {
                 }
             }
 
+            // ═══════════════════════════════════════════════════════
             // Tab 3: Proxy & Privacy
+            // ═══════════════════════════════════════════════════════
             Rectangle {
                 width: parent.width
                 height: 42
-                radius: Theme.radiusMd
-                color: (root.activeTab === 3) ? Theme.activeTabBg : (tabProxyMouse.containsMouse ? Theme.bgCardHover : "transparent")
-                opacity: (root.activeTab === 3) ? 1.0 : (tabProxyMouse.containsMouse ? 0.85 : 0.55)
-                Behavior on opacity { NumberAnimation { duration: 150 } }
-                border.color: (root.activeTab === 3) ? Theme.activeTabBorder : "transparent"
-                border.width: 1
+                readonly property bool isActive: root.activeTab === 3
+                readonly property bool isHover: tabProxyMouse.containsMouse
 
-                // Left vertical neon indicator line
-                Rectangle {
-                    width: 3
-                    height: 18
-                    radius: 2
-                    color: Theme.activeTabIndicator
-                    anchors.left: parent.left
-                    anchors.leftMargin: 2
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: root.activeTab === 3
-                }
+                radius: (isActive || isHover) ? 14 : 9
+                color: isActive ? Qt.alpha(Theme.accent, 0.20) : (isHover ? "#12ffffff" : "transparent")
+                border.color: isActive ? Qt.alpha(Theme.accent, 0.45) : (isHover ? "#1affffff" : "transparent")
+                border.width: 1
+                opacity: isActive ? 1.0 : (isHover ? 0.94 : 0.55)
+
+                Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on border.color { ColorAnimation { duration: 200 } }
+                Behavior on opacity { NumberAnimation { duration: 180 } }
 
                 MouseArea {
                     id: tabProxyMouse
@@ -451,64 +451,68 @@ Rectangle {
                     onClicked: root.activeTab = 3
                 }
 
-                Row {
-                    anchors.fill: parent
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 12
-                    spacing: 12
+                Item {
+                    width: 18; height: 18
+                    x: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    rotation: (parent.isActive || parent.isHover) ? -8 : 0
+                    scale: parent.isHover ? 1.15 : (parent.isActive ? 1.10 : 1.0)
 
-                    Item {
-                        width: 18; height: 18
-                        anchors.verticalCenter: parent.verticalCenter
-                        Canvas {
-                            id: tabProxyCanvas
-                            anchors.fill: parent
-                            onPaint: {
-                                var ctx = getContext("2d");
-                                ctx.reset();
-                                ctx.strokeStyle = (root.activeTab === 3) ? Theme.accent : (tabProxyMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary);
-                                ctx.fillStyle = ctx.strokeStyle;
-                                ctx.lineWidth = 1.75;
-                                ctx.lineCap = "round";
-                                ctx.lineJoin = "round";
+                    Behavior on rotation { NumberAnimation { duration: 230; easing.type: Easing.OutBack } }
+                    Behavior on scale { NumberAnimation { duration: 230; easing.type: Easing.OutBack } }
 
-                                // Symmetrical cyber shield outline
-                                ctx.beginPath();
-                                ctx.moveTo(9, 2.5);
-                                ctx.lineTo(15, 4.8);
-                                ctx.lineTo(15, 9.5);
-                                ctx.bezierCurveTo(15, 13.5, 12, 15.8, 9, 16.8);
-                                ctx.bezierCurveTo(6, 15.8, 3, 13.5, 3, 9.5);
-                                ctx.lineTo(3, 4.8);
-                                ctx.closePath();
-                                ctx.stroke();
+                    Canvas {
+                        id: tabProxyCanvas
+                        anchors.fill: parent
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.reset();
+                            ctx.strokeStyle = (root.activeTab === 3 || tabProxyMouse.containsMouse) ? Theme.accent : Theme.textSecondary;
+                            ctx.fillStyle = ctx.strokeStyle;
+                            ctx.lineWidth = 1.75;
+                            ctx.lineCap = "round";
+                            ctx.lineJoin = "round";
 
-                                // Crisp security checkmark
-                                ctx.beginPath();
-                                ctx.moveTo(6.5, 9.5);
-                                ctx.lineTo(8.2, 11.3);
-                                ctx.lineTo(11.8, 7.3);
-                                ctx.stroke();
-                            }
-                            Connections {
-                                target: root
-                                function onActiveTabChanged() { tabProxyCanvas.requestPaint(); }
-                            }
-                            Connections {
-                                target: tabProxyMouse
-                                function onContainsMouseChanged() { tabProxyCanvas.requestPaint(); }
-                            }
+                            // Symmetrical cyber shield outline
+                            ctx.beginPath();
+                            ctx.moveTo(9, 2.5);
+                            ctx.lineTo(15, 4.8);
+                            ctx.lineTo(15, 9.5);
+                            ctx.bezierCurveTo(15, 13.5, 12, 15.8, 9, 16.8);
+                            ctx.bezierCurveTo(6, 15.8, 3, 13.5, 3, 9.5);
+                            ctx.lineTo(3, 4.8);
+                            ctx.closePath();
+                            ctx.stroke();
+
+                            // Crisp security checkmark
+                            ctx.beginPath();
+                            ctx.moveTo(6.5, 9.5);
+                            ctx.lineTo(8.2, 11.3);
+                            ctx.lineTo(11.8, 7.3);
+                            ctx.stroke();
+                        }
+                        Connections {
+                            target: root
+                            function onActiveTabChanged() { tabProxyCanvas.requestPaint(); }
+                        }
+                        Connections {
+                            target: tabProxyMouse
+                            function onContainsMouseChanged() { tabProxyCanvas.requestPaint(); }
                         }
                     }
+                }
 
-                    Text {
-                        text: I18n.t("navProxy")
-                        color: (root.activeTab === 3) ? Theme.activeTabText : (tabProxyMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary)
-                        font.pixelSize: 13
-                        font.family: Theme.fontFamily
-                        font.weight: (root.activeTab === 3) ? Font.DemiBold : Font.Normal
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+                Text {
+                    text: I18n.t("navProxy")
+                    x: (parent.isActive || parent.isHover) ? 47 : 44
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: parent.isActive ? Theme.activeTabText : (parent.isHover ? Theme.textPrimary : Theme.textSecondary)
+                    font.pixelSize: 13
+                    font.family: Theme.fontFamily
+                    font.weight: parent.isActive ? Font.DemiBold : Font.Normal
+
+                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 180 } }
                 }
 
                 // Glowing indicator when proxy is actively enabled
@@ -529,28 +533,25 @@ Rectangle {
                 }
             }
 
+            // ═══════════════════════════════════════════════════════
             // Tab 4: Settings
+            // ═══════════════════════════════════════════════════════
             Rectangle {
                 width: parent.width
                 height: 42
-                radius: Theme.radiusMd
-                color: (root.activeTab === 4) ? Theme.activeTabBg : (tab3Mouse.containsMouse ? Theme.bgCardHover : "transparent")
-                opacity: (root.activeTab === 4) ? 1.0 : (tab3Mouse.containsMouse ? 0.85 : 0.55)
-                Behavior on opacity { NumberAnimation { duration: 150 } }
-                border.color: (root.activeTab === 4) ? Theme.activeTabBorder : "transparent"
-                border.width: 1
+                readonly property bool isActive: root.activeTab === 4
+                readonly property bool isHover: tab3Mouse.containsMouse
 
-                // Left vertical neon indicator line
-                Rectangle {
-                    width: 3
-                    height: 18
-                    radius: 2
-                    color: Theme.activeTabIndicator
-                    anchors.left: parent.left
-                    anchors.leftMargin: 2
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: root.activeTab === 4
-                }
+                radius: (isActive || isHover) ? 14 : 9
+                color: isActive ? Qt.alpha(Theme.accent, 0.20) : (isHover ? "#12ffffff" : "transparent")
+                border.color: isActive ? Qt.alpha(Theme.accent, 0.45) : (isHover ? "#1affffff" : "transparent")
+                border.width: 1
+                opacity: isActive ? 1.0 : (isHover ? 0.94 : 0.55)
+
+                Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on border.color { ColorAnimation { duration: 200 } }
+                Behavior on opacity { NumberAnimation { duration: 180 } }
 
                 MouseArea {
                     id: tab3Mouse
@@ -560,91 +561,93 @@ Rectangle {
                     onClicked: root.activeTab = 4
                 }
 
-                Row {
-                    anchors.fill: parent
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 12
-                    spacing: 12
+                Item {
+                    width: 18; height: 18
+                    x: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    rotation: (parent.isActive || parent.isHover) ? -8 : 0
+                    scale: parent.isHover ? 1.15 : (parent.isActive ? 1.10 : 1.0)
 
-                    Item {
-                        width: 18; height: 18
-                        anchors.verticalCenter: parent.verticalCenter
-                        Canvas {
-                            id: tab3Canvas
-                            anchors.fill: parent
-                            onPaint: {
-                                var ctx = getContext("2d");
-                                ctx.reset();
-                                ctx.strokeStyle = (root.activeTab === 4) ? Theme.accent : (tab3Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary);
-                                ctx.lineWidth = 1.75;
-                                ctx.lineCap = "round";
-                                ctx.lineJoin = "round";
+                    Behavior on rotation { NumberAnimation { duration: 230; easing.type: Easing.OutBack } }
+                    Behavior on scale { NumberAnimation { duration: 230; easing.type: Easing.OutBack } }
 
-                                var cx = 9;
-                                var cy = 9;
-                                var rOuter = 7.3;
-                                var rInner = 5.0;
-                                var rHole = 2.3;
-                                var degToRad = Math.PI / 180;
+                    Canvas {
+                        id: tab3Canvas
+                        anchors.fill: parent
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.reset();
+                            ctx.strokeStyle = (root.activeTab === 4 || tab3Mouse.containsMouse) ? Theme.accent : Theme.textSecondary;
+                            ctx.lineWidth = 1.75;
+                            ctx.lineCap = "round";
+                            ctx.lineJoin = "round";
 
-                                // Modern continuous 6-tooth gear contour
-                                ctx.beginPath();
-                                for (var i = 0; i < 6; i++) {
-                                    var mid = -90 + i * 60;
-                                    var a1 = (mid - 11) * degToRad;
-                                    var a2 = (mid + 11) * degToRad;
-                                    var a3 = (mid + 19) * degToRad;
-                                    var a4 = (mid + 41) * degToRad;
+                            var cx = 9;
+                            var cy = 9;
+                            var rOuter = 7.3;
+                            var rInner = 5.0;
+                            var rHole = 2.3;
+                            var degToRad = Math.PI / 180;
 
-                                    var x1 = cx + rOuter * Math.cos(a1);
-                                    var y1 = cy + rOuter * Math.sin(a1);
-                                    var x2 = cx + rOuter * Math.cos(a2);
-                                    var y2 = cy + rOuter * Math.sin(a2);
-                                    var x3 = cx + rInner * Math.cos(a3);
-                                    var y3 = cy + rInner * Math.sin(a3);
-                                    var x4 = cx + rInner * Math.cos(a4);
-                                    var y4 = cy + rInner * Math.sin(a4);
+                            // Modern continuous 6-tooth gear contour
+                            ctx.beginPath();
+                            for (var i = 0; i < 6; i++) {
+                                var mid = -90 + i * 60;
+                                var a1 = (mid - 11) * degToRad;
+                                var a2 = (mid + 11) * degToRad;
+                                var a3 = (mid + 19) * degToRad;
+                                var a4 = (mid + 41) * degToRad;
 
-                                    if (i === 0) {
-                                        ctx.moveTo(x1, y1);
-                                    } else {
-                                        ctx.lineTo(x1, y1);
-                                    }
-                                    ctx.lineTo(x2, y2);
-                                    ctx.lineTo(x3, y3);
-                                    ctx.lineTo(x4, y4);
+                                var x1 = cx + rOuter * Math.cos(a1);
+                                var y1 = cy + rOuter * Math.sin(a1);
+                                var x2 = cx + rOuter * Math.cos(a2);
+                                var y2 = cy + rOuter * Math.sin(a2);
+                                var x3 = cx + rInner * Math.cos(a3);
+                                var y3 = cy + rInner * Math.sin(a3);
+                                var x4 = cx + rInner * Math.cos(a4);
+                                var y4 = cy + rInner * Math.sin(a4);
+
+                                if (i === 0) {
+                                    ctx.moveTo(x1, y1);
+                                } else {
+                                    ctx.lineTo(x1, y1);
                                 }
-                                ctx.closePath();
-                                ctx.stroke();
+                                ctx.lineTo(x2, y2);
+                                ctx.lineTo(x3, y3);
+                                ctx.lineTo(x4, y4);
+                            }
+                            ctx.closePath();
+                            ctx.stroke();
 
-                                // Center axle hole
-                                ctx.beginPath();
-                                ctx.arc(cx, cy, rHole, 0, Math.PI * 2);
-                                ctx.stroke();
-                            }
-                            Connections {
-                                target: root
-                                function onActiveTabChanged() { tab3Canvas.requestPaint(); }
-                            }
-                            Connections {
-                                target: tab3Mouse
-                                function onContainsMouseChanged() { tab3Canvas.requestPaint(); }
-                            }
+                            // Center axle hole
+                            ctx.beginPath();
+                            ctx.arc(cx, cy, rHole, 0, Math.PI * 2);
+                            ctx.stroke();
+                        }
+                        Connections {
+                            target: root
+                            function onActiveTabChanged() { tab3Canvas.requestPaint(); }
+                        }
+                        Connections {
+                            target: tab3Mouse
+                            function onContainsMouseChanged() { tab3Canvas.requestPaint(); }
                         }
                     }
+                }
 
-                    Text {
-                        text: I18n.t("navSettings")
-                        color: (root.activeTab === 4) ? Theme.activeTabText : (tab3Mouse.containsMouse ? Theme.textPrimary : Theme.textSecondary)
-                        font.pixelSize: 13
-                        font.family: Theme.fontFamily
-                        font.weight: (root.activeTab === 4) ? Font.DemiBold : Font.Normal
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+                Text {
+                    text: I18n.t("navSettings")
+                    x: (parent.isActive || parent.isHover) ? 47 : 44
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: parent.isActive ? Theme.activeTabText : (parent.isHover ? Theme.textPrimary : Theme.textSecondary)
+                    font.pixelSize: 13
+                    font.family: Theme.fontFamily
+                    font.weight: parent.isActive ? Font.DemiBold : Font.Normal
+
+                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 180 } }
                 }
             }
         }
-
-
     }
 }
