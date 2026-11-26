@@ -458,7 +458,7 @@ Item {
                 // Feature 1
                 Rectangle {
                     width: parent.width
-                    implicitHeight: f1Row.implicitHeight + 20
+                    implicitHeight: f1Row.implicitHeight + 22
                     radius: Theme.radiusMd
                     color: Theme.bgCard
                     border.color: Theme.borderDim
@@ -467,24 +467,20 @@ Item {
                     Row {
                         id: f1Row
                         anchors.fill: parent
-                        anchors.margins: 12
-                        spacing: 12
+                        anchors.margins: 14
+                        spacing: 14
 
                         Rectangle {
-                            width: 32; height: 32; radius: 16
-                            color: Theme.accent + "20"
+                            width: 3
+                            height: 28
+                            radius: 1.5
+                            color: Theme.accent
                             anchors.verticalCenter: parent.verticalCenter
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "🎓"
-                                font.pixelSize: 15
-                            }
                         }
 
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 48
+                            width: parent.width - 24
                             spacing: 3
 
                             Text {
@@ -512,7 +508,7 @@ Item {
                 // Feature 2
                 Rectangle {
                     width: parent.width
-                    implicitHeight: f2Row.implicitHeight + 20
+                    implicitHeight: f2Row.implicitHeight + 22
                     radius: Theme.radiusMd
                     color: Theme.bgCard
                     border.color: Theme.borderDim
@@ -521,24 +517,20 @@ Item {
                     Row {
                         id: f2Row
                         anchors.fill: parent
-                        anchors.margins: 12
-                        spacing: 12
+                        anchors.margins: 14
+                        spacing: 14
 
                         Rectangle {
-                            width: 32; height: 32; radius: 16
-                            color: Theme.accent + "20"
+                            width: 3
+                            height: 28
+                            radius: 1.5
+                            color: Theme.accent
                             anchors.verticalCenter: parent.verticalCenter
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "⚡"
-                                font.pixelSize: 15
-                            }
                         }
 
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 48
+                            width: parent.width - 24
                             spacing: 3
 
                             Text {
@@ -566,7 +558,7 @@ Item {
                 // Feature 3
                 Rectangle {
                     width: parent.width
-                    implicitHeight: f3Row.implicitHeight + 20
+                    implicitHeight: f3Row.implicitHeight + 22
                     radius: Theme.radiusMd
                     color: Theme.bgCard
                     border.color: Theme.borderDim
@@ -575,24 +567,20 @@ Item {
                     Row {
                         id: f3Row
                         anchors.fill: parent
-                        anchors.margins: 12
-                        spacing: 12
+                        anchors.margins: 14
+                        spacing: 14
 
                         Rectangle {
-                            width: 32; height: 32; radius: 16
-                            color: Theme.accent + "20"
+                            width: 3
+                            height: 28
+                            radius: 1.5
+                            color: Theme.accent
                             anchors.verticalCenter: parent.verticalCenter
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "🔒"
-                                font.pixelSize: 15
-                            }
                         }
 
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 48
+                            width: parent.width - 24
                             spacing: 3
 
                             Text {

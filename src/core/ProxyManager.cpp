@@ -583,7 +583,7 @@ void ProxyManager::testBatch(int startIndex) {
         probeNam->setProxy(proxy);
 
         QNetworkRequest req(QUrl("https://cp.cloudflare.com/generate_204"));
-        req.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.2.0");
+        req.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.2.5");
 
         QElapsedTimer *timer = new QElapsedTimer();
         timer->start();
@@ -641,7 +641,7 @@ void ProxyManager::testBatch(int startIndex) {
                                       node.host, static_cast<quint16>(node.port));
                 ipNam->setProxy(ipProxy);
                 QNetworkRequest ipReq(QUrl("https://api.ipify.org"));
-                ipReq.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.2.0");
+                ipReq.setHeader(QNetworkRequest::UserAgentHeader, "YuYuInstaller/1.2.5");
                 QNetworkReply *ipReply = ipNam->get(ipReq);
                 ipReply->ignoreSslErrors();
                 QTimer *ipTimeout = new QTimer(ipReply);
