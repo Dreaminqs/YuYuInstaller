@@ -125,7 +125,14 @@ void YtDlpDownloader::start() {
 
     // Subtitles handling (if requested for video)
     if (!m_subtitleLang.isEmpty() && m_subtitleLang != "none" && !m_formatId.startsWith("audio_")) {
-        args << "--write-subs" << "--write-auto-subs" << "--sub-langs" << m_subtitleLang;
+        if (m_subtitleLang == "all") {
+            // Avoid downloading 150+ auto-translated ASR languages (which causes YouTube 429 rate-limit freeze on "Starting...")
+            args << "--write-subs" << "--write-auto-subs" << "--sub-langs" << "tr.*,en.*";
+        } else {
+            args << "--write-subs" << "--write-auto-subs" << "--sub-langs" << (m_subtitleLang + "," + m_subtitleLang + ".*");
+        }
+        args << "--sub-format" << "srt/vtt/best";
+        args << "--ignore-errors";
         if (m_embedSubtitles) {
             args << "--embed-subs";
         } else {
@@ -253,6 +260,21 @@ void YtDlpDownloader::parseOutputLine(const QString &line) {
         }
     }
 
+    // Detect subtitle download & embedding stages so UI never looks stuck on "Starting..."
+    if (line.contains("Downloading subtitles", Qt::CaseInsensitive) || line.contains("Writing video subtitles", Qt::CaseInsensitive)) {
+        m_speedString = "Downloading Subtitles...";
+        emit progressUpdated(m_progress, m_speedString, m_etaString, -1, -1);
+        return;
+    }
+    if (line.contains("[EmbedSubtitle]") || line.contains("[SubtitlesConvertor]")) {
+        m_progress = 99.0;
+        m_speedString = "Embedding Subtitles...";
+        m_etaString = "Finishing";
+        emit conversionStarted(m_id);
+        emit progressUpdated(99.0, m_speedString, m_etaString, 0, 0);
+        return;
+    }
+
     // Check for post-processing conversions: [ExtractAudio] or [Merger]
     if (line.contains("[ExtractAudio]") || line.contains("[Merger]") || line.contains("[Fixup")) {
         m_progress = 99.0;
@@ -279,6 +301,16 @@ void YtDlpDownloader::parseOutputLine(const QString &line) {
             qint64 tot = parts[4].trimmed().toLongLong(&totOk);
             if (!totOk && parts.size() > 5) {
                 tot = parts[5].trimmed().toLongLong(&totOk);
+            }
+
+            // Subtitle files are tiny (< 500 KB) and download before the video; don't let a 50KB subtitle jump the main video bar to 100%
+            bool isTinySubtitleStream = (!m_subtitleLang.isEmpty() && m_subtitleLang != "none" && totOk && tot > 0 && tot < 512 * 1024 && m_progress < 5.0);
+            if (isTinySubtitleStream) {
+                if (m_progressTimer.hasExpired(250)) {
+                    m_progressTimer.restart();
+                    emit progressUpdated(0.0, "Downloading Subtitles...", "--:--", -1, -1);
+                }
+                return;
             }
 
             if (pctOk && pct >= 0.0) {
