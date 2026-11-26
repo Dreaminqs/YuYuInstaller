@@ -2508,6 +2508,39 @@ void UrlAnalyzer::startYtDlpProbe(const QString &rawUrl) {
     m_ytDlpProcess->start(ytDlpExe, args);
 }
 
+static QString normalizeThumbnailForQt(QString thumb, const QString &sourceUrl = QString()) {
+    thumb = thumb.trimmed();
+
+    // Helper: extract 11-char YouTube video ID from any YouTube page or ytimg URL
+    auto extractYouTubeId = [](const QString &u) -> QString {
+        static const QRegularExpression reYt(R"((?:youtu\.be/|youtube\.com/(?:watch\?.*v=|embed/|shorts/|live/)|ytimg\.com/vi(?:_webp)?/)([A-Za-z0-9_-]{11}))");
+        auto m = reYt.match(u);
+        return m.hasMatch() ? m.captured(1) : QString();
+    };
+
+    // Convert YouTube WebP thumbnails (vi_webp/*.webp) to JPG (vi/*.jpg) because Qt doesn't bundle qwebp.dll
+    if (thumb.contains("ytimg.com/vi_webp/") || (thumb.contains("ytimg.com") && thumb.contains(".webp"))) {
+        QString ytId = extractYouTubeId(thumb);
+        if (ytId.isEmpty()) ytId = extractYouTubeId(sourceUrl);
+        if (!ytId.isEmpty()) {
+            return QString("https://i.ytimg.com/vi/%1/hqdefault.jpg").arg(ytId);
+        }
+        thumb.replace("/vi_webp/", "/vi/");
+        int qIdx = thumb.indexOf('?');
+        if (qIdx != -1) thumb = thumb.left(qIdx);
+        thumb.replace(".webp", ".jpg");
+        return thumb;
+    }
+
+    // If thumbnail is empty or a generic .webp on a YouTube URL, fall back to standard YouTube JPG thumbnail
+    QString ytId = extractYouTubeId(sourceUrl);
+    if (!ytId.isEmpty() && (thumb.isEmpty() || thumb == "NA" || thumb.contains(".webp"))) {
+        return QString("https://i.ytimg.com/vi/%1/hqdefault.jpg").arg(ytId);
+    }
+
+    return thumb;
+}
+
 void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus) {
     m_isAnalyzing = false;
     emit analyzingChanged();
@@ -2524,7 +2557,7 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
         QString title = parts.value(0).trimmed();
         QString author = (parts.size() > 1) ? parts.value(1).trimmed() : "";
         QString duration = (parts.size() > 2) ? parts.value(2).trimmed() : "";
-        QString thumbnail = (parts.size() > 3) ? parts.value(3).trimmed() : "";
+        QString thumbnail = normalizeThumbnailForQt((parts.size() > 3) ? parts.value(3).trimmed() : "", m_analyzingUrl);
         int maxHeight = (parts.size() > 4) ? parts.value(4).trimmed().toInt() : 1080;
         if (maxHeight <= 0) maxHeight = 1080;
 
@@ -3130,7 +3163,7 @@ void UrlAnalyzer::onSearchFallbackFinished(int exitCode, QProcess::ExitStatus ex
         m_currentInfo->setTitle(m_searchTitle.isEmpty() ? title : m_searchTitle);
         m_currentInfo->setAuthor(m_searchAuthor.isEmpty() ? QString("%1 • %2").arg(m_searchSource, author) : QString("%1 • %2").arg(m_searchSource, m_searchAuthor));
         m_currentInfo->setDuration(duration);
-        m_currentInfo->setThumbnailUrl(m_searchThumb.isEmpty() ? ytThumb : m_searchThumb);
+        m_currentInfo->setThumbnailUrl(normalizeThumbnailForQt(m_searchThumb.isEmpty() ? ytThumb : m_searchThumb, webpageUrl.isEmpty() ? m_analyzingUrl : webpageUrl));
         m_currentInfo->setIsDirectFile(false);
         m_currentInfo->setIsAudioOnly(true);
 

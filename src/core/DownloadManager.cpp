@@ -253,6 +253,14 @@ void DownloadManager::loadQueueState() {
         item.totalBytes = obj["totalBytes"].toInteger(0);
         item.isAudioOnly = task.isAudioOnly;
         item.thumbnailUrl = obj["thumbnailUrl"].toString();
+        if (item.thumbnailUrl.contains("ytimg.com/vi_webp/") || (item.thumbnailUrl.contains("ytimg.com") && item.thumbnailUrl.contains(".webp")) || (item.thumbnailUrl.isEmpty() && (item.url.contains("youtube.com") || item.url.contains("youtu.be")))) {
+            static const QRegularExpression reYt(R"((?:youtu\.be/|youtube\.com/(?:watch\?.*v=|embed/|shorts/|live/)|ytimg\.com/vi(?:_webp)?/)([A-Za-z0-9_-]{11}))");
+            auto m = reYt.match(!item.thumbnailUrl.isEmpty() ? item.thumbnailUrl : item.url);
+            if (!m.hasMatch()) m = reYt.match(item.url);
+            if (m.hasMatch()) {
+                item.thumbnailUrl = QString("https://i.ytimg.com/vi/%1/hqdefault.jpg").arg(m.captured(1));
+            }
+        }
         item.createdTime = QDateTime::fromString(obj["createdTime"].toString(), Qt::ISODate);
 
         // Check if file partially exists on disk to ensure accurate byte count
@@ -640,6 +648,14 @@ void DownloadManager::addDownload(const QString &url, const QString &title, cons
     if (m_urlAnalyzer.currentMediaInfo()) {
         referer = m_urlAnalyzer.currentMediaInfo()->referer();
         thumbnailUrl = m_urlAnalyzer.currentMediaInfo()->thumbnailUrl();
+    }
+    if (thumbnailUrl.isEmpty() || thumbnailUrl.contains("ytimg.com/vi_webp/") || (thumbnailUrl.contains("ytimg.com") && thumbnailUrl.contains(".webp"))) {
+        static const QRegularExpression reYt(R"((?:youtu\.be/|youtube\.com/(?:watch\?.*v=|embed/|shorts/|live/)|ytimg\.com/vi(?:_webp)?/)([A-Za-z0-9_-]{11}))");
+        auto m = reYt.match(!thumbnailUrl.isEmpty() ? thumbnailUrl : url);
+        if (!m.hasMatch()) m = reYt.match(url);
+        if (m.hasMatch()) {
+            thumbnailUrl = QString("https://i.ytimg.com/vi/%1/hqdefault.jpg").arg(m.captured(1));
+        }
     }
 
     QueuedTask task;
