@@ -257,25 +257,29 @@ Rectangle {
                         font.weight: (root.activeTab === 1) ? Font.DemiBold : Font.Normal
                         anchors.verticalCenter: parent.verticalCenter
                     }
+                }
 
-                    Item { width: 10; height: 1 }
+                // Badge for active downloads count (cleanly anchored inside the right edge)
+                Rectangle {
+                    visible: queueModel.activeDownloadCount > 0
+                    height: 18
+                    width: Math.max(18, queueBadgeTxt.implicitWidth + 10)
+                    radius: 9
+                    color: (root.activeTab === 1) ? Theme.accent : Qt.alpha(Theme.accent, 0.22)
+                    border.color: (root.activeTab === 1) ? "transparent" : Qt.alpha(Theme.accent, 0.55)
+                    border.width: (root.activeTab === 1) ? 0 : 1
+                    anchors.right: parent.right
+                    anchors.rightMargin: 10
+                    anchors.verticalCenter: parent.verticalCenter
 
-                    // Badge for active downloads count
-                    Rectangle {
-                        visible: queueModel.activeDownloadCount > 0
-                        width: 20
-                        height: 20
-                        radius: 10
-                        color: Theme.accent
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: queueModel.activeDownloadCount
-                            color: "#07090e"
-                            font.pixelSize: 10
-                            font.weight: Font.Bold
-                        }
+                    Text {
+                        id: queueBadgeTxt
+                        anchors.centerIn: parent
+                        text: queueModel.activeDownloadCount
+                        color: (root.activeTab === 1) ? "#07090e" : Theme.accent
+                        font.pixelSize: 10
+                        font.family: Theme.fontFamily
+                        font.weight: Font.Bold
                     }
                 }
             }
@@ -332,28 +336,37 @@ Rectangle {
                                 ctx.lineCap = "round";
                                 ctx.lineJoin = "round";
 
-                                // Top arc
+                                // Top sync arc (clear gap on both ends)
+                                var r = 6.0;
+                                var aTopStart = -135 * Math.PI / 180;
+                                var aTopEnd   =  -15 * Math.PI / 180;
                                 ctx.beginPath();
-                                ctx.arc(9, 9, 5.5, -Math.PI * 0.25, Math.PI * 0.65);
+                                ctx.arc(9, 9, r, aTopStart, aTopEnd);
                                 ctx.stroke();
 
-                                // Top-right arrow head
+                                // Top-right arrowhead at aTopEnd
+                                var tx = 9 + r * Math.cos(aTopEnd);
+                                var ty = 9 + r * Math.sin(aTopEnd);
                                 ctx.beginPath();
-                                ctx.moveTo(11, 3);
-                                ctx.lineTo(14.2, 4.5);
-                                ctx.lineTo(13.2, 7.8);
+                                ctx.moveTo(tx - 3.2, ty - 1.2);
+                                ctx.lineTo(tx + 0.3, ty + 0.3);
+                                ctx.lineTo(tx + 1.0, ty - 3.3);
                                 ctx.stroke();
 
-                                // Bottom arc
+                                // Bottom sync arc (clear gap on both ends)
+                                var aBotStart =  45 * Math.PI / 180;
+                                var aBotEnd   = 165 * Math.PI / 180;
                                 ctx.beginPath();
-                                ctx.arc(9, 9, 5.5, Math.PI * 0.75, Math.PI * 1.65);
+                                ctx.arc(9, 9, r, aBotStart, aBotEnd);
                                 ctx.stroke();
 
-                                // Bottom-left arrow head
+                                // Bottom-left arrowhead at aBotEnd
+                                var bx = 9 + r * Math.cos(aBotEnd);
+                                var by = 9 + r * Math.sin(aBotEnd);
                                 ctx.beginPath();
-                                ctx.moveTo(7, 15);
-                                ctx.lineTo(3.8, 13.5);
-                                ctx.lineTo(4.8, 10.2);
+                                ctx.moveTo(bx + 3.2, by + 1.2);
+                                ctx.lineTo(bx - 0.3, by - 0.3);
+                                ctx.lineTo(bx - 1.0, by + 3.3);
                                 ctx.stroke();
                             }
                             Connections {
@@ -375,32 +388,34 @@ Rectangle {
                         font.weight: (root.activeTab === 2) ? Font.DemiBold : Font.Normal
                         anchors.verticalCenter: parent.verticalCenter
                     }
+                }
 
-                    // Neon update notification badge with gentle breathing pulse
-                    Item {
-                        width: 14; height: 14
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: (typeof updateManager !== "undefined" && updateManager.updateAvailable)
+                // Neon update notification badge with gentle breathing pulse
+                Item {
+                    width: 14; height: 14
+                    anchors.right: parent.right
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: (typeof updateManager !== "undefined" && updateManager.updateAvailable)
 
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: 12; height: 12; radius: 6
-                            color: Theme.accent
-                            opacity: 0.35
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 12; height: 12; radius: 6
+                        color: Theme.accent
+                        opacity: 0.35
 
-                            SequentialAnimation on scale {
-                                running: (typeof updateManager !== "undefined" && updateManager.updateAvailable)
-                                loops: Animation.Infinite
-                                NumberAnimation { from: 0.8; to: 1.35; duration: 1100; easing.type: Easing.InOutQuad }
-                                NumberAnimation { from: 1.35; to: 0.8; duration: 1100; easing.type: Easing.InOutQuad }
-                            }
+                        SequentialAnimation on scale {
+                            running: (typeof updateManager !== "undefined" && updateManager.updateAvailable)
+                            loops: Animation.Infinite
+                            NumberAnimation { from: 0.8; to: 1.35; duration: 1100; easing.type: Easing.InOutQuad }
+                            NumberAnimation { from: 1.35; to: 0.8; duration: 1100; easing.type: Easing.InOutQuad }
                         }
+                    }
 
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: 7; height: 7; radius: 3.5
-                            color: Theme.accent
-                        }
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 7; height: 7; radius: 3.5
+                        color: Theme.accent
                     }
                 }
             }
@@ -494,22 +509,22 @@ Rectangle {
                         font.weight: (root.activeTab === 3) ? Font.DemiBold : Font.Normal
                         anchors.verticalCenter: parent.verticalCenter
                     }
+                }
 
-                    Item { width: 4; height: 1 }
+                // Glowing indicator when proxy is actively enabled
+                Rectangle {
+                    visible: (typeof proxyManager !== "undefined" && (proxyManager.warpRunning || proxyManager.enabled))
+                    width: 7; height: 7; radius: 3.5
+                    color: "#10b981"
+                    anchors.right: parent.right
+                    anchors.rightMargin: 14
+                    anchors.verticalCenter: parent.verticalCenter
 
-                    // Glowing indicator when proxy is actively enabled
                     Rectangle {
-                        visible: (typeof proxyManager !== "undefined" && (proxyManager.warpRunning || proxyManager.enabled))
-                        width: 7; height: 7; radius: 3.5
-                        color: Theme.accent
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: 12; height: 12; radius: 6
-                            color: Theme.accent
-                            opacity: 0.35
-                        }
+                        anchors.centerIn: parent
+                        width: 13; height: 13; radius: 6.5
+                        color: "#10b981"
+                        opacity: 0.30
                     }
                 }
             }
