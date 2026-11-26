@@ -2474,7 +2474,7 @@ void UrlAnalyzer::startYtDlpProbe(const QString &rawUrl) {
 
     QStringList args;
     args << "--encoding" << "utf-8";
-    args << "--print" << "%(title)s|||%(uploader)s|||%(duration_string)s|||%(thumbnail)s|||%(height)s|||%(formats.:.height)#j|||%(subtitles)j|||%(automatic_captions)j";
+    args << "--print" << "%(title)s|||%(uploader)s|||%(duration_string)s|||%(thumbnail)s|||%(height)s|||%(formats.:.height)#j";
     args << "--no-warnings";
     args << "--no-playlist";
     args << "--no-check-certificates";
@@ -2583,96 +2583,6 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
             }
         }
 
-        QVariantList detectedSubtitles;
-        // 1. Try manual (creator-uploaded) subtitles
-        if (parts.size() > 6) {
-            QString subJsonStr = parts.value(6).trimmed();
-            if (subJsonStr != "NA" && subJsonStr.startsWith("{")) {
-                QJsonDocument subDoc = QJsonDocument::fromJson(subJsonStr.toUtf8());
-                if (subDoc.isObject()) {
-                    QJsonObject subObj = subDoc.object();
-                    struct SubLangEntry {
-                        QString code;
-                        QString name;
-                    };
-                    QList<SubLangEntry> entries;
-
-                    for (auto it = subObj.begin(); it != subObj.end(); ++it) {
-                        QString code = it.key().trimmed();
-                        if (code.isEmpty()) continue;
-                        QString label;
-                        if (it.value().isArray()) {
-                            QJsonArray arr = it.value().toArray();
-                            if (!arr.isEmpty() && arr.first().isObject()) {
-                                label = arr.first().toObject().value("name").toString().trimmed();
-                            }
-                        }
-                        QString displayName = getLanguageDisplayName(code, label);
-                        entries.append({code, displayName});
-                    }
-
-                    // Sort: Turkish (tr) first, English (en) second, others alphabetically
-                    std::sort(entries.begin(), entries.end(), [](const SubLangEntry &a, const SubLangEntry &b) {
-                        auto getRank = [](const QString &c) {
-                            if (c == "tr" || c.startsWith("tr-") || c.startsWith("tr_")) return 0;
-                            if (c == "en" || c.startsWith("en-") || c.startsWith("en_")) return 1;
-                            return 2;
-                        };
-                        int rankA = getRank(a.code);
-                        int rankB = getRank(b.code);
-                        if (rankA != rankB) return rankA < rankB;
-                        return a.name.localeAwareCompare(b.name) < 0;
-                    });
-
-                    for (const auto &e : entries) {
-                        QVariantMap map;
-                        map["code"] = e.code;
-                        map["name"] = e.name;
-                        detectedSubtitles.append(map);
-                    }
-                }
-            }
-        }
-
-        // 2. If no manual subtitles exist, check automatic captions (e.g. YouTube auto ASR)
-        if (detectedSubtitles.isEmpty() && parts.size() > 7) {
-            QString autoJsonStr = parts.mid(7).join("|||").trimmed();
-            if (autoJsonStr != "NA" && autoJsonStr.startsWith("{")) {
-                QJsonDocument autoDoc = QJsonDocument::fromJson(autoJsonStr.toUtf8());
-                if (autoDoc.isObject()) {
-                    QJsonObject autoObj = autoDoc.object();
-                    struct AutoSubEntry {
-                        QString code;
-                        QString name;
-                        int priority;
-                    };
-                    QList<AutoSubEntry> autoEntries;
-
-                    // Prioritized candidate codes for auto-captions
-                    QStringList priorityCodes = {"tr", "en", "de", "es", "fr", "ja", "ko", "ru", "az", "ar"};
-                    for (const QString &pCode : priorityCodes) {
-                        if (autoObj.contains(pCode)) {
-                            QString disp = getLanguageDisplayName(pCode) + " (Otomatik)";
-                            int prio = (pCode == "tr") ? 0 : ((pCode == "en") ? 1 : 2);
-                            autoEntries.append({pCode, disp, prio});
-                        }
-                    }
-
-                    std::sort(autoEntries.begin(), autoEntries.end(), [](const AutoSubEntry &a, const AutoSubEntry &b) {
-                        if (a.priority != b.priority) return a.priority < b.priority;
-                        return a.name.localeAwareCompare(b.name) < 0;
-                    });
-
-                    for (const auto &ae : autoEntries) {
-                        QVariantMap map;
-                        map["code"] = ae.code;
-                        map["name"] = ae.name;
-                        detectedSubtitles.append(map);
-                    }
-                }
-            }
-        }
-
         if (!title.isEmpty()) {
             if (m_currentInfo) {
                 m_currentInfo->deleteLater();
@@ -2686,7 +2596,6 @@ void UrlAnalyzer::onYtDlpFinished(int exitCode, QProcess::ExitStatus exitStatus)
             m_currentInfo->setIsDirectFile(false);
             m_currentInfo->setMaxHeight(maxHeight);
             m_currentInfo->setAvailableHeights(detectedHeights);
-            m_currentInfo->setAvailableSubtitles(detectedSubtitles);
             m_currentInfo->setReferer(!m_pageReferer.isEmpty() ? m_pageReferer : m_analyzingUrl);
 
             populateWebStreamOptions(m_currentInfo);
