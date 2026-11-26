@@ -357,6 +357,65 @@ Item {
                         width: parent.width
                         spacing: 10
 
+                        // v1.2.6 Pro
+                        Rectangle {
+                            width: parent.width
+                            implicitHeight: log126Col.implicitHeight + 20
+                            radius: Theme.radiusMd
+                            color: Theme.bgInput
+                            border.color: Theme.borderDim
+                            border.width: 1
+
+                            Column {
+                                id: log126Col
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 8
+
+                                Row {
+                                    spacing: 8
+                                    Rectangle {
+                                        width: 58; height: 20; radius: 4
+                                        color: Theme.accent
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "v1.2.6"
+                                            color: "#07090e"
+                                            font.pixelSize: 11
+                                            font.weight: Font.Bold
+                                        }
+                                    }
+                                    Rectangle {
+                                        width: 54; height: 18; radius: 9
+                                        color: "#162338"
+                                        border.color: Theme.accent
+                                        border.width: 1
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "CURRENT"
+                                            color: Theme.accent
+                                            font.pixelSize: 9
+                                            font.weight: Font.Bold
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    text: I18n.language === "tr"
+                                          ? "• Yenilenen Arayüz & Morph Sidebar: Ayarlar sayfası gruplu listeye, Proxy sayfası tekil ana kontrol kartına ve 3'lü özellik ızgarasına dönüştürüldü; sol menüye Morph & Tilt animasyonu eklendi\n• 60 FPS GPU Video Motoru: Arka plan videosu ayrı bir worker thread ve doğrudan GPU texture (QSGImageNode) üzerine taşınarak sayfa kaydırma takılmaları ve açılış gecikmesi sıfırlandı\n• Performans & Boyut Optimizasyonu: Gecikmeli sayfa yükleme (Loader), YouTube JPG kapak düzeltmesi ve MSVC /LTCG derleyici optimizasyonu ile kurulum boyutu küçültüldü"
+                                          : (I18n.language === "uk"
+                                             ? "• Оновлений інтерфейс та Morph Sidebar: Налаштування перероблено на груповий список, сторінку проксі об'єднано в єдину картку керування, додано анімацію Morph & Tilt\n• 60 FPS GPU Відео-рушій: Фонове відео перенесено в окремий потік із прямим рендерингом через GPU-текстуру (QSGImageNode) для ідеально плавної прокрутки\n• Оптимізація продуктивності: Відкладене завантаження сторінок (Loader), виправлення YouTube JPG обкладинок та оптимізація компілятора MSVC /LTCG"
+                                             : "• Redesigned UI & Morph Sidebar: Grouped Settings layout, unified Proxy hero card with 3-column architecture grid, and Morph & Tilt sidebar animations\n• 60 FPS GPU Video Engine: Offloaded video decoding to a worker thread with direct QSGImageNode GPU texture rendering for zero scroll stutter and instant frame #1 startup\n• Performance & Size Optimization: Lazy-loaded views via Loader, YouTube JPG thumbnail fix, and MSVC /LTCG whole-program optimization")
+                                    color: Theme.textSecondary
+                                    font.pixelSize: 11
+                                    font.family: Theme.fontFamily
+                                    lineHeight: 1.45
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+
                         // v1.2.5 Pro
                         Rectangle {
                             width: parent.width
@@ -376,25 +435,12 @@ Item {
                                     spacing: 8
                                     Rectangle {
                                         width: 58; height: 20; radius: 4
-                                        color: Theme.accent
+                                        color: "#222c3c"
                                         Text {
                                             anchors.centerIn: parent
                                             text: "v1.2.5"
-                                            color: "#07090e"
+                                            color: Theme.textSecondary
                                             font.pixelSize: 11
-                                            font.weight: Font.Bold
-                                        }
-                                    }
-                                    Rectangle {
-                                        width: 54; height: 18; radius: 9
-                                        color: "#162338"
-                                        border.color: Theme.accent
-                                        border.width: 1
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "CURRENT"
-                                            color: Theme.accent
-                                            font.pixelSize: 9
                                             font.weight: Font.Bold
                                         }
                                     }
