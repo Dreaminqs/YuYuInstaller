@@ -357,6 +357,65 @@ Item {
                         width: parent.width
                         spacing: 10
 
+                        // v1.2.7 Pro
+                        Rectangle {
+                            width: parent.width
+                            implicitHeight: log127Col.implicitHeight + 20
+                            radius: Theme.radiusMd
+                            color: Theme.bgInput
+                            border.color: Theme.borderDim
+                            border.width: 1
+
+                            Column {
+                                id: log127Col
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 8
+
+                                Row {
+                                    spacing: 8
+                                    Rectangle {
+                                        width: 58; height: 20; radius: 4
+                                        color: Theme.accent
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "v1.2.7"
+                                            color: "#07090e"
+                                            font.pixelSize: 11
+                                            font.weight: Font.Bold
+                                        }
+                                    }
+                                    Rectangle {
+                                        width: 54; height: 18; radius: 9
+                                        color: "#162338"
+                                        border.color: Theme.accent
+                                        border.width: 1
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "CURRENT"
+                                            color: Theme.accent
+                                            font.pixelSize: 9
+                                            font.weight: Font.Bold
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    text: I18n.language === "tr"
+                                          ? "• Çoklu Anime Bölüm & Sezon Seçici: SonAnime, OpenAnime, Animecix ve Diziwatch linklerinde tüm sezon ve bölümleri otomatik algılayan tiklenebilir bölüm ızgarası eklendi\n• Dinamik Sezon Butonları (S1 / S2 / S3): Çok sezonlu animelerde tek tıkla istediğiniz sezonun tüm bölümlerini seçme özelliği getirildi\n• Akıllı Toplu İndirme Kuyruğu: Seçilen bölümleri tek tıkla kuyruğa ekleyip sıra geldiğinde otomatik çözümleyerek (auto-resolve) indiren toplu kuyruk motoru"
+                                          : (I18n.language === "uk"
+                                             ? "• Вибір сезонів та серій аніме: Додано сітку вибору всіх доступних серій для SonAnime, OpenAnime, Animecix та Diziwatch\n• Динамічні кнопки сезонів (S1 / S2 / S3): Швидкий вибір усіх серій потрібного сезону одним кліком\n• Пакетне завантаження: Автоматичне додавання вибраних серій у чергу та фонове розпізнавання потоків"
+                                             : "• Multi-Episode & Season Selector: Interactive checkbox grid automatically listing all seasons and episodes on SonAnime, OpenAnime, Animecix and Diziwatch\n• Dynamic Season Buttons (S1 / S2 / S3): One-click full season selection for multi-season anime series\n• Smart Batch Queue Engine: Queues all checked episodes at once and automatically resolves episode streams on the fly")
+                                    color: Theme.textSecondary
+                                    font.pixelSize: 11
+                                    font.family: Theme.fontFamily
+                                    lineHeight: 1.45
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+
                         // v1.2.6 Pro
                         Rectangle {
                             width: parent.width
@@ -376,25 +435,12 @@ Item {
                                     spacing: 8
                                     Rectangle {
                                         width: 58; height: 20; radius: 4
-                                        color: Theme.accent
+                                        color: "#222c3c"
                                         Text {
                                             anchors.centerIn: parent
                                             text: "v1.2.6"
-                                            color: "#07090e"
+                                            color: Theme.textSecondary
                                             font.pixelSize: 11
-                                            font.weight: Font.Bold
-                                        }
-                                    }
-                                    Rectangle {
-                                        width: 54; height: 18; radius: 9
-                                        color: "#162338"
-                                        border.color: Theme.accent
-                                        border.width: 1
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "CURRENT"
-                                            color: Theme.accent
-                                            font.pixelSize: 9
                                             font.weight: Font.Bold
                                         }
                                     }

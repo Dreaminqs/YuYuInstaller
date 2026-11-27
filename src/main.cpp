@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     app.setApplicationName("YuYuInstaller");
     app.setOrganizationName("YuYuDev");
-    app.setApplicationVersion("1.2.6");
+    app.setApplicationVersion("1.2.7");
 
     QFont defaultFont("Segoe UI", 10);
     defaultFont.setStyleHint(QFont::SansSerif);
