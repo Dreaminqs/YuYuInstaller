@@ -7,16 +7,33 @@ Item {
     id: root
 
     property string currentErrorMessage: ""
+    property bool pendingAutoDownload: false
 
     signal navigateToQueue()
+
+    function triggerExternalUrl(extUrl, autoDownload) {
+        if (!extUrl || extUrl.trim().length === 0) return
+        root.currentErrorMessage = ""
+        root.pendingAutoDownload = autoDownload
+        urlInputField.text = extUrl.trim()
+        urlAnalyzer.analyzeUrl(extUrl.trim())
+    }
 
     Connections {
         target: urlAnalyzer
         function onAnalysisError(msg) {
             root.currentErrorMessage = msg
+            root.pendingAutoDownload = false
         }
         function onAnalysisSuccess(info) {
             root.currentErrorMessage = ""
+            if (root.pendingAutoDownload && info) {
+                root.pendingAutoDownload = false
+                downloadManager.addDownload(info.url, info.title, "best_video", downloadManager.defaultDownloadPath)
+                urlInputField.clear()
+                urlAnalyzer.clear()
+                root.navigateToQueue()
+            }
         }
     }
 

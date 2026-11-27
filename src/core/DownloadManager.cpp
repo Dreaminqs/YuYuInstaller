@@ -14,6 +14,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QCoreApplication>
+#include <QUrlQuery>
+#include <QHostAddress>
 
 static QString formatBytesHelper(qint64 bytes) {
     if (bytes <= 0) return QString();
@@ -66,6 +68,8 @@ DownloadManager::DownloadManager(QObject *parent)
     connect(&m_queueModel, &DownloadQueueModel::queueOrderChanged, this, &DownloadManager::scheduleSaveQueueState);
 
     loadQueueState();
+    registerUrlProtocol();
+    startBrowserBridgeServer();
 }
 
 QString DownloadManager::logFilePath() {
@@ -975,4 +979,133 @@ void DownloadManager::onQueueCancel(const QString &id) {
     if (m_activeYtDlpDownloads.contains(id) && m_activeYtDlpDownloads[id]) {
         m_activeYtDlpDownloads[id]->cancel();
     }
+}
+
+void DownloadManager::registerUrlProtocol() {
+#ifdef Q_OS_WIN
+    QString exePath = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+    QSettings reg("HKEY_CURRENT_USER\\Software\\Classes\\yuyu", QSettings::NativeFormat);
+    reg.setValue("Default", "URL:YuYuInstaller Protocol");
+    reg.setValue("URL Protocol", "");
+
+    QSettings iconReg("HKEY_CURRENT_USER\\Software\\Classes\\yuyu\\DefaultIcon", QSettings::NativeFormat);
+    iconReg.setValue("Default", QString("\"%1\",0").arg(exePath));
+
+    QSettings cmdReg("HKEY_CURRENT_USER\\Software\\Classes\\yuyu\\shell\\open\\command", QSettings::NativeFormat);
+    cmdReg.setValue("Default", QString("\"%1\" \"%2\"").arg(exePath, "%1"));
+#endif
+}
+
+void DownloadManager::handleCommandLineUrl(const QString &rawArg) {
+    QString arg = rawArg.trimmed();
+    if (arg.isEmpty()) return;
+
+    QString targetUrl;
+    bool autoDownload = false;
+
+    if (arg.startsWith("yuyu://", Qt::CaseInsensitive)) {
+        QUrl protoUrl(arg);
+        QUrlQuery query(protoUrl);
+        targetUrl = QUrl::fromPercentEncoding(query.queryItemValue("url", QUrl::FullyEncoded).toUtf8()).trimmed();
+        autoDownload = (protoUrl.host().compare("download", Qt::CaseInsensitive) == 0 || query.queryItemValue("auto") == "1");
+        if (targetUrl.isEmpty()) {
+            QString rest = arg.mid(7);
+            if (rest.startsWith("open/?url=", Qt::CaseInsensitive)) {
+                targetUrl = QUrl::fromPercentEncoding(rest.mid(10).toUtf8()).trimmed();
+            } else if (rest.startsWith("http://") || rest.startsWith("https://")) {
+                targetUrl = rest;
+            }
+        }
+    } else if (arg.startsWith("http://", Qt::CaseInsensitive) || arg.startsWith("https://", Qt::CaseInsensitive)) {
+        targetUrl = arg;
+    }
+
+    if (!targetUrl.isEmpty()) {
+        emit externalUrlRequested(targetUrl, autoDownload);
+    }
+}
+
+void DownloadManager::startBrowserBridgeServer() {
+    if (m_bridgeServer.isListening()) return;
+
+    connect(&m_bridgeServer, &QTcpServer::newConnection, this, [this]() {
+        while (m_bridgeServer.hasPendingConnections()) {
+            QTcpSocket *sock = m_bridgeServer.nextPendingConnection();
+            if (!sock) continue;
+
+            connect(sock, &QTcpSocket::readyRead, this, [this, sock]() {
+                QByteArray reqData = sock->readAll();
+                QString reqStr = QString::fromUtf8(reqData);
+                QString firstLine = reqStr.section("\r\n", 0, 0);
+                QStringList parts = firstLine.split(' ');
+                QString method = parts.value(0).toUpper();
+                QString rawPath = parts.value(1);
+
+                auto sendJsonResponse = [sock](int code, const QByteArray &body) {
+                    QByteArray resp;
+                    resp += QString("HTTP/1.1 %1 OK\r\n").arg(code).toUtf8();
+                    resp += "Content-Type: application/json; charset=utf-8\r\n";
+                    resp += "Access-Control-Allow-Origin: *\r\n";
+                    resp += "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n";
+                    resp += "Access-Control-Allow-Headers: Content-Type\r\n";
+                    resp += "Connection: close\r\n";
+                    resp += QString("Content-Length: %1\r\n\r\n").arg(body.size()).toUtf8();
+                    resp += body;
+                    sock->write(resp);
+                    sock->flush();
+                    sock->disconnectFromHost();
+                };
+
+                if (method == "OPTIONS") {
+                    sendJsonResponse(200, "{}");
+                    return;
+                }
+
+                QUrl reqUrl("http://127.0.0.1" + rawPath);
+                QString path = reqUrl.path().toLower();
+                QUrlQuery query(reqUrl);
+
+                if (path == "/ping" || path == "/status") {
+                    QJsonObject obj;
+                    obj["ok"] = true;
+                    obj["app"] = "YuYuInstaller";
+                    obj["version"] = "1.2.7";
+                    sendJsonResponse(200, QJsonDocument(obj).toJson(QJsonDocument::Compact));
+                    return;
+                }
+
+                if (path == "/analyze" || path == "/download") {
+                    QString targetUrl = QUrl::fromPercentEncoding(query.queryItemValue("url", QUrl::FullyEncoded).toUtf8()).trimmed();
+                    bool autoDl = (path == "/download" || query.queryItemValue("auto") == "1");
+
+                    if (targetUrl.isEmpty() && method == "POST") {
+                        int bodyIdx = reqStr.indexOf("\r\n\r\n");
+                        if (bodyIdx != -1) {
+                            QJsonDocument bodyDoc = QJsonDocument::fromJson(reqStr.mid(bodyIdx + 4).toUtf8());
+                            if (bodyDoc.isObject()) {
+                                targetUrl = bodyDoc.object().value("url").toString().trimmed();
+                                if (bodyDoc.object().value("auto").toBool(false)) autoDl = true;
+                            }
+                        }
+                    }
+
+                    if (!targetUrl.isEmpty()) {
+                        emit externalUrlRequested(targetUrl, autoDl);
+                        QJsonObject obj;
+                        obj["ok"] = true;
+                        obj["url"] = targetUrl;
+                        obj["mode"] = autoDl ? "download" : "analyze";
+                        sendJsonResponse(200, QJsonDocument(obj).toJson(QJsonDocument::Compact));
+                        return;
+                    }
+                }
+
+                sendJsonResponse(400, "{\"ok\":false,\"error\":\"invalid_request\"}");
+            });
+
+            connect(sock, &QTcpSocket::disconnected, sock, &QObject::deleteLater);
+        }
+    });
+
+    m_bridgeServer.listen(QHostAddress::LocalHost, 48652);
 }

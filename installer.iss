@@ -76,6 +76,12 @@ Source: "build\qml\*"; DestDir: "{app}\qml"; Flags: ignoreversion recursesubdirs
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\app.ico"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\app.ico"; Check: ShouldCreateDesktopIcon
 
+[Registry]
+Root: HKA; Subkey: "Software\Classes\yuyu"; ValueType: string; ValueName: ""; ValueData: "URL:YuYuInstaller Protocol"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\yuyu"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKA; Subkey: "Software\Classes\yuyu\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"",0"
+Root: HKA; Subkey: "Software\Classes\yuyu\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 Filename: "{app}\{#MyAppExeName}"; Flags: nowait; Check: WizardSilent

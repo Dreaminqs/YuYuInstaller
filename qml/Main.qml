@@ -41,6 +41,20 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: (typeof downloadManager !== "undefined") ? downloadManager : null
+        function onExternalUrlRequested(extUrl, autoDownload) {
+            window.show();
+            if (window.visibility === Window.Minimized) {
+                window.showNormal();
+            }
+            window.raise();
+            window.requestActivate();
+            sidebarNav.activeTab = 0;
+            dashboardView.triggerExternalUrl(extUrl, autoDownload);
+        }
+    }
+
     // Base dark fallback
     Rectangle {
         anchors.fill: parent

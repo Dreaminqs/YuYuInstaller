@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "YuYuInstaller Companion",
+  "short_name": "YuYuInstaller",
+  "version": "1.2.7",
+  "description": "Send links and media pages directly to the YuYuInstaller desktop application with one click.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Send to YuYuInstaller",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": [
+    "activeTab",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.sonanime.com/*",
+        "*://*.openani.me/*",
+        "*://*.animecix.tv/*",
+        "*://*.animecix.com/*",
+        "*://*.animecix.net/*",
+        "*://*.diziwatch.app/*",
+        "*://*.diziwatch.net/*",
+        "*://*.diziwatch.com/*",
+        "*://*.youtube.com/*",
+        "*://*.twitch.tv/*",
+        "*://*.kick.com/*",
+        "*://*.tiktok.com/*",
+        "*://*.instagram.com/*",
+        "*://*.x.com/*",
+        "*://*.twitter.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "companion@yuyuinstaller.app",
+      "strict_min_version": "109.0"
+    }
+  }
+}
