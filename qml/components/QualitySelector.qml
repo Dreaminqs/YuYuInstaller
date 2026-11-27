@@ -22,6 +22,41 @@ Rectangle {
     property bool isEditingTitle: false
     property var selectedEpisodeIndices: []
 
+    function getAvailableSeasons() {
+        if (!mediaInfo || !mediaInfo.availableEpisodes) return []
+        var seasons = []
+        var eps = mediaInfo.availableEpisodes
+        for (var i = 0; i < eps.length; ++i) {
+            var s = eps[i].season || 1
+            if (seasons.indexOf(s) === -1) seasons.push(s)
+        }
+        seasons.sort(function(a, b) { return a - b })
+        return seasons
+    }
+
+    function isSeasonFullySelected(seasonNum) {
+        if (!mediaInfo || !mediaInfo.availableEpisodes) return false
+        var eps = mediaInfo.availableEpisodes
+        var count = 0
+        for (var i = 0; i < eps.length; ++i) {
+            if ((eps[i].season || 1) === seasonNum) {
+                count++
+                if (selectedEpisodeIndices.indexOf(i) === -1) return false
+            }
+        }
+        return count > 0
+    }
+
+    function selectSeasonEpisodes(seasonNum) {
+        if (!mediaInfo || !mediaInfo.availableEpisodes) return
+        var eps = mediaInfo.availableEpisodes
+        var list = []
+        for (var i = 0; i < eps.length; ++i) {
+            if ((eps[i].season || 1) === seasonNum) list.push(i)
+        }
+        if (list.length > 0) selectedEpisodeIndices = list
+    }
+
     function isEpisodeSelected(idx) {
         return selectedEpisodeIndices.indexOf(idx) !== -1
     }
@@ -677,6 +712,40 @@ Rectangle {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 6
+
+                    // Dynamic Season Selector Buttons (S1, S2, S3... shown when anime has >1 season)
+                    Repeater {
+                        model: {
+                            var sList = root.getAvailableSeasons()
+                            return (sList.length > 1) ? sList : []
+                        }
+
+                        delegate: Rectangle {
+                            required property var modelData
+                            readonly property int seasonNum: modelData
+                            readonly property bool seasonActive: root.isSeasonFullySelected(seasonNum)
+
+                            height: 24
+                            width: sBtnTxt.implicitWidth + 16
+                            radius: 6
+                            color: seasonActive ? Qt.alpha(Theme.accent, 0.22) : (sBtnHover.hovered ? Qt.alpha(Theme.accent, 0.14) : Theme.bgElevated)
+                            border.color: (seasonActive || sBtnHover.hovered) ? Theme.accent : Theme.borderDim
+                            border.width: seasonActive ? 1.5 : 1
+
+                            HoverHandler { id: sBtnHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler { onTapped: root.selectSeasonEpisodes(seasonNum) }
+
+                            Text {
+                                id: sBtnTxt
+                                anchors.centerIn: parent
+                                text: "S" + parent.seasonNum
+                                color: (parent.seasonActive || sBtnHover.hovered) ? Theme.accent : Theme.textSecondary
+                                font.pixelSize: 11
+                                font.family: Theme.fontFamily
+                                font.weight: Font.Bold
+                            }
+                        }
+                    }
 
                     // Select All button
                     Rectangle {
