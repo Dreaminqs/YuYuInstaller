@@ -1159,24 +1159,65 @@ void UrlAnalyzer::startOpenaniResolve(const QUrl &url) {
                 m_currentInfo->setMaxHeight(maxHeight);
                 m_currentInfo->setAvailableHeights(availableHeights);
 
-                // Extract all episodes for this season from OpenAnime HTML (or fallback to episode count)
-                QSet<int> foundEpNums;
-                QRegularExpression oaEpLinkRe(QString(R"(/anime/%1/%2/(\d+))").arg(QRegularExpression::escape(slug)).arg(targetSeason));
-                auto oaIt = oaEpLinkRe.globalMatch(html);
-                while (oaIt.hasNext()) {
-                    int eNum = oaIt.next().captured(1).toInt();
-                    if (eNum > 0 && eNum <= 2000) foundEpNums.insert(eNum);
+                // Extract all seasons and episodes from OpenAnime's seasons:[{season_number:1,name:"Season 1",episode_count:12}, ...] array
+                struct OaSeasonInfo { int seasonNum; int epCount; };
+                QList<OaSeasonInfo> oaSeasons;
+                QSet<int> seenOaSeasons;
+
+                QRegularExpression oaSeasonsBlockRe(R"(seasons\s*:\s*\[(\{\s*season_number\s*:[^\]]+)\])");
+                auto oaSbMatch = oaSeasonsBlockRe.match(html);
+                if (oaSbMatch.hasMatch()) {
+                    QString block = oaSbMatch.captured(1);
+                    QRegularExpression oaItemRe(R"(\{[^{}]*?season_number\s*:\s*(\d+)[^{}]*?episode_count\s*:\s*(\d+)[^{}]*?\})");
+                    auto itS = oaItemRe.globalMatch(block);
+                    while (itS.hasNext()) {
+                        auto sm = itS.next();
+                        int sNum = sm.captured(1).toInt();
+                        int eCnt = sm.captured(2).toInt();
+                        if (sNum > 0 && eCnt > 0 && !seenOaSeasons.contains(sNum)) {
+                            seenOaSeasons.insert(sNum);
+                            oaSeasons.append({sNum, eCnt});
+                        }
+                    }
                 }
-                QRegularExpression oaEpJsonRe(R"(episodeNumber\s*:\s*(\d+))");
-                auto oaIt2 = oaEpJsonRe.globalMatch(html);
-                while (oaIt2.hasNext()) {
-                    int eNum = oaIt2.next().captured(1).toInt();
-                    if (eNum > 0 && eNum <= 2000) foundEpNums.insert(eNum);
-                }
-                if (foundEpNums.size() > 1) {
+
+                QVariantList epList;
+                if (!oaSeasons.isEmpty()) {
+                    std::sort(oaSeasons.begin(), oaSeasons.end(), [](const OaSeasonInfo &a, const OaSeasonInfo &b) {
+                        return a.seasonNum < b.seasonNum;
+                    });
+                    bool multiSeason = (oaSeasons.size() > 1 || oaSeasons.first().seasonNum > 1);
+                    for (const auto &si : oaSeasons) {
+                        for (int eNum = 1; eNum <= si.epCount; ++eNum) {
+                            QVariantMap map;
+                            map["season"] = si.seasonNum;
+                            map["episode"] = eNum;
+                            map["title"] = QString("%1 - %2. Sezon %3. Bölüm").arg(animeName).arg(si.seasonNum).arg(eNum);
+                            map["label"] = multiSeason ? QString("S%1 B%2").arg(si.seasonNum).arg(eNum) : QString("%1. Bölüm").arg(eNum);
+                            bool isCurrentResolved = (si.seasonNum == targetSeason && eNum == targetEp);
+                            map["url"] = isCurrentResolved ? videoUrl : QString("https://openani.me/anime/%1/%2/%3").arg(slug).arg(si.seasonNum).arg(eNum);
+                            map["isDirect"] = isCurrentResolved;
+                            map["referer"] = "https://openani.me/";
+                            epList.append(map);
+                        }
+                    }
+                } else {
+                    // Fallback: scan single-season episode links or episodeNumber occurrences in HTML
+                    QSet<int> foundEpNums;
+                    QRegularExpression oaEpLinkRe(QString(R"(/anime/%1/%2/(\d+))").arg(QRegularExpression::escape(slug)).arg(targetSeason));
+                    auto oaIt = oaEpLinkRe.globalMatch(html);
+                    while (oaIt.hasNext()) {
+                        int eNum = oaIt.next().captured(1).toInt();
+                        if (eNum > 0 && eNum <= 2000) foundEpNums.insert(eNum);
+                    }
+                    QRegularExpression oaEpJsonRe(R"(episodeNumber\s*:\s*(\d+))");
+                    auto oaIt2 = oaEpJsonRe.globalMatch(html);
+                    while (oaIt2.hasNext()) {
+                        int eNum = oaIt2.next().captured(1).toInt();
+                        if (eNum > 0 && eNum <= 2000) foundEpNums.insert(eNum);
+                    }
                     QList<int> sortedEps = foundEpNums.values();
                     std::sort(sortedEps.begin(), sortedEps.end());
-                    QVariantList epList;
                     for (int eNum : sortedEps) {
                         QVariantMap map;
                         map["season"] = targetSeason;
@@ -1188,6 +1229,9 @@ void UrlAnalyzer::startOpenaniResolve(const QUrl &url) {
                         map["referer"] = "https://openani.me/";
                         epList.append(map);
                     }
+                }
+
+                if (epList.size() > 1) {
                     m_currentInfo->setAvailableEpisodes(epList);
                 }
 
