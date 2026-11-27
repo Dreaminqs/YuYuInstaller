@@ -452,43 +452,86 @@ void UrlAnalyzer::startDiziwatchResolve(const QUrl &url) {
         if (mI.hasMatch()) ivHex = mI.captured(1);
         if (mS.hasMatch()) saltHex = mS.captured(1);
 
-        if (k.isEmpty() || ciphertext.isEmpty() || ivHex.isEmpty() || saltHex.isEmpty()) {
-            // Check if this is a Diziwatch main anime series page containing episode links
-            QRegularExpression epLinkRe(R"(href=["'](https?://(?:www\.)?diziwatch\.(?:app|net|com)/[^"']*?(\d+)-sezon-(\d+)-bolum[^"']*?)["'])", QRegularExpression::CaseInsensitiveOption);
-            auto itEp = epLinkRe.globalMatch(html);
+        auto parseDiziwatchEpisodes = [&html, &url](QString seriesTitle) -> QVariantList {
+            seriesTitle.remove(QRegularExpression(R"(\s*(?:[-–|]\s*)?\d+\.\s*Sezon\s*\d+\.\s*Bölüm.*$)", QRegularExpression::CaseInsensitiveOption));
+            seriesTitle.remove(QRegularExpression(R"(\s*(?:[-–|]\s*)?(?:İzle|Türkçe Altyazılı).*$)", QRegularExpression::CaseInsensitiveOption));
+            seriesTitle = seriesTitle.trimmed();
+            if (seriesTitle.isEmpty()) seriesTitle = "Diziwatch Anime";
+
             struct DwEpItem { int season; int ep; QString url; };
             QList<DwEpItem> dwEps;
             QSet<QString> seenDw;
-            while (itEp.hasNext()) {
-                auto m = itEp.next();
-                QString epUrl = m.captured(1);
+
+            QString baseHost = QString("%1://%2").arg(url.scheme().isEmpty() ? "https" : url.scheme(), url.host().isEmpty() ? "diziwatch.app" : url.host());
+
+            // Pattern 1: /dizi/<slug>/sezon-<S>/bolum-<E> (both full https://... and relative /dizi/... in HTML or JSON-LD)
+            QRegularExpression modernRe(R"(((?:https?://(?:www\.)?diziwatch\.(?:app|net|com))?/dizi/[a-zA-Z0-9_\-]+/sezon-(\d+)/bolum-(\d+)))", QRegularExpression::CaseInsensitiveOption);
+            auto itM = modernRe.globalMatch(html);
+            while (itM.hasNext()) {
+                auto m = itM.next();
+                QString rawPath = m.captured(1);
                 int sNum = m.captured(2).toInt();
                 int eNum = m.captured(3).toInt();
+                if (sNum <= 0 || eNum <= 0) continue;
+                QString fullEpUrl = rawPath.startsWith("http") ? rawPath : (baseHost + rawPath);
                 QString key = QString("%1_%2").arg(sNum).arg(eNum);
                 if (!seenDw.contains(key)) {
                     seenDw.insert(key);
-                    dwEps.append({sNum, eNum, epUrl});
+                    dwEps.append({sNum, eNum, fullEpUrl});
                 }
             }
-            if (!dwEps.isEmpty()) {
-                std::sort(dwEps.begin(), dwEps.end(), [](const DwEpItem &a, const DwEpItem &b) {
-                    if (a.season != b.season) return a.season < b.season;
-                    return a.ep < b.ep;
-                });
-                QVariantList epList;
-                for (const auto &de : dwEps) {
-                    QVariantMap map;
-                    map["season"] = de.season;
-                    map["episode"] = de.ep;
-                    map["title"] = QString("%1 - %2. Sezon %3. Bölüm").arg(title).arg(de.season).arg(de.ep);
-                    map["label"] = (dwEps.last().season > 1) ? QString("S%1 B%2").arg(de.season).arg(de.ep) : QString("%1. Bölüm").arg(de.ep);
-                    map["url"] = de.url;
-                    map["isDirect"] = false;
-                    map["referer"] = "https://diziwatch.app/";
-                    epList.append(map);
+
+            // Pattern 2: Classic /<slug>-<S>-sezon-<E>-bolum...
+            QRegularExpression classicRe(R"(href=["']((?:https?://(?:www\.)?diziwatch\.(?:app|net|com))?/[^"'/]*?(\d+)-sezon-(\d+)-bolum[^"']*?)["'])", QRegularExpression::CaseInsensitiveOption);
+            auto itC = classicRe.globalMatch(html);
+            while (itC.hasNext()) {
+                auto m = itC.next();
+                QString rawPath = m.captured(1);
+                int sNum = m.captured(2).toInt();
+                int eNum = m.captured(3).toInt();
+                if (sNum <= 0 || eNum <= 0) continue;
+                QString fullEpUrl = rawPath.startsWith("http") ? rawPath : (baseHost + rawPath);
+                QString key = QString("%1_%2").arg(sNum).arg(eNum);
+                if (!seenDw.contains(key)) {
+                    seenDw.insert(key);
+                    dwEps.append({sNum, eNum, fullEpUrl});
                 }
+            }
+
+            if (dwEps.isEmpty()) return {};
+
+            std::sort(dwEps.begin(), dwEps.end(), [](const DwEpItem &a, const DwEpItem &b) {
+                if (a.season != b.season) return a.season < b.season;
+                return a.ep < b.ep;
+            });
+
+            int maxSeason = 1;
+            for (const auto &de : dwEps) {
+                if (de.season > maxSeason) maxSeason = de.season;
+            }
+
+            QVariantList epList;
+            for (const auto &de : dwEps) {
+                QVariantMap map;
+                map["season"] = de.season;
+                map["episode"] = de.ep;
+                map["title"] = QString("%1 - %2. Sezon %3. Bölüm").arg(seriesTitle).arg(de.season).arg(de.ep);
+                map["label"] = (maxSeason > 1) ? QString("S%1 B%2").arg(de.season).arg(de.ep) : QString("%1. Bölüm").arg(de.ep);
+                map["url"] = de.url;
+                map["isDirect"] = false;
+                map["referer"] = baseHost + "/";
+                epList.append(map);
+            }
+            return epList;
+        };
+
+        if (k.isEmpty() || ciphertext.isEmpty() || ivHex.isEmpty() || saltHex.isEmpty()) {
+            // Check if this is a Diziwatch main anime series page (e.g. https://diziwatch.app/dizi/jigokuraku)
+            QVariantList epList = parseDiziwatchEpisodes(title);
+            if (!epList.isEmpty()) {
                 m_pendingEpisodes = epList;
-                startDiziwatchResolve(QUrl(dwEps.first().url));
+                QString firstEpUrl = epList.first().toMap().value("url").toString();
+                startDiziwatchResolve(QUrl(firstEpUrl));
                 return;
             }
 
@@ -500,41 +543,8 @@ void UrlAnalyzer::startDiziwatchResolve(const QUrl &url) {
 
         // Also collect all episode links on the current episode page so the user can batch-select episodes
         if (m_pendingEpisodes.isEmpty()) {
-            QRegularExpression epLinkRe(R"(href=["'](https?://(?:www\.)?diziwatch\.(?:app|net|com)/[^"']*?(\d+)-sezon-(\d+)-bolum[^"']*?)["'])", QRegularExpression::CaseInsensitiveOption);
-            auto itEp = epLinkRe.globalMatch(html);
-            struct DwEpItem { int season; int ep; QString url; };
-            QList<DwEpItem> dwEps;
-            QSet<QString> seenDw;
-            while (itEp.hasNext()) {
-                auto m = itEp.next();
-                QString epUrl = m.captured(1);
-                int sNum = m.captured(2).toInt();
-                int eNum = m.captured(3).toInt();
-                QString key = QString("%1_%2").arg(sNum).arg(eNum);
-                if (!seenDw.contains(key)) {
-                    seenDw.insert(key);
-                    dwEps.append({sNum, eNum, epUrl});
-                }
-            }
-            if (dwEps.size() > 1) {
-                std::sort(dwEps.begin(), dwEps.end(), [](const DwEpItem &a, const DwEpItem &b) {
-                    if (a.season != b.season) return a.season < b.season;
-                    return a.ep < b.ep;
-                });
-                QString baseSeriesTitle = title;
-                baseSeriesTitle.remove(QRegularExpression(R"(\s*\d+\.\s*Sezon\s*\d+\.\s*Bölüm.*$)", QRegularExpression::CaseInsensitiveOption));
-                QVariantList epList;
-                for (const auto &de : dwEps) {
-                    QVariantMap map;
-                    map["season"] = de.season;
-                    map["episode"] = de.ep;
-                    map["title"] = QString("%1 - %2. Sezon %3. Bölüm").arg(baseSeriesTitle.trimmed()).arg(de.season).arg(de.ep);
-                    map["label"] = (dwEps.last().season > 1) ? QString("S%1 B%2").arg(de.season).arg(de.ep) : QString("%1. Bölüm").arg(de.ep);
-                    map["url"] = de.url;
-                    map["isDirect"] = false;
-                    map["referer"] = "https://diziwatch.app/";
-                    epList.append(map);
-                }
+            QVariantList epList = parseDiziwatchEpisodes(title);
+            if (epList.size() > 1) {
                 m_pendingEpisodes = epList;
             }
         }
