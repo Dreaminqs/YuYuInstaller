@@ -135,6 +135,11 @@ Item {
                     urlAnalyzer.clear()
                     root.navigateToQueue()
                 }
+                onBatchDownloadStarted: function() {
+                    urlInputField.clear()
+                    urlAnalyzer.clear()
+                    root.navigateToQueue()
+                }
             }
         }
     }

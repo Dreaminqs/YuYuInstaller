@@ -427,6 +427,18 @@ void DownloadManager::pauseActiveDownloadsExcept(const QString &keepId) {
 }
 
 void DownloadManager::startTask(const QueuedTask &task) {
+    // Check if this task is an unresolved anime episode page URL (OpenAnime, Animecix, or Diziwatch)
+    QString lowerTaskUrl = task.url.toLower();
+    bool isUnresolvedAnimePage =
+        (lowerTaskUrl.contains("openani.me/anime/") && !lowerTaskUrl.contains(".mp4") && !lowerTaskUrl.contains(".m3u8")) ||
+        (lowerTaskUrl.contains("animecix.") && lowerTaskUrl.contains("/titles/") && lowerTaskUrl.contains("/episode/")) ||
+        ((lowerTaskUrl.contains("diziwatch.app/") || lowerTaskUrl.contains("diziwatch.net/") || lowerTaskUrl.contains("diziwatch.com/")) && !lowerTaskUrl.contains(".m3u8") && !lowerTaskUrl.contains("master."));
+
+    if (isUnresolvedAnimePage) {
+        resolveEpisodePageAndStart(task);
+        return;
+    }
+
     m_queueModel.updateStatus(task.id, "Downloading");
     m_queueModel.updateProgress(task.id, -1, "Starting...", "--:--", -1, -1);
 
@@ -481,6 +493,106 @@ void DownloadManager::startTask(const QueuedTask &task) {
     }
 
     emit downloadStarted(task.id, task.title);
+}
+
+void DownloadManager::resolveEpisodePageAndStart(const QueuedTask &task) {
+    m_queueModel.updateStatus(task.id, "Downloading");
+    m_queueModel.updateProgress(task.id, -1, "Resolving Episode...", "--:--", -1, -1);
+
+    UrlAnalyzer *epResolver = new UrlAnalyzer(this);
+    connect(epResolver, &UrlAnalyzer::analysisSuccess, this, [this, epResolver, taskId = task.id](MediaInfo *info) {
+        if (!m_taskRegistry.contains(taskId) || !info) {
+            epResolver->deleteLater();
+            return;
+        }
+        QueuedTask resolved = m_taskRegistry[taskId];
+        resolved.url = info->url();
+        resolved.referer = info->referer();
+        resolved.useYtDlp = !info->isDirectFile();
+        m_taskRegistry[taskId] = resolved;
+        epResolver->deleteLater();
+        startTask(resolved);
+    });
+
+    connect(epResolver, &UrlAnalyzer::analysisError, this, [this, epResolver, taskId = task.id](const QString &errMsg) {
+        epResolver->deleteLater();
+        handleDownloadFailed(taskId, errMsg);
+    });
+
+    epResolver->analyzeUrl(task.url);
+}
+
+void DownloadManager::addBatchEpisodeDownloads(const QVariantList &episodes, const QString &formatId, const QString &customFolder) {
+    QString targetDir = customFolder.trimmed().isEmpty() ? m_defaultDownloadPath : customFolder;
+    QDir().mkpath(targetDir);
+
+    QString thumbnailUrl;
+    if (m_urlAnalyzer.currentMediaInfo()) {
+        thumbnailUrl = m_urlAnalyzer.currentMediaInfo()->thumbnailUrl();
+    }
+
+    bool isAudioOnly = formatId.startsWith("audio_");
+    QString extension = isAudioOnly ? (formatId.contains("m4a") ? ".m4a" : ".mp3") : ".mp4";
+
+    // When batch-adding multiple episodes, limit initial concurrent starts to 2 so servers don't rate-limit
+    int maxParallelBatch = m_sequentialMode ? 1 : 2;
+
+    for (const QVariant &v : episodes) {
+        QVariantMap map = v.toMap();
+        QString epUrl = map.value("url").toString().trimmed();
+        QString epTitle = map.value("title").toString().trimmed();
+        bool isDirect = map.value("isDirect", false).toBool();
+        QString epReferer = map.value("referer").toString().trimmed();
+        if (epUrl.isEmpty()) continue;
+
+        QString id = generateUniqueId();
+        QString safeBaseName = sanitizeFileName(epTitle);
+        QString finalFileName = safeBaseName + extension;
+        int counter = 1;
+        while (QFile::exists(targetDir + "/" + finalFileName)) {
+            finalFileName = QString("%1 (%2)%3").arg(safeBaseName).arg(counter).arg(extension);
+            counter++;
+        }
+        QString finalFilePath = targetDir + "/" + finalFileName;
+
+        QueuedTask task;
+        task.id = id;
+        task.url = epUrl;
+        task.title = finalFileName;
+        task.formatId = formatId;
+        task.customFolder = customFolder;
+        task.finalFilePath = finalFilePath;
+        task.referer = epReferer;
+        task.isAudioOnly = isAudioOnly;
+        task.useYtDlp = !isDirect && (epUrl.contains(".m3u8") || epUrl.contains("master.m3u8"));
+
+        DownloadItem item;
+        item.id = id;
+        item.title = finalFileName;
+        item.url = epUrl;
+        item.destinationPath = finalFilePath;
+        item.progress = 0.0;
+        item.isAudioOnly = isAudioOnly;
+        item.thumbnailUrl = thumbnailUrl;
+        item.createdTime = QDateTime::currentDateTime();
+
+        m_taskRegistry[id] = task;
+
+        int activeCount = countActiveDownloads();
+        if (activeCount >= maxParallelBatch) {
+            item.status = "Queued";
+            item.speed = "";
+            item.eta = "--:--";
+            m_queuedTasks[id] = task;
+            m_queueModel.addItem(item);
+        } else {
+            item.status = "Downloading";
+            item.speed = "Starting...";
+            item.eta = "--:--";
+            m_queueModel.addItem(item);
+            startTask(task);
+        }
+    }
 }
 
 void DownloadManager::startAllQueuedTasks() {

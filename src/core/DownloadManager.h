@@ -52,6 +52,7 @@ public:
     QString language() const { return m_language; }
 
     Q_INVOKABLE void addDownload(const QString &url, const QString &title, const QString &formatId, const QString &customFolder = QString());
+    Q_INVOKABLE void addBatchEpisodeDownloads(const QVariantList &episodes, const QString &formatId, const QString &customFolder = QString());
     Q_INVOKABLE QString getDefaultDownloadDirectory() const;
     Q_INVOKABLE void setDefaultDownloadPath(const QString &path);
     Q_INVOKABLE void setSequentialMode(bool seq);
@@ -105,6 +106,7 @@ private:
     QString sanitizeFileName(const QString &name) const;
     int effectiveConcurrentLimit() const;
     void startTask(const QueuedTask &task);
+    void resolveEpisodePageAndStart(const QueuedTask &task);
     void startAllQueuedTasks();
     void pauseActiveDownloadsExcept(const QString &keepId = QString());
 

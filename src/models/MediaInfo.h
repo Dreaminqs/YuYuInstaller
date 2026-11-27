@@ -37,6 +37,8 @@ class MediaInfo : public QObject {
     Q_PROPERTY(int maxHeight READ maxHeight WRITE setMaxHeight NOTIFY maxHeightChanged)
     Q_PROPERTY(QVariantList availableHeights READ availableHeightsVariant WRITE setAvailableHeightsVariant NOTIFY availableHeightsChanged)
     Q_PROPERTY(QVariantList streamOptions READ streamOptionsVariant NOTIFY streamOptionsChanged)
+    Q_PROPERTY(bool hasEpisodes READ hasEpisodes NOTIFY episodesChanged)
+    Q_PROPERTY(QVariantList availableEpisodes READ availableEpisodes NOTIFY episodesChanged)
 
 public:
     explicit MediaInfo(QObject *parent = nullptr);
@@ -79,6 +81,10 @@ public:
 
     QVariantList streamOptionsVariant() const;
 
+    bool hasEpisodes() const { return m_availableEpisodes.size() > 1; }
+    QVariantList availableEpisodes() const { return m_availableEpisodes; }
+    void setAvailableEpisodes(const QVariantList &episodes);
+
 signals:
     void refererChanged();
     void urlChanged();
@@ -91,6 +97,7 @@ signals:
     void maxHeightChanged();
     void availableHeightsChanged();
     void streamOptionsChanged();
+    void episodesChanged();
 
 private:
     QString m_referer;
@@ -104,4 +111,5 @@ private:
     int m_maxHeight = 1080;
     QList<int> m_availableHeights;
     QList<MediaStreamOption> m_streamOptions;
+    QVariantList m_availableEpisodes;
 };

@@ -55,7 +55,7 @@ private:
     void startPlaymogoResolve(const QUrl &url);
     void resolveDoodstreamPass(const QUrl &embedUrl, const QString &passPath, const QString &token, const QString &title, const QString &thumb, const QString &authorName = "PlayMogo");
     void startAnimecixResolve(const QUrl &url);
-    void startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster, const QStringList &fallbackEmbeds = {});
+    void startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster, const QStringList &fallbackEmbeds = {}, const QVariantList &episodeList = {});
     void startWebPageScrape(const QUrl &url);
     void fetchIframeContent(const QUrl &iframeUrl, const QString &title, const QString &thumb, const QString &providerName);
     void parseHtmlForMedia(const QString &html, const QUrl &baseUrl);
@@ -90,4 +90,5 @@ private:
     QString m_pendingTitle;
     QString m_pendingThumb;
     QString m_pendingProvider;
+    QVariantList m_pendingEpisodes;
 };

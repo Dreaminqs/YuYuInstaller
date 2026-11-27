@@ -20,6 +20,34 @@ Rectangle {
     property string customFolder: downloadManager.defaultDownloadPath
     property string customTitle: ""
     property bool isEditingTitle: false
+    property var selectedEpisodeIndices: []
+
+    function isEpisodeSelected(idx) {
+        return selectedEpisodeIndices.indexOf(idx) !== -1
+    }
+
+    function toggleEpisodeIndex(idx) {
+        var copy = selectedEpisodeIndices.slice()
+        var pos = copy.indexOf(idx)
+        if (pos !== -1) {
+            if (copy.length > 1) copy.splice(pos, 1)
+        } else {
+            copy.push(idx)
+            copy.sort(function(a, b) { return a - b })
+        }
+        selectedEpisodeIndices = copy
+    }
+
+    function selectAllEpisodes() {
+        if (!mediaInfo || !mediaInfo.availableEpisodes) return
+        var all = []
+        for (var i = 0; i < mediaInfo.availableEpisodes.length; ++i) all.push(i)
+        selectedEpisodeIndices = all
+    }
+
+    function clearEpisodeSelection() {
+        selectedEpisodeIndices = [0]
+    }
 
     FolderDialog {
         id: customFolderDialog
@@ -36,6 +64,19 @@ Rectangle {
         customTitle = mediaInfo ? mediaInfo.title : ""
         isEditingTitle = false
         selectedVideoQuality = "best_video"
+        if (mediaInfo && mediaInfo.hasEpisodes && mediaInfo.availableEpisodes.length > 0) {
+            var curUrl = mediaInfo.url
+            var matchedIdx = 0
+            for (var i = 0; i < mediaInfo.availableEpisodes.length; ++i) {
+                if (mediaInfo.availableEpisodes[i].url === curUrl) {
+                    matchedIdx = i
+                    break
+                }
+            }
+            selectedEpisodeIndices = [matchedIdx]
+        } else {
+            selectedEpisodeIndices = []
+        }
         if (mediaInfo && mediaInfo.isAudioOnly) {
             selectedFormatType = "audio"
             selectedOptionId = selectedAudioQuality
@@ -93,6 +134,7 @@ Rectangle {
     }
 
     signal downloadTriggered(string url, string title, string formatId, string folder)
+    signal batchDownloadStarted()
 
     Column {
         id: contentColumn
@@ -598,6 +640,172 @@ Rectangle {
             }
         }
 
+        // Section: Anime Episode Batch Selector (Visible when anime series has multiple episodes)
+        Column {
+            width: parent.width
+            spacing: 10
+            visible: root.mediaInfo && root.mediaInfo.hasEpisodes
+
+            Item {
+                width: parent.width
+                height: 26
+
+                Row {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 8
+
+                    Rectangle {
+                        width: 4; height: 14; radius: 2
+                        color: Theme.accent
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Text {
+                        text: I18n.language === "tr"
+                              ? ("Bölüm Seçimi (" + root.selectedEpisodeIndices.length + " / " + ((root.mediaInfo && root.mediaInfo.availableEpisodes) ? root.mediaInfo.availableEpisodes.length : 0) + " Seçili)")
+                              : ("Select Episodes (" + root.selectedEpisodeIndices.length + " / " + ((root.mediaInfo && root.mediaInfo.availableEpisodes) ? root.mediaInfo.availableEpisodes.length : 0) + " Selected)")
+                        color: Theme.textPrimary
+                        font.pixelSize: 12
+                        font.family: Theme.fontFamily
+                        font.weight: Font.DemiBold
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                Row {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 6
+
+                    // Select All button
+                    Rectangle {
+                        height: 24
+                        width: selAllTxt.implicitWidth + 16
+                        radius: 6
+                        color: selAllHover.hovered ? Qt.alpha(Theme.accent, 0.18) : Theme.bgElevated
+                        border.color: selAllHover.hovered ? Theme.accent : Theme.borderDim
+                        border.width: 1
+
+                        HoverHandler { id: selAllHover; cursorShape: Qt.PointingHandCursor }
+                        TapHandler { onTapped: root.selectAllEpisodes() }
+
+                        Text {
+                            id: selAllTxt
+                            anchors.centerIn: parent
+                            text: I18n.language === "tr" ? "Tümünü Seç" : "Select All"
+                            color: selAllHover.hovered ? Theme.accent : Theme.textSecondary
+                            font.pixelSize: 11
+                            font.family: Theme.fontFamily
+                            font.weight: Font.DemiBold
+                        }
+                    }
+
+                    // Reset to 1st button
+                    Rectangle {
+                        height: 24
+                        width: clrAllTxt.implicitWidth + 16
+                        radius: 6
+                        color: clrAllHover.hovered ? "#1affffff" : Theme.bgElevated
+                        border.color: clrAllHover.hovered ? Theme.borderBright : Theme.borderDim
+                        border.width: 1
+
+                        HoverHandler { id: clrAllHover; cursorShape: Qt.PointingHandCursor }
+                        TapHandler { onTapped: root.clearEpisodeSelection() }
+
+                        Text {
+                            id: clrAllTxt
+                            anchors.centerIn: parent
+                            text: I18n.language === "tr" ? "Temizle" : "Reset"
+                            color: clrAllHover.hovered ? Theme.textPrimary : Theme.textSecondary
+                            font.pixelSize: 11
+                            font.family: Theme.fontFamily
+                            font.weight: Font.Medium
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: Math.min(180, epFlow.implicitHeight + 20)
+                radius: Theme.radiusMd
+                color: Theme.bgInput
+                border.color: Theme.borderDim
+                border.width: 1
+                clip: true
+
+                Flickable {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    contentHeight: epFlow.implicitHeight
+                    clip: true
+
+                    Flow {
+                        id: epFlow
+                        width: parent.width
+                        spacing: 8
+
+                        Repeater {
+                            model: (root.mediaInfo && root.mediaInfo.availableEpisodes) ? root.mediaInfo.availableEpisodes : []
+
+                            delegate: Rectangle {
+                                required property var modelData
+                                required property int index
+                                readonly property bool checked: root.selectedEpisodeIndices.indexOf(index) !== -1
+
+                                width: Math.max(92, epRow.implicitWidth + 20)
+                                height: 32
+                                radius: Theme.radiusSm
+                                color: checked ? Qt.alpha(Theme.accent, 0.18) : (epHover.hovered ? Theme.bgCardHover : Theme.bgElevated)
+                                border.color: checked ? Theme.accent : (epHover.hovered ? Theme.borderBright : Theme.borderDim)
+                                border.width: checked ? 1.5 : 1
+
+                                Behavior on color { ColorAnimation { duration: 130 } }
+                                Behavior on border.color { ColorAnimation { duration: 130 } }
+
+                                HoverHandler { id: epHover; cursorShape: Qt.PointingHandCursor }
+                                TapHandler { onTapped: root.toggleEpisodeIndex(index) }
+
+                                Row {
+                                    id: epRow
+                                    anchors.centerIn: parent
+                                    spacing: 6
+
+                                    // Checkbox Box with Checkmark
+                                    Rectangle {
+                                        width: 14; height: 14; radius: 4
+                                        color: checked ? Theme.accent : "transparent"
+                                        border.color: checked ? Theme.accent : Theme.textMuted
+                                        border.width: 1.2
+                                        anchors.verticalCenter: parent.verticalCenter
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            visible: checked
+                                            text: "✓"
+                                            color: "#07090e"
+                                            font.pixelSize: 10
+                                            font.weight: Font.Bold
+                                        }
+                                    }
+
+                                    Text {
+                                        text: modelData.label || ((index + 1) + ". Bölüm")
+                                        color: checked ? Theme.textPrimary : Theme.textSecondary
+                                        font.pixelSize: 11
+                                        font.family: Theme.fontFamily
+                                        font.weight: checked ? Font.Bold : Font.Normal
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Section: Save Folder & Start Download
         Row {
             width: parent.width
@@ -726,6 +934,29 @@ Rectangle {
                         id: dlTap
                         onTapped: {
                             if (root.mediaInfo) {
+                                if (root.mediaInfo.hasEpisodes && root.selectedEpisodeIndices.length > 0) {
+                                    var chosen = []
+                                    var allEps = root.mediaInfo.availableEpisodes
+                                    for (var i = 0; i < root.selectedEpisodeIndices.length; ++i) {
+                                        var idx = root.selectedEpisodeIndices[i]
+                                        if (idx >= 0 && idx < allEps.length) {
+                                            chosen.push(allEps[idx])
+                                        }
+                                    }
+                                    if (chosen.length === 1 && chosen[0].isDirect) {
+                                        root.downloadTriggered(
+                                            chosen[0].url,
+                                            chosen[0].title,
+                                            root.selectedOptionId,
+                                            root.customFolder
+                                        )
+                                    } else if (chosen.length > 0) {
+                                        downloadManager.addBatchEpisodeDownloads(chosen, root.selectedOptionId, root.customFolder)
+                                        root.batchDownloadStarted()
+                                    }
+                                    return
+                                }
+
                                 if (root.isEditingTitle && titleInput.text.trim().length > 0) {
                                     root.customTitle = titleInput.text.trim()
                                     root.isEditingTitle = false

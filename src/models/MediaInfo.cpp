@@ -105,4 +105,11 @@ QVariantList MediaInfo::streamOptionsVariant() const {
     return list;
 }
 
+void MediaInfo::setAvailableEpisodes(const QVariantList &episodes) {
+    if (m_availableEpisodes != episodes) {
+        m_availableEpisodes = episodes;
+        emit episodesChanged();
+    }
+}
+
 

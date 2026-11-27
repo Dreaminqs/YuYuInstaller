@@ -141,6 +141,7 @@ void UrlAnalyzer::clear() {
     }
     m_ytDlpRetried = false;
     m_oembedRetried = false;
+    m_pendingEpisodes.clear();
     m_analyzingUrl.clear();
     m_pageReferer.clear();
     if (m_isAnalyzing) {
@@ -176,6 +177,7 @@ void UrlAnalyzer::analyzeUrl(const QString &rawUrl) {
 
     m_analyzingUrl = trimmed;
     m_pageReferer.clear();
+    m_pendingEpisodes.clear();
     m_ytDlpRetried = false;
     m_oembedRetried = false;
     m_isAnalyzing = true;
@@ -451,10 +453,90 @@ void UrlAnalyzer::startDiziwatchResolve(const QUrl &url) {
         if (mS.hasMatch()) saltHex = mS.captured(1);
 
         if (k.isEmpty() || ciphertext.isEmpty() || ivHex.isEmpty() || saltHex.isEmpty()) {
+            // Check if this is a Diziwatch main anime series page containing episode links
+            QRegularExpression epLinkRe(R"(href=["'](https?://(?:www\.)?diziwatch\.(?:app|net|com)/[^"']*?(\d+)-sezon-(\d+)-bolum[^"']*?)["'])", QRegularExpression::CaseInsensitiveOption);
+            auto itEp = epLinkRe.globalMatch(html);
+            struct DwEpItem { int season; int ep; QString url; };
+            QList<DwEpItem> dwEps;
+            QSet<QString> seenDw;
+            while (itEp.hasNext()) {
+                auto m = itEp.next();
+                QString epUrl = m.captured(1);
+                int sNum = m.captured(2).toInt();
+                int eNum = m.captured(3).toInt();
+                QString key = QString("%1_%2").arg(sNum).arg(eNum);
+                if (!seenDw.contains(key)) {
+                    seenDw.insert(key);
+                    dwEps.append({sNum, eNum, epUrl});
+                }
+            }
+            if (!dwEps.isEmpty()) {
+                std::sort(dwEps.begin(), dwEps.end(), [](const DwEpItem &a, const DwEpItem &b) {
+                    if (a.season != b.season) return a.season < b.season;
+                    return a.ep < b.ep;
+                });
+                QVariantList epList;
+                for (const auto &de : dwEps) {
+                    QVariantMap map;
+                    map["season"] = de.season;
+                    map["episode"] = de.ep;
+                    map["title"] = QString("%1 - %2. Sezon %3. Bölüm").arg(title).arg(de.season).arg(de.ep);
+                    map["label"] = (dwEps.last().season > 1) ? QString("S%1 B%2").arg(de.season).arg(de.ep) : QString("%1. Bölüm").arg(de.ep);
+                    map["url"] = de.url;
+                    map["isDirect"] = false;
+                    map["referer"] = "https://diziwatch.app/";
+                    epList.append(map);
+                }
+                m_pendingEpisodes = epList;
+                startDiziwatchResolve(QUrl(dwEps.first().url));
+                return;
+            }
+
             emit analysisError("Diziwatch video parametreleri okunamadi.");
             m_isAnalyzing = false;
             emit analyzingChanged();
             return;
+        }
+
+        // Also collect all episode links on the current episode page so the user can batch-select episodes
+        if (m_pendingEpisodes.isEmpty()) {
+            QRegularExpression epLinkRe(R"(href=["'](https?://(?:www\.)?diziwatch\.(?:app|net|com)/[^"']*?(\d+)-sezon-(\d+)-bolum[^"']*?)["'])", QRegularExpression::CaseInsensitiveOption);
+            auto itEp = epLinkRe.globalMatch(html);
+            struct DwEpItem { int season; int ep; QString url; };
+            QList<DwEpItem> dwEps;
+            QSet<QString> seenDw;
+            while (itEp.hasNext()) {
+                auto m = itEp.next();
+                QString epUrl = m.captured(1);
+                int sNum = m.captured(2).toInt();
+                int eNum = m.captured(3).toInt();
+                QString key = QString("%1_%2").arg(sNum).arg(eNum);
+                if (!seenDw.contains(key)) {
+                    seenDw.insert(key);
+                    dwEps.append({sNum, eNum, epUrl});
+                }
+            }
+            if (dwEps.size() > 1) {
+                std::sort(dwEps.begin(), dwEps.end(), [](const DwEpItem &a, const DwEpItem &b) {
+                    if (a.season != b.season) return a.season < b.season;
+                    return a.ep < b.ep;
+                });
+                QString baseSeriesTitle = title;
+                baseSeriesTitle.remove(QRegularExpression(R"(\s*\d+\.\s*Sezon\s*\d+\.\s*Bölüm.*$)", QRegularExpression::CaseInsensitiveOption));
+                QVariantList epList;
+                for (const auto &de : dwEps) {
+                    QVariantMap map;
+                    map["season"] = de.season;
+                    map["episode"] = de.ep;
+                    map["title"] = QString("%1 - %2. Sezon %3. Bölüm").arg(baseSeriesTitle.trimmed()).arg(de.season).arg(de.ep);
+                    map["label"] = (dwEps.last().season > 1) ? QString("S%1 B%2").arg(de.season).arg(de.ep) : QString("%1. Bölüm").arg(de.ep);
+                    map["url"] = de.url;
+                    map["isDirect"] = false;
+                    map["referer"] = "https://diziwatch.app/";
+                    epList.append(map);
+                }
+                m_pendingEpisodes = epList;
+            }
         }
 
         QString decryptedUrl = decryptDiziwatch(k, saltHex, ivHex, ciphertext);
@@ -542,6 +624,9 @@ void UrlAnalyzer::startPichiveResolve(const QUrl &iframeUrl, const QString &titl
                     if (m_currentInfo) {
                         m_currentInfo->setAvailableHeights({1080, 720, 480});
                         m_currentInfo->setMaxHeight(1080);
+                        if (!m_pendingEpisodes.isEmpty()) {
+                            m_currentInfo->setAvailableEpisodes(m_pendingEpisodes);
+                        }
                         populateWebStreamOptions(m_currentInfo);
                     }
                     return;
@@ -673,6 +758,9 @@ void UrlAnalyzer::fetchPichiveSource(const QString &sourceUrl, const QString &if
         if (m_currentInfo) {
             m_currentInfo->setAvailableHeights({1080, 480});
             m_currentInfo->setMaxHeight(1080);
+            if (!m_pendingEpisodes.isEmpty()) {
+                m_currentInfo->setAvailableEpisodes(m_pendingEpisodes);
+            }
             populateWebStreamOptions(m_currentInfo);
         }
     });
@@ -826,6 +914,50 @@ void UrlAnalyzer::startSonanimeResolve(const QUrl &url) {
                         m_currentInfo->setReferer("https://sonanime.com/");
                         m_currentInfo->setMaxHeight(maxHeight);
                         m_currentInfo->setAvailableHeights(availableHeights);
+
+                        // Build full episode list for batch selection in QualitySelector
+                        struct SonEpEntry {
+                            int season;
+                            int ep;
+                            QString url;
+                        };
+                        QList<SonEpEntry> sonEntries;
+                        int maxSeasonNum = 1;
+                        for (const QJsonValue &eVal : episodes) {
+                            QJsonObject epObj = eVal.toObject();
+                            int s = epObj.value("anime_season").toInt(1);
+                            int epNum = epObj.value("episode_number").toInt(0);
+                            if (s <= 0) s = 1;
+                            if (epNum <= 0) continue;
+                            QString epBestUrl;
+                            for (const auto &item : resMap) {
+                                QString link = epObj.value(item.key).toString().trimmed();
+                                if (!link.isEmpty()) { epBestUrl = link; break; }
+                            }
+                            if (!epBestUrl.isEmpty()) {
+                                if (s > maxSeasonNum) maxSeasonNum = s;
+                                sonEntries.append({s, epNum, epBestUrl});
+                            }
+                        }
+                        std::sort(sonEntries.begin(), sonEntries.end(), [](const SonEpEntry &a, const SonEpEntry &b) {
+                            if (a.season != b.season) return a.season < b.season;
+                            return a.ep < b.ep;
+                        });
+                        QVariantList epList;
+                        for (const auto &se : sonEntries) {
+                            QVariantMap map;
+                            map["season"] = se.season;
+                            map["episode"] = se.ep;
+                            map["title"] = QString("%1 - %2. Sezon %3. Bölüm").arg(animeName).arg(se.season).arg(se.ep);
+                            map["label"] = (maxSeasonNum > 1) ? QString("S%1 B%2").arg(se.season).arg(se.ep) : QString("%1. Bölüm").arg(se.ep);
+                            map["url"] = se.url;
+                            map["isDirect"] = true;
+                            map["referer"] = "https://sonanime.com/";
+                            epList.append(map);
+                        }
+                        if (epList.size() > 1) {
+                            m_currentInfo->setAvailableEpisodes(epList);
+                        }
 
                         populateDirectFileOptions(m_currentInfo, 0, "video/mp4", formattedTitle + ".mp4");
 
@@ -1026,6 +1158,38 @@ void UrlAnalyzer::startOpenaniResolve(const QUrl &url) {
                 m_currentInfo->setReferer("https://openani.me/");
                 m_currentInfo->setMaxHeight(maxHeight);
                 m_currentInfo->setAvailableHeights(availableHeights);
+
+                // Extract all episodes for this season from OpenAnime HTML (or fallback to episode count)
+                QSet<int> foundEpNums;
+                QRegularExpression oaEpLinkRe(QString(R"(/anime/%1/%2/(\d+))").arg(QRegularExpression::escape(slug)).arg(targetSeason));
+                auto oaIt = oaEpLinkRe.globalMatch(html);
+                while (oaIt.hasNext()) {
+                    int eNum = oaIt.next().captured(1).toInt();
+                    if (eNum > 0 && eNum <= 2000) foundEpNums.insert(eNum);
+                }
+                QRegularExpression oaEpJsonRe(R"(episodeNumber\s*:\s*(\d+))");
+                auto oaIt2 = oaEpJsonRe.globalMatch(html);
+                while (oaIt2.hasNext()) {
+                    int eNum = oaIt2.next().captured(1).toInt();
+                    if (eNum > 0 && eNum <= 2000) foundEpNums.insert(eNum);
+                }
+                if (foundEpNums.size() > 1) {
+                    QList<int> sortedEps = foundEpNums.values();
+                    std::sort(sortedEps.begin(), sortedEps.end());
+                    QVariantList epList;
+                    for (int eNum : sortedEps) {
+                        QVariantMap map;
+                        map["season"] = targetSeason;
+                        map["episode"] = eNum;
+                        map["title"] = QString("%1 - %2. Sezon %3. Bölüm").arg(animeName).arg(targetSeason).arg(eNum);
+                        map["label"] = QString("%1. Bölüm").arg(eNum);
+                        map["url"] = (eNum == targetEp) ? videoUrl : QString("https://openani.me/anime/%1/%2/%3").arg(slug).arg(targetSeason).arg(eNum);
+                        map["isDirect"] = (eNum == targetEp);
+                        map["referer"] = "https://openani.me/";
+                        epList.append(map);
+                    }
+                    m_currentInfo->setAvailableEpisodes(epList);
+                }
 
                 populateDirectFileOptions(m_currentInfo, bestSize, "video/mp4", formattedTitle + ".mp4");
 
@@ -1258,30 +1422,62 @@ void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
 
                 QJsonArray seasons = rootObj.value("seasons").toArray();
                 if (!seasons.isEmpty()) {
+                    struct AcxEpItem { int season; int ep; QString name; };
+                    QList<AcxEpItem> allAcxEps;
+                    int maxAcxSeason = 1;
+
                     for (const QJsonValue &sVal : seasons) {
                         QJsonObject sObj = sVal.toObject();
-                        if (sObj.value("number").toInt() == targetSeason) {
-                            QJsonArray episodes = sObj.value("episodes").toArray();
-                            for (const QJsonValue &epVal : episodes) {
-                                QJsonObject epObj = epVal.toObject();
-                                if (epObj.value("episode").toInt() == targetEp) {
-                                    episodeName = epObj.value("name").toString().trimmed();
-                                    QString epPoster = epObj.value("poster").toString().trimmed();
-                                    if (!epPoster.isEmpty()) {
-                                        poster = epPoster;
-                                    }
+                        int sNum = sObj.value("number").toInt(1);
+                        if (sNum > maxAcxSeason) maxAcxSeason = sNum;
+                        QJsonArray episodes = sObj.value("episodes").toArray();
+                        for (const QJsonValue &epVal : episodes) {
+                            QJsonObject epObj = epVal.toObject();
+                            int eNum = epObj.value("episode").toInt(0);
+                            QString eName = epObj.value("name").toString().trimmed();
+                            if (eNum > 0) {
+                                allAcxEps.append({sNum, eNum, eName});
+                            }
+                            if (sNum == targetSeason && eNum == targetEp) {
+                                episodeName = eName;
+                                QString epPoster = epObj.value("poster").toString().trimmed();
+                                if (!epPoster.isEmpty()) {
+                                    poster = epPoster;
+                                }
 
-                                    QRegularExpression tauPosterRe(R"(tau-video/(?:poster|thb)/([a-f0-9]{24}))", QRegularExpression::CaseInsensitiveOption);
-                                    auto m = tauPosterRe.match(poster);
-                                    if (m.hasMatch()) {
-                                        tauId = m.captured(1);
-                                    }
-                                    break;
+                                QRegularExpression tauPosterRe(R"(tau-video/(?:poster|thb)/([a-f0-9]{24}))", QRegularExpression::CaseInsensitiveOption);
+                                auto m = tauPosterRe.match(poster);
+                                if (m.hasMatch()) {
+                                    tauId = m.captured(1);
                                 }
                             }
-                            break;
                         }
                     }
+
+                    std::sort(allAcxEps.begin(), allAcxEps.end(), [](const AcxEpItem &a, const AcxEpItem &b) {
+                        if (a.season != b.season) return a.season < b.season;
+                        return a.ep < b.ep;
+                    });
+                    QVariantList epList;
+                    QSet<QString> seenAcx;
+                    for (const auto &ae : allAcxEps) {
+                        QString key = QString("%1_%2").arg(ae.season).arg(ae.ep);
+                        if (seenAcx.contains(key)) continue;
+                        seenAcx.insert(key);
+
+                        QVariantMap map;
+                        map["season"] = ae.season;
+                        map["episode"] = ae.ep;
+                        QString epTitle = QString("%1 - S%2E%3").arg(animeTitle).arg(ae.season, 2, 10, QChar('0')).arg(ae.ep, 2, 10, QChar('0'));
+                        if (!ae.name.isEmpty()) epTitle += " - " + ae.name;
+                        map["title"] = epTitle;
+                        map["label"] = (maxAcxSeason > 1) ? QString("S%1 B%2").arg(ae.season).arg(ae.ep) : QString("%1. Bölüm").arg(ae.ep);
+                        map["url"] = QString("https://animecix.tv/titles/%1/season/%2/episode/%3").arg(titleId).arg(ae.season).arg(ae.ep);
+                        map["isDirect"] = false;
+                        map["referer"] = "https://tau-video.xyz/";
+                        epList.append(map);
+                    }
+                    m_pendingEpisodes = epList;
                 }
             }
         }
@@ -1512,7 +1708,8 @@ void UrlAnalyzer::startAnimecixResolve(const QUrl &url) {
     });
 }
 
-void UrlAnalyzer::startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster, const QStringList &fallbackEmbeds) {
+void UrlAnalyzer::startTauVideoResolve(const QString &tauId, const QString &animeTitle, int season, int episode, const QString &epName, const QString &poster, const QStringList &fallbackEmbeds, const QVariantList &episodeList) {
+    Q_UNUSED(episodeList);
     QString tauApiUrl = QString("https://tau-video.xyz/api/video/%1").arg(tauId);
     QNetworkRequest request((QUrl(tauApiUrl)));
     request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
@@ -1616,6 +1813,9 @@ void UrlAnalyzer::startTauVideoResolve(const QString &tauId, const QString &anim
                     }
 
                     populateDirectFileOptions(m_currentInfo, bestSize, "video/mp4", formattedTitle + ".mp4");
+                    if (m_pendingEpisodes.size() > 1) {
+                        m_currentInfo->setAvailableEpisodes(m_pendingEpisodes);
+                    }
 
                     emit mediaInfoChanged();
                     emit analysisSuccess(m_currentInfo);
