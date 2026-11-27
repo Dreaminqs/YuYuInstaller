@@ -13,8 +13,6 @@
 #include <QIcon>
 #include <QFont>
 #include <QDebug>
-#include <QTcpSocket>
-#include <QUrl>
 #include <iostream>
 
 #include "DownloadManager.h"
@@ -46,42 +44,6 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("YuYuInstaller");
     app.setOrganizationName("YuYuDev");
     app.setApplicationVersion("1.2.7");
-
-    // Check if an instance is already listening on 127.0.0.1:48652 and forward any yuyu:// or http(s):// argument to it
-    QString startupArg;
-    const QStringList cliArgs = app.arguments();
-    if (cliArgs.size() > 1) {
-        startupArg = cliArgs.at(1).trimmed();
-    }
-
-    {
-        QTcpSocket probeSock;
-        probeSock.connectToHost("127.0.0.1", 48652);
-        if (probeSock.waitForConnected(150)) {
-            QString forwardUrl = startupArg;
-            bool autoDl = false;
-            if (forwardUrl.startsWith("yuyu://", Qt::CaseInsensitive)) {
-                QUrl pUrl(forwardUrl);
-                autoDl = pUrl.host().compare("download", Qt::CaseInsensitive) == 0 || forwardUrl.contains("auto=1");
-                int idx = forwardUrl.indexOf("url=");
-                if (idx != -1) {
-                    forwardUrl = QUrl::fromPercentEncoding(forwardUrl.mid(idx + 4).section('&', 0, 0).toUtf8());
-                }
-            }
-            QByteArray reqLine;
-            if (!forwardUrl.isEmpty()) {
-                QByteArray enc = QUrl::toPercentEncoding(forwardUrl);
-                reqLine = QByteArray("GET /") + (autoDl ? "download" : "analyze") + "?url=" + enc + " HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n";
-            } else {
-                reqLine = "GET /ping HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n";
-            }
-            probeSock.write(reqLine);
-            probeSock.flush();
-            probeSock.waitForBytesWritten(250);
-            probeSock.disconnectFromHost();
-            return 0;
-        }
-    }
 
     QFont defaultFont("Segoe UI", 10);
     defaultFont.setStyleHint(QFont::SansSerif);
@@ -160,7 +122,7 @@ int main(int argc, char *argv[]) {
     const QUrl url(u"qrc:/qt/qml/YuYuInstaller/qml/Main.qml"_qs);
 
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [&app, &downloadManager, startupArg, url, appIcon](QObject *obj, const QUrl &objUrl) {
+                     &app, [&app, url, appIcon](QObject *obj, const QUrl &objUrl) {
         if (!obj && url == objUrl) {
             std::cerr << ">>> [FATAL] Failed to load root QML object: " << objUrl.toString().toStdString() << std::endl;
             std::cerr.flush();
@@ -183,12 +145,6 @@ int main(int argc, char *argv[]) {
             win->show();
             win->raise();
             win->requestActivate();
-
-            if (!startupArg.isEmpty()) {
-                QTimer::singleShot(250, &downloadManager, [&downloadManager, startupArg]() {
-                    downloadManager.handleCommandLineUrl(startupArg);
-                });
-            }
         }
     }, Qt::QueuedConnection);
 

@@ -5,8 +5,6 @@
 #include <QMap>
 #include <QPointer>
 #include <QTimer>
-#include <QTcpServer>
-#include <QTcpSocket>
 #include "DownloadQueueModel.h"
 #include "UrlAnalyzer.h"
 #include "Downloader.h"
@@ -71,9 +69,6 @@ public:
     void scheduleSaveQueueState();
     void loadQueueState();
     static QString queueStateFilePath();
-    void startBrowserBridgeServer();
-    void handleCommandLineUrl(const QString &rawArg);
-    static void registerUrlProtocol();
 
     bool hasActiveDownloads() const;
     bool hasActiveDownload() const;
@@ -92,7 +87,6 @@ signals:
     void activeDownloadsChanged();
     void downloadStarted(const QString &id, const QString &title);
     void downloadFinished(const QString &id, const QString &title);
-    void externalUrlRequested(const QString &url, bool autoDownload);
 
 public slots:
     void checkNextQueueItem();
@@ -132,5 +126,4 @@ private:
     QMap<QString, QPointer<YtDlpDownloader>> m_activeYtDlpDownloads;
     QMap<QString, bool> m_pendingAudioConversion;
     QTimer m_saveDebounceTimer;
-    QTcpServer m_bridgeServer;
 };
