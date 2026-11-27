@@ -16,6 +16,9 @@
 #include <QCoreApplication>
 #include <QUrlQuery>
 #include <QHostAddress>
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 static QString formatBytesHelper(qint64 bytes) {
     if (bytes <= 0) return QString();
@@ -984,15 +987,19 @@ void DownloadManager::onQueueCancel(const QString &id) {
 void DownloadManager::registerUrlProtocol() {
 #ifdef Q_OS_WIN
     QString exePath = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
-    QSettings reg("HKEY_CURRENT_USER\\Software\\Classes\\yuyu", QSettings::NativeFormat);
-    reg.setValue("Default", "URL:YuYuInstaller Protocol");
-    reg.setValue("URL Protocol", "");
+    auto writeRegStr = [](const wchar_t *subKey, const wchar_t *valueName, const QString &val) {
+        HKEY hKey = nullptr;
+        if (RegCreateKeyExW(HKEY_CURRENT_USER, subKey, 0, nullptr, 0, KEY_WRITE, nullptr, &hKey, nullptr) == ERROR_SUCCESS) {
+            std::wstring ws = val.toStdWString();
+            RegSetValueExW(hKey, valueName, 0, REG_SZ, reinterpret_cast<const BYTE *>(ws.c_str()), static_cast<DWORD>((ws.size() + 1) * sizeof(wchar_t)));
+            RegCloseKey(hKey);
+        }
+    };
 
-    QSettings iconReg("HKEY_CURRENT_USER\\Software\\Classes\\yuyu\\DefaultIcon", QSettings::NativeFormat);
-    iconReg.setValue("Default", QString("\"%1\",0").arg(exePath));
-
-    QSettings cmdReg("HKEY_CURRENT_USER\\Software\\Classes\\yuyu\\shell\\open\\command", QSettings::NativeFormat);
-    cmdReg.setValue("Default", QString("\"%1\" \"%2\"").arg(exePath, "%1"));
+    writeRegStr(L"Software\\Classes\\yuyu", nullptr, "URL:YuYuInstaller Protocol");
+    writeRegStr(L"Software\\Classes\\yuyu", L"URL Protocol", "");
+    writeRegStr(L"Software\\Classes\\yuyu\\DefaultIcon", nullptr, QString("\"%1\",0").arg(exePath));
+    writeRegStr(L"Software\\Classes\\yuyu\\shell\\open\\command", nullptr, QString("\"%1\" \"%2\"").arg(exePath, "%1"));
 #endif
 }
 

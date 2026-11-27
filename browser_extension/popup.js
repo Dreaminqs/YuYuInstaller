@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
       statusTextEl.textContent = "Masaüstü Bağlı";
     } else {
       statusBadgeEl.classList.remove("online");
-      statusTextEl.textContent = "Otomatik Başlat";
+      statusTextEl.textContent = "Uygulama Kapalı";
     }
   });
 
@@ -40,11 +40,17 @@ document.addEventListener("DOMContentLoaded", () => {
       url: currentTab.url,
       autoDownload: autoDownload,
       tabId: currentTab.id
-    }, () => {
+    }, (res) => {
+      if (res && res.needProtocol && res.protoUrl) {
+        const frame = document.createElement("iframe");
+        frame.style.display = "none";
+        frame.src = res.protoUrl;
+        document.body.appendChild(frame);
+      }
       toastEl.textContent = autoDownload
         ? "İndirme kuyruğuna gönderildi!"
         : "YuYuInstaller üzerinde açıldı!";
-      setTimeout(() => window.close(), 650);
+      setTimeout(() => window.close(), 700);
     });
   }
 

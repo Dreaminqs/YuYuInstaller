@@ -25,14 +25,14 @@ if (chrome.runtime.onStartup) {
   chrome.runtime.onStartup.addListener(createMenus);
 }
 
-async function sendToDesktopBridge(targetUrl, autoDownload, tabId) {
+async function sendToDesktopBridge(targetUrl, autoDownload) {
   if (!targetUrl) return { ok: false };
   const endpoint = autoDownload ? "/download" : "/analyze";
   const bridgeUrl = `${BRIDGE_BASE}${endpoint}?url=${encodeURIComponent(targetUrl)}`;
 
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1200);
+    const timer = setTimeout(() => controller.abort(), 1400);
     const resp = await fetch(bridgeUrl, {
       method: "GET",
       signal: controller.signal
@@ -42,24 +42,25 @@ async function sendToDesktopBridge(targetUrl, autoDownload, tabId) {
       return { ok: true, via: "bridge" };
     }
   } catch (_) {
-    // Desktop app is not running yet; launch via yuyu:// protocol
+    // Desktop app is not running yet
   }
 
-  const protoMode = autoDownload ? "download" : "analyze";
-  const protoUrl = `yuyu://${protoMode}/?url=${encodeURIComponent(targetUrl)}`;
-  if (tabId) {
-    chrome.tabs.update(tabId, { url: protoUrl });
-  } else {
-    chrome.tabs.create({ url: protoUrl });
-  }
-  return { ok: true, via: "protocol" };
+  return {
+    ok: false,
+    needProtocol: true,
+    protoUrl: `yuyu://${autoDownload ? "download" : "analyze"}/?url=${encodeURIComponent(targetUrl)}`
+  };
 }
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   const targetUrl = info.linkUrl || info.srcUrl || info.pageUrl || (tab && tab.url) || "";
   if (!targetUrl) return;
   const autoDl = info.menuItemId === "yuyu-download-page";
-  sendToDesktopBridge(targetUrl, autoDl, tab ? tab.id : null);
+  sendToDesktopBridge(targetUrl, autoDl).then(res => {
+    if (res && res.needProtocol && tab && tab.id) {
+      chrome.tabs.sendMessage(tab.id, { action: "launchProtocol", protoUrl: res.protoUrl });
+    }
+  });
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -74,8 +75,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.action === "sendUrl") {
-    const tabId = (sender && sender.tab && sender.tab.id) ? sender.tab.id : msg.tabId;
-    sendToDesktopBridge(msg.url, Boolean(msg.autoDownload), tabId)
+    sendToDesktopBridge(msg.url, Boolean(msg.autoDownload))
       .then(res => sendResponse(res))
       .catch(() => sendResponse({ ok: false }));
     return true;
